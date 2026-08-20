@@ -341,8 +341,18 @@ mod tests {
             sort_desc: false,
         };
         let entries = list_dir(root.to_str().unwrap(), &opts, &roots).unwrap();
-        assert_eq!(entries.len(), 1);
-        assert!(entries[0].is_hidden);
+        let secret = entries
+            .iter()
+            .find(|e| e.name == ".secret")
+            .expect("hidden file should be listed when show_hidden is set");
+        assert!(secret.is_hidden);
+
+        let hidden_opts = ListOptions {
+            show_hidden: false,
+            ..opts
+        };
+        let without = list_dir(root.to_str().unwrap(), &hidden_opts, &roots).unwrap();
+        assert!(without.iter().all(|e| e.name != ".secret"));
     }
 
     #[test]
