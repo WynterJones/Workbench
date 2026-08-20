@@ -1,0 +1,100 @@
+import { readFileSync, readdirSync, statSync } from "node:fs";
+import { join } from "node:path";
+import { describe, expect, it } from "vitest";
+
+const ROOT = join(__dirname, "..", "..");
+const IGNORED_PARAMS = new Set(["app", "state", "window", "webview", "registry", "cancel", "watchers"]);
+
+function walk(dir: string, ext: string): string[] {
+  return readdirSync(dir).flatMap((entry) => {
+    const full = join(dir, entry);
+    if (entry === "node_modules" || entry === "target" || entry === "ui") return [];
+    if (statSync(full).isDirectory()) return walk(full, ext);
+    return full.endsWith(ext) ? [full] : [];
+  });
+}
+
+function snakeToCamel(value: string): string {
+  return value.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
+}
+
+function frontendCalls(): Map<string, Set<string>> {
+  const calls = new Map<string, Set<string>>();
+  const pattern = /invoke(?:<[^>]*>)?\(\s*"([a-z_0-9]+)"\s*,\s*\{([^}]*)\}/g;
+  for (const file of walk(join(ROOT, "src"), ".ts").concat(walk(join(ROOT, "src"), ".tsx"))) {
+    const source = readFileSync(file, "utf8");
+    for (const match of source.matchAll(pattern)) {
+      const keys = [...match[2].matchAll(/(?:^|,)\s*(\w+)/g)].map((m) => m[1]);
+      const existing = calls.get(match[1]) ?? new Set<string>();
+      keys.forEach((k) => existing.add(k));
+      calls.set(match[1], existing);
+    }
+  }
+  return calls;
+}
+
+function rustCommands(): Map<string, Set<string>> {
+  const commands = new Map<string, Set<string>>();
+  const pattern = /#\[tauri::command[^\]]*\]\s*(?:pub\s+)?(?:async\s+)?fn\s+(\w+)\s*\(([\s\S]*?)\)\s*->/g;
+  for (const file of walk(join(ROOT, "src-tauri", "src"), ".rs")) {
+    const source = readFileSync(file, "utf8");
+    for (const match of source.matchAll(pattern)) {
+      const params = new Set<string>();
+      let depth = 0;
+      let current = "";
+      for (const char of match[2]) {
+        if (char === "<" || char === "(") depth += 1;
+        if (char === ">" || char === ")") depth -= 1;
+        if (char === "," && depth === 0) {
+          current = "";
+          continue;
+        }
+        current += char;
+        if (char === ":" && depth === 0 && current.includes(":")) {
+          const name = current.slice(0, -1).trim();
+          if (name && !IGNORED_PARAMS.has(name)) params.add(name);
+          current = "";
+        }
+      }
+      const raw = match[2]
+        .split(/,(?![^<(]*[>)])/)
+        .map((p) => p.trim())
+        .filter(Boolean)
+        .filter((p) => !/State<|AppHandle|Window<|WebviewWindow/.test(p))
+        .map((p) => p.split(":")[0].trim())
+        .filter((p) => p && !IGNORED_PARAMS.has(p));
+      commands.set(match[1], new Set(raw));
+    }
+  }
+  return commands;
+}
+
+describe("tauri command contract", () => {
+  const frontend = frontendCalls();
+  const rust = rustCommands();
+
+  it("finds commands on both sides", () => {
+    expect(frontend.size).toBeGreaterThan(10);
+    expect(rust.size).toBeGreaterThan(10);
+  });
+
+  it("every invoked command exists in Rust", () => {
+    const missing = [...frontend.keys()].filter((name) => !rust.has(name));
+    expect(missing).toEqual([]);
+  });
+
+  it("every invoked command's argument names match its Rust parameters", () => {
+    const mismatches: string[] = [];
+    for (const [name, sent] of frontend) {
+      const params = rust.get(name);
+      if (!params) continue;
+      const expected = new Set([...params].map(snakeToCamel));
+      const sentSorted = [...sent].sort();
+      const expectedSorted = [...expected].sort();
+      if (JSON.stringify(sentSorted) !== JSON.stringify(expectedSorted)) {
+        mismatches.push(`${name}: frontend sends [${sentSorted}] but Rust expects [${expectedSorted}]`);
+      }
+    }
+    expect(mismatches).toEqual([]);
+  });
+});

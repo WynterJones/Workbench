@@ -66,16 +66,19 @@
     @apply bg-background text-foreground antialiased;
     font-feature-settings: "cv11", "ss01";
   }
-  ::-webkit-scrollbar {
-    width: 10px;
-    height: 10px;
+  * {
+    --scrollbar-thumb: #3f3f46;
+    --scrollbar-track: transparent;
+    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+    scrollbar-width: thin;
   }
-  ::-webkit-scrollbar-thumb {
-    @apply rounded-full bg-secondary;
+
+  @media (prefers-contrast: more) {
+    * {
+      --scrollbar-thumb: #d4d4d8;
+    }
   }
-  ::-webkit-scrollbar-track {
-    background: transparent;
-  }
+
 }
 
 @keyframes intro-scan-sweep {
@@ -92,5 +95,32 @@
   100% {
     transform: translateY(100vh);
     opacity: 0;
+  }
+}
+
+@supports not (scrollbar-color: auto) {
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--scrollbar-track);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    background-clip: padding-box;
+    border: 2px solid transparent;
+    border-radius: 999px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #52525b;
+    background-clip: padding-box;
+  }
+
+  ::-webkit-scrollbar-corner {
+    background: transparent;
   }
 }

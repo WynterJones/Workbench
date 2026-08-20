@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import type { Framework, ShelfId } from "@/lib/types";
 
-export type Route = "intro" | "library" | "project" | "settings" | "files";
+export type Route = "intro" | "library" | "project" | "settings" | "files" | "skills" | "models";
 
 export interface CommandPaletteItem {
   id: string;

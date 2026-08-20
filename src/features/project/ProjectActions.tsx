@@ -6,12 +6,15 @@ import {
   FolderOpenIcon,
   GlobeIcon,
   PlayIcon,
+  CameraIcon,
   SparklesIcon,
   TerminalIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { AiLaunchDialog } from "@/features/project/AiLaunchDialog";
+import { TrustDialog } from "@/features/project/TrustDialog";
+import { useQueryClient } from "@tanstack/react-query";
 import { useArchiveProject } from "@/hooks/useProjects";
 import { useRunProject } from "@/hooks/useRunProject";
 import { api } from "@/lib/api";
@@ -26,6 +29,9 @@ export function ProjectActions({ project, onRunResult }: ProjectActionsProps) {
   const runProject = useRunProject();
   const archiveProject = useArchiveProject();
   const [aiOpen, setAiOpen] = useState(false);
+  const [trustOpen, setTrustOpen] = useState(false);
+  const [capturing, setCapturing] = useState(false);
+  const queryClient = useQueryClient();
 
   async function openIn(target: "editor" | "browser" | "finder" | "terminal") {
     try {
@@ -38,9 +44,47 @@ export function ProjectActions({ project, onRunResult }: ProjectActionsProps) {
   }
 
   function run() {
+    if (!project.trusted) {
+      setTrustOpen(true);
+      return;
+    }
     runProject.mutate(project.id, {
       onSuccess: (result) => onRunResult?.(result),
     });
+  }
+
+  async function trustAndRun() {
+    try {
+      await api.trustProject(project.id, true);
+      await queryClient.invalidateQueries({ queryKey: ["project", project.id] });
+      setTrustOpen(false);
+      runProject.mutate(project.id, {
+        onSuccess: (result) => onRunResult?.(result),
+      });
+    } catch (error) {
+      toast.error("Could not trust project", {
+        description: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+
+  async function screenshot() {
+    if (!project.trusted) {
+      setTrustOpen(true);
+      return;
+    }
+    setCapturing(true);
+    try {
+      await api.captureProject(project.id);
+      await queryClient.invalidateQueries({ queryKey: ["project", project.id] });
+      toast.success("Screenshot captured");
+    } catch (error) {
+      toast.error("Screenshot failed", {
+        description: error instanceof Error ? error.message : String(error),
+      });
+    } finally {
+      setCapturing(false);
+    }
   }
 
   return (
@@ -48,6 +92,10 @@ export function ProjectActions({ project, onRunResult }: ProjectActionsProps) {
       <Button size="sm" onClick={run} disabled={runProject.isPending}>
         <PlayIcon />
         {runProject.isPending ? "Running…" : "Run"}
+      </Button>
+      <Button size="sm" variant="outline" onClick={screenshot} disabled={capturing} className="cursor-pointer">
+        <CameraIcon />
+        {capturing ? "Capturing…" : "Screenshot"}
       </Button>
       <Button size="sm" variant="outline" onClick={() => openIn("editor")}>
         <CodeIcon />
@@ -79,6 +127,13 @@ export function ProjectActions({ project, onRunResult }: ProjectActionsProps) {
       </Button>
 
       <AiLaunchDialog project={project} open={aiOpen} onOpenChange={setAiOpen} />
+      <TrustDialog
+        project={project}
+        open={trustOpen}
+        onOpenChange={setTrustOpen}
+        onConfirm={trustAndRun}
+        pending={runProject.isPending}
+      />
     </div>
   );
 }

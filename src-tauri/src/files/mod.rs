@@ -4,6 +4,7 @@ mod listing;
 mod scaffold;
 mod starters;
 mod watch;
+mod read;
 
 pub use watch::WatcherState;
 
@@ -169,4 +170,14 @@ pub fn fs_build_context(
 ) -> Result<String, String> {
     let roots = roots_from_state(&state)?;
     context::build_context(&paths, &opts, &roots)
+}
+
+#[tauri::command]
+pub fn fs_read_file(
+    state: State<DbState>,
+    path: String,
+    max_bytes: Option<u64>,
+) -> Result<read::FileContents, String> {
+    let roots = roots_from_state(&state)?;
+    read::read_file(&path, &roots, max_bytes)
 }

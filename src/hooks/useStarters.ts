@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { listen } from "@tauri-apps/api/event";
 import { toast } from "sonner";
-import { filesApi, type StarterTemplate } from "@/lib/filesApi";
+import { filesApi } from "@/lib/filesApi";
 
 const STARTERS_KEY = ["starters"];
 
@@ -37,8 +37,8 @@ export function useStarters() {
   });
 
   const saveFolderAsStarter = useMutation({
-    mutationFn: ({ path, meta }: { path: string; meta: Partial<StarterTemplate> }) =>
-      filesApi.saveFolderAsStarter(path, meta),
+    mutationFn: ({ path, name }: { path: string; name: string }) =>
+      filesApi.saveFolderAsStarter(path, name),
     onSuccess: () => {
       toast.success("Saved as starter");
       queryClient.invalidateQueries({ queryKey: STARTERS_KEY });

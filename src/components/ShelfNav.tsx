@@ -39,7 +39,7 @@ export function ShelfNav() {
   const counts = useShelfCounts();
 
   return (
-    <nav className="flex flex-col gap-0.5 px-2">
+    <nav data-tauri-drag-region className="flex flex-col gap-0.5 px-2">
       {SHELVES.map(({ id, label, icon: Icon }) => {
         const active = route === "library" && shelf === id;
         return (

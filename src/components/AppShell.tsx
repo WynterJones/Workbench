@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { useEffect } from "react";
 import { Sidebar } from "@/components/Sidebar";
 import { TopBar } from "@/components/TopBar";
+import { ShelfTabs } from "@/components/ShelfTabs";
 import { CommandPalette } from "@/components/CommandPalette";
 import { useAppStore } from "@/lib/store";
 
@@ -10,6 +11,7 @@ interface AppShellProps {
 }
 
 export function AppShell({ children }: AppShellProps) {
+  const route = useAppStore((s) => s.route);
   const toggleSidebar = useAppStore((s) => s.toggleSidebar);
   const setCommandPaletteOpen = useAppStore((s) => s.setCommandPaletteOpen);
 
@@ -34,6 +36,7 @@ export function AppShell({ children }: AppShellProps) {
       <Sidebar />
       <div className="flex min-w-0 flex-1 flex-col">
         <TopBar />
+        {route === "library" && <ShelfTabs />}
         <main className="flex-1 overflow-y-auto">{children}</main>
       </div>
       <CommandPalette />

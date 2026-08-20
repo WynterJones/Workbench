@@ -35,6 +35,8 @@ export const api = {
   runProject: (id: number) => invoke<RunResult>("run_project", { id }),
   stopProject: (id: number) => invoke<void>("stop_project", { id }),
   captureAll: () => invoke<void>("capture_all"),
+  captureProject: (projectId: number) => invoke<void>("capture_project", { projectId }),
+  trustProject: (id: number, trusted: boolean) => invoke<void>("trust_project", { id, trusted }),
 
   openIn: (target: "finder" | "terminal" | "editor" | "browser" | "github", id: number) =>
     invoke<void>("open_in", { target, id }),

@@ -26,8 +26,7 @@ export function TopBar() {
 
   return (
     <div className="sticky top-0 z-10 flex flex-col border-b border-border bg-background/95 backdrop-blur">
-      <div data-tauri-drag-region className="h-7 w-full shrink-0" />
-      <div className="flex h-14 shrink-0 items-center gap-3 px-4">
+      <div data-tauri-drag-region className="flex h-16 shrink-0 items-center gap-3 px-4">
         <div className="relative max-w-md flex-1">
           <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input

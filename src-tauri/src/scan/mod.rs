@@ -52,6 +52,8 @@ pub fn run_scan(app: &AppHandle, roots: &[String]) -> Result<(), String> {
         }
     }
 
+    mark_missing_projects_dead(&conn);
+
     let _ = app.emit(
         "scan:progress",
         ScanProgress {
@@ -259,21 +261,21 @@ fn compute_and_persist_ship_score(conn: &Connection, project: &Project) -> ShipS
 }
 
 #[tauri::command]
-pub fn ship_score(id: i64) -> Result<ShipScore, String> {
+pub fn ship_score(project_id: i64) -> Result<ShipScore, String> {
     let conn = db::open()?;
-    let project = db::get_project(&conn, id)
+    let project = db::get_project(&conn, project_id)
         .map_err(|e| e.to_string())?
-        .ok_or_else(|| format!("project {id} not found"))?;
+        .ok_or_else(|| format!("project {project_id} not found"))?;
 
     Ok(compute_and_persist_ship_score(&conn, &project))
 }
 
 #[tauri::command]
-pub fn project_todos(id: i64) -> Result<Vec<String>, String> {
+pub fn project_todos(project_id: i64) -> Result<Vec<String>, String> {
     let conn = db::open()?;
-    let project = db::get_project(&conn, id)
+    let project = db::get_project(&conn, project_id)
         .map_err(|e| e.to_string())?
-        .ok_or_else(|| format!("project {id} not found"))?;
+        .ok_or_else(|| format!("project {project_id} not found"))?;
 
     Ok(find_todos(Path::new(&project.path)))
 }
@@ -341,5 +343,69 @@ fn walk_for_todos(
                 }
             }
         }
+    }
+}
+
+fn mark_missing_projects_dead(conn: &rusqlite::Connection) -> usize {
+    let paths: Vec<(i64, String)> = match conn
+        .prepare("SELECT id, path FROM projects WHERE status != 'dead'")
+        .and_then(|mut stmt| {
+            stmt.query_map([], |row| Ok((row.get(0)?, row.get(1)?)))
+                .and_then(|rows| rows.collect::<rusqlite::Result<Vec<_>>>())
+        }) {
+        Ok(rows) => rows,
+        Err(_) => return 0,
+    };
+
+    let mut marked = 0;
+    for (id, path) in paths {
+        if !std::path::Path::new(&path).is_dir() {
+            if conn
+                .execute(
+                    "UPDATE projects SET status = 'dead' WHERE id = ?1",
+                    rusqlite::params![id],
+                )
+                .is_ok()
+            {
+                marked += 1;
+            }
+        }
+    }
+    marked
+}
+
+#[cfg(test)]
+mod dead_tests {
+    use super::*;
+
+    #[test]
+    fn marks_only_projects_whose_directory_is_gone() {
+        let conn = rusqlite::Connection::open_in_memory().unwrap();
+        crate::db::run_migrations(&conn).unwrap();
+
+        let alive = std::env::temp_dir();
+        conn.execute(
+            "INSERT INTO projects (path, name, framework, package_manager, status, first_seen, last_scanned, last_modified) \
+             VALUES (?1, 'Alive', 'node', 'npm', 'runnable', '2026-01-01', '2026-01-01', '2026-01-01')",
+            rusqlite::params![alive.to_string_lossy()],
+        )
+        .unwrap();
+        conn.execute(
+            "INSERT INTO projects (path, name, framework, package_manager, status, first_seen, last_scanned, last_modified) \
+             VALUES ('/nope/gone-forever', 'Gone', 'node', 'npm', 'runnable', '2026-01-01', '2026-01-01', '2026-01-01')",
+            [],
+        )
+        .unwrap();
+
+        assert_eq!(mark_missing_projects_dead(&conn), 1);
+
+        let dead: String = conn
+            .query_row("SELECT status FROM projects WHERE name = 'Gone'", [], |r| r.get(0))
+            .unwrap();
+        let live: String = conn
+            .query_row("SELECT status FROM projects WHERE name = 'Alive'", [], |r| r.get(0))
+            .unwrap();
+        assert_eq!(dead, "dead");
+        assert_ne!(live, "dead");
     }
 }

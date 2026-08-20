@@ -1,54 +1,46 @@
-import { Folder as FolderIcon, Settings } from "lucide-react";
-import { ShelfNav } from "@/components/ShelfNav";
+import { Boxes, Cpu, Folder, Settings, Sparkles } from "lucide-react";
+import { NavItem } from "@/components/NavItem";
 import { cn } from "@/lib/utils";
 import { useAppStore } from "@/lib/store";
+import { useShelfCounts } from "@/hooks/useShelfCounts";
 
 export function Sidebar() {
   const collapsed = useAppStore((s) => s.sidebarCollapsed);
   const route = useAppStore((s) => s.route);
   const setRoute = useAppStore((s) => s.setRoute);
+  const openFiles = useAppStore((s) => s.openFiles);
+  const counts = useShelfCounts();
 
   return (
     <aside
+      data-tauri-drag-region
       className={cn(
         "flex h-full shrink-0 flex-col border-r border-border bg-card transition-[width] duration-150 ease-out",
-        collapsed ? "w-0 overflow-hidden border-r-0" : "w-60",
+        collapsed ? "w-0 overflow-hidden border-r-0" : "w-56",
       )}
     >
-      <div data-tauri-drag-region className="flex h-16 shrink-0 items-end gap-2.5 px-4 pb-3 pt-7">
-        <img src="/logo.png" alt="Workbench" className="size-7 shrink-0 rounded-[7px]" />
-        <span className="pb-0.5 text-sm font-semibold tracking-tight text-foreground">Workbench</span>
+      <div data-tauri-drag-region className="flex h-16 shrink-0 items-end px-4 pb-3 pt-7">
+        <img src="/wordmark.png" alt="Workbench" className="h-[26px] w-auto select-none" draggable={false} />
       </div>
-      <div className="flex-1 overflow-y-auto py-2">
-        <ShelfNav />
-      </div>
+      <nav data-tauri-drag-region className="flex flex-1 flex-col gap-0.5 p-2">
+        <NavItem
+          icon={Boxes}
+          label="Projects"
+          count={counts.all}
+          active={route === "library" || route === "project"}
+          onClick={() => setRoute("library")}
+        />
+        <NavItem icon={Folder} label="Files" active={route === "files"} onClick={() => openFiles()} />
+        <NavItem icon={Sparkles} label="Skills" active={route === "skills"} onClick={() => setRoute("skills")} />
+        <NavItem icon={Cpu} label="Models" active={route === "models"} onClick={() => setRoute("models")} />
+      </nav>
       <div className="border-t border-border p-2">
-        <button
-          type="button"
-          onClick={() => useAppStore.getState().openFiles()}
-          className={cn(
-            "flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm transition-colors duration-150 ease-out",
-            route === "files"
-              ? "bg-secondary text-foreground"
-              : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground",
-          )}
-        >
-          <FolderIcon className="size-4 shrink-0" strokeWidth={1.75} />
-          <span>Files</span>
-        </button>
-        <button
-          type="button"
+        <NavItem
+          icon={Settings}
+          label="Settings"
+          active={route === "settings"}
           onClick={() => setRoute("settings")}
-          className={cn(
-            "flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm transition-colors duration-150 ease-out",
-            route === "settings"
-              ? "bg-secondary text-foreground"
-              : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground",
-          )}
-        >
-          <Settings className="size-4 shrink-0" strokeWidth={1.75} />
-          <span>Settings</span>
-        </button>
+        />
       </div>
     </aside>
   );

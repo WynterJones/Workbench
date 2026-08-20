@@ -199,6 +199,13 @@ fn pop_next(queue: &Mutex<VecDeque<i64>>) -> Option<i64> {
 }
 
 #[tauri::command]
+pub fn capture_project(app: AppHandle, project_id: i64) -> Result<(), String> {
+    let cancel = app.state::<CaptureCancel>();
+    cancel.0.store(false, Ordering::SeqCst);
+    capture_one(project_id, &app)
+}
+
+#[tauri::command]
 pub fn capture_all(app: AppHandle) -> Result<(), String> {
     let cancel = app.state::<CaptureCancel>();
     cancel.0.store(false, Ordering::SeqCst);

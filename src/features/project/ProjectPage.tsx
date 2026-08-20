@@ -9,6 +9,7 @@ import { ScreenshotHero } from "@/features/project/ScreenshotHero";
 import { ProjectTimeline } from "@/features/project/ProjectTimeline";
 import { ShipScoreCard } from "@/features/project/ShipScoreCard";
 import { ReadmePanel } from "@/features/project/ReadmePanel";
+import { CommitList } from "@/features/project/CommitList";
 import { TodoList } from "@/features/project/TodoList";
 import { RunLogPanel } from "@/features/project/RunLogPanel";
 import { useProject } from "@/hooks/useProject";
@@ -46,11 +47,15 @@ export function ProjectPage() {
           <Tabs defaultValue="readme">
             <TabsList>
               <TabsTrigger value="readme">README</TabsTrigger>
+              <TabsTrigger value="commits">Commits</TabsTrigger>
               <TabsTrigger value="todos">TODOs</TabsTrigger>
               <TabsTrigger value="runlog">Run Log</TabsTrigger>
             </TabsList>
             <TabsContent value="readme">
-              <ReadmePanel readmeSummary={project.readmeSummary} />
+              <ReadmePanel projectId={project.id} />
+            </TabsContent>
+            <TabsContent value="commits">
+              <CommitList projectId={project.id} />
             </TabsContent>
             <TabsContent value="todos">
               <TodoList projectId={project.id} />
@@ -65,7 +70,7 @@ export function ProjectPage() {
           <ShipScoreCard projectId={project.id} />
           <div className="rounded-lg border border-border bg-card p-4">
             <p className="mb-3 text-sm font-medium">Timeline</p>
-            <ProjectTimeline projectId={project.id} />
+            <ProjectTimeline project={project} />
           </div>
         </div>
       </div>

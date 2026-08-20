@@ -1,6 +1,7 @@
 mod ai;
 mod commands;
 mod db;
+mod detail;
 mod files;
 mod misc;
 mod models;
@@ -44,10 +45,13 @@ pub fn run() {
             scan::start_scan,
             scan::ship_score,
             scan::project_todos,
+            detail::project_readme,
+            detail::project_commits,
             run::run_project,
             run::stop_project,
             run::trust_project,
             run::capture_all,
+            run::capture_project,
             run::capture_cancel,
             ai::build_ai_prompt,
             ai::start_ai_session,
@@ -75,6 +79,7 @@ pub fn run() {
             files::fs_create_from_template,
             files::fs_scaffold_starter,
             files::fs_build_context,
+            files::fs_read_file,
         ])
         .build(tauri::generate_context!())
         .expect("error while running tauri application")
