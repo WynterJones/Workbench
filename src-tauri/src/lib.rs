@@ -2,6 +2,7 @@ mod agents;
 mod ai;
 mod commands;
 mod db;
+mod doctor;
 mod detail;
 mod files;
 mod heatmap;
@@ -80,6 +81,7 @@ pub fn run() {
             skills::install_skill,
             skills::search_skill_registry,
             agents::detect_agents,
+            doctor::system_checks,
             misc::disk_reclaim_scan,
             files::fs_list_dir,
             files::fs_create_dir,

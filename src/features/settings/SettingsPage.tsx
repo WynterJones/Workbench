@@ -1,5 +1,6 @@
 import { RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { SystemChecksSettings } from "@/features/settings/SystemChecksSettings";
 import { ScanRootsSettings } from "@/features/settings/ScanRootsSettings";
 import { AiProviderSettings } from "@/features/settings/AiProviderSettings";
 import { EditorTerminalSettings } from "@/features/settings/EditorTerminalSettings";
@@ -38,6 +39,7 @@ export function SettingsPage() {
       <AiProviderSettings settings={settings} onChange={updateSettings} />
       <EditorTerminalSettings settings={settings} onChange={updateSettings} />
       <RunSettings settings={settings} onChange={updateSettings} />
+      <SystemChecksSettings />
     </div>
   );
 }
