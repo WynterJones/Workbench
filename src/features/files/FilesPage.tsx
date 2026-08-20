@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { FolderOpenIcon } from "lucide-react";
+import { FolderOpenIcon, Loader2Icon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useFilesStore } from "@/lib/filesStore";
 import { useFsWatch } from "@/hooks/useFsWatch";
@@ -33,6 +33,15 @@ export function FilesPage() {
 
   if (mode === "starters") return <StarterLibrary />;
   if (mode === "reclaim") return <DiskReclaim />;
+
+  if (!rootPath && isLoading) {
+    return (
+      <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
+        <Loader2Icon className="size-6 animate-spin text-muted-foreground" strokeWidth={1.5} />
+        <p className="text-sm text-muted-foreground">Looking for your folders…</p>
+      </div>
+    );
+  }
 
   if (!rootPath) {
     return (

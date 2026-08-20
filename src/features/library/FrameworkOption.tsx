@@ -12,13 +12,15 @@ export function FrameworkOption({ framework }: FrameworkOptionProps) {
   const Fallback = frameworkIcon(framework);
 
   return (
-    <span className="flex items-center gap-2">
-      {brand ? (
-        <BrandIcon mark={brand} className="size-3.5" />
-      ) : (
-        <Fallback className="size-3.5 text-muted-foreground" strokeWidth={1.5} />
-      )}
-      {frameworkLabel(framework)}
+    <span className="flex min-w-0 items-center gap-2.5">
+      <span className="flex size-4 shrink-0 items-center justify-center">
+        {brand ? (
+          <BrandIcon mark={brand} className="max-h-4 max-w-4 size-auto" />
+        ) : (
+          <Fallback className="size-4 text-muted-foreground" strokeWidth={1.5} />
+        )}
+      </span>
+      <span className="truncate">{frameworkLabel(framework)}</span>
     </span>
   );
 }

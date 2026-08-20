@@ -14,6 +14,7 @@ export function BrandIcon({ mark, className, monochrome }: BrandIconProps) {
       viewBox="0 0 24 24"
       aria-label={mark.title}
       className={cn("size-3.5 shrink-0", className)}
+      preserveAspectRatio="xMidYMid meet"
       fill={monochrome ? "currentColor" : mark.hex}
     >
       <path d={mark.path} />

@@ -5,6 +5,8 @@ import { SettingsPage } from "@/features/settings/SettingsPage";
 import { LibraryPage } from "@/features/library/LibraryPage";
 import { ProjectPage } from "@/features/project/ProjectPage";
 import { FilesPage } from "@/features/files/FilesPage";
+import { SkillsPage } from "@/features/skills/SkillsPage";
+import { ModelsPage } from "@/features/models/ModelsPage";
 import { useFilesStore } from "@/lib/filesStore";
 import { useAppStore } from "@/lib/store";
 import { useSettings } from "@/hooks/useSettings";
@@ -41,6 +43,8 @@ export default function App() {
       {route === "library" && <LibraryPage />}
       {route === "project" && <ProjectPage />}
       {route === "files" && <FilesPage />}
+      {route === "skills" && <SkillsPage />}
+      {route === "models" && <ModelsPage />}
       {route === "settings" && <SettingsPage />}
     </AppShell>
   );

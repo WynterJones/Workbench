@@ -54,7 +54,7 @@ export function LibraryPage() {
   }
 
   return (
-    <div className="space-y-4 p-6">
+    <div className="space-y-4 px-6 pb-6 pt-4">
       <InsightsBar />
       <FilterBar
         availableFrameworks={availableFrameworks}

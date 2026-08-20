@@ -15,7 +15,7 @@ export function InsightsBar() {
 
   if (isError) {
     return (
-      <div className="flex h-10 items-center gap-3 border-b border-border px-4 text-xs text-muted-foreground">
+      <div className="flex h-11 items-center gap-3 rounded-lg border border-border bg-card px-4 text-xs text-muted-foreground">
         Couldn&apos;t load library stats.
         <button type="button" onClick={() => refetch()} className="cursor-pointer underline">
           Retry
@@ -25,11 +25,11 @@ export function InsightsBar() {
   }
 
   if (isLoading || !stats) {
-    return <div className="h-10 shrink-0 animate-pulse border-b border-border bg-card/40" />;
+    return <div className="h-11 shrink-0 animate-pulse rounded-lg border border-border bg-card/40" />;
   }
 
   return (
-    <div className="flex h-10 shrink-0 items-center gap-5 overflow-x-auto border-b border-border px-4">
+    <div className="flex h-11 shrink-0 items-center gap-5 overflow-x-auto rounded-lg border border-border bg-card px-4">
       <StatChip icon={BoxesIcon} label="projects" value={total} />
       <StatChip icon={PlayCircleIcon} label="runnable" value={runnable} />
       <StatChip icon={CameraIcon} label="captured" value={captured} />

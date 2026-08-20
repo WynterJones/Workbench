@@ -1,3 +1,4 @@
+mod agents;
 mod ai;
 mod commands;
 mod db;
@@ -11,6 +12,7 @@ mod run;
 mod scan;
 mod score;
 mod settings;
+mod skills;
 
 use std::sync::Mutex;
 
@@ -62,6 +64,11 @@ pub fn run() {
             openers::open_in,
             misc::pick_folder,
             folders::search_folders,
+            skills::list_skills,
+            skills::read_skill,
+            skills::toggle_skill,
+            skills::install_skill,
+            agents::detect_agents,
             misc::disk_reclaim_scan,
             files::fs_list_dir,
             files::fs_create_dir,
