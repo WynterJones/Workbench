@@ -53,12 +53,11 @@ export function IntroStepDiagram({ reducedMotion, onNext }: IntroStepDiagramProp
     <div className="flex w-full max-w-5xl flex-col items-center gap-10 px-6">
       <div className="max-w-3xl space-y-4 text-center">
         <h2 className="text-balance text-4xl font-bold leading-[1.05] tracking-tight text-foreground sm:text-5xl lg:text-6xl">
-          Your best work is rotting in a folder called
-          <span className="text-brand"> test-2-final</span>.
+          Your hard drive is a <span className="wb-gradient-text">portfolio</span> in disguise.
         </h2>
         <p className="text-balance text-base font-light leading-relaxed text-muted-foreground sm:text-lg">
-          A visual library of everything you have ever built — for people who ship faster than they
-          can name folders.
+          Workbench finds every project you have ever built, runs them, screenshots them, and puts
+          them all on one shelf — for people who ship faster than they can name folders.
         </p>
       </div>
 

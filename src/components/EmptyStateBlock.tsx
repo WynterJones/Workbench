@@ -27,7 +27,7 @@ export function EmptyStateBlock({
       <span className="flex size-11 items-center justify-center rounded-full border border-border bg-card">
         <Icon className="size-5 text-muted-foreground" strokeWidth={1.5} />
       </span>
-      <div className="max-w-md space-y-1.5">
+      <div className="max-w-sm space-y-1.5 px-4">
         <p className="text-sm font-medium text-foreground">{title}</p>
         {message && <p className="text-sm leading-relaxed text-muted-foreground">{message}</p>}
       </div>

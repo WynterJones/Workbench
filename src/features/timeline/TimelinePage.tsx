@@ -18,25 +18,7 @@ export function TimelinePage() {
   const summary = data?.pages[0];
   const groups = useMemo(() => groupByMonth(events), [events]);
 
-  const years = useMemo(() => {
-    const seen: string[] = [];
-    for (const group of groups) {
-      const year = yearOf(group.key);
-      if (!seen.includes(year)) seen.push(year);
-    }
-    return seen;
-  }, [groups]);
-
-  const counts = useMemo(() => {
-    const map: Record<string, number> = {};
-    for (const group of groups) {
-      const year = yearOf(group.key);
-      map[year] = (map[year] ?? 0) + group.events.length;
-    }
-    return map;
-  }, [groups]);
-
-  const [activeYear, setActiveYear] = useState("");
+  const [activeKey, setActiveKey] = useState("");
   const spine = useRef<HTMLDivElement | null>(null);
 
   const loadMore = useCallback(() => {
@@ -47,8 +29,8 @@ export function TimelinePage() {
   const sentinel = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    if (!activeYear && years.length > 0) setActiveYear(years[0]);
-  }, [years, activeYear]);
+    if (!activeKey && groups.length > 0) setActiveKey(groups[0].key);
+  }, [groups, activeKey]);
 
   useEffect(() => {
     const node = sentinel.current;
@@ -64,7 +46,7 @@ export function TimelinePage() {
   useEffect(() => {
     const root = spine.current;
     if (!root) return;
-    const headings = Array.from(root.querySelectorAll<HTMLElement>("[data-year]"));
+    const headings = Array.from(root.querySelectorAll<HTMLElement>("[data-month-key]"));
     if (headings.length === 0) return;
 
     const observer = new IntersectionObserver(
@@ -72,28 +54,39 @@ export function TimelinePage() {
         const top = entries
           .filter((entry) => entry.isIntersecting)
           .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
-        const year = top?.target.getAttribute("data-year");
-        if (year) setActiveYear(year);
+        const key = top?.target.getAttribute("data-month-key");
+        if (key) setActiveKey(key);
       },
-      { rootMargin: "-20% 0px -70% 0px" },
+      { rootMargin: "-15% 0px -70% 0px" },
     );
     headings.forEach((heading) => observer.observe(heading));
     return () => observer.disconnect();
   }, [groups]);
 
+  const lastScrolled = useRef(-1);
+
   useEffect(() => {
     if (!playback.playing || playback.revealed === 0) return;
+
+    const stride = playback.speed === 1 ? 4 : 8;
+    if (playback.revealed - lastScrolled.current < stride) return;
+    lastScrolled.current = playback.revealed;
+
     const node = spine.current?.querySelector<HTMLElement>(
       `[data-timeline-index="${playback.revealed - 1}"]`,
     );
     if (!node) return;
+
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const smooth = !reduce && playback.speed === 1;
-    node.scrollIntoView({ behavior: smooth ? "smooth" : "auto", block: "center" });
+    node.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "center" });
   }, [playback.playing, playback.revealed, playback.speed]);
 
-  function jumpToYear(year: string) {
-    const node = spine.current?.querySelector<HTMLElement>(`[data-year="${year}"]`);
+  useEffect(() => {
+    if (!playback.playing) lastScrolled.current = -1;
+  }, [playback.playing]);
+
+  function jumpToKey(key: string) {
+    const node = spine.current?.querySelector<HTMLElement>(`[data-month-key="${key}"]`);
     node?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
@@ -145,12 +138,7 @@ export function TimelinePage() {
         }
       >
         <div className="flex gap-8">
-          <TimelineYearRail
-            years={years}
-            activeYear={activeYear}
-            counts={counts}
-            onSelect={jumpToYear}
-          />
+          <TimelineYearRail groups={groups} activeKey={activeKey} onSelect={jumpToKey} />
 
           <div ref={spine} className="relative min-w-0 flex-1">
             <span aria-hidden className="absolute inset-y-0 left-[34px] w-px bg-border" />
@@ -161,7 +149,7 @@ export function TimelinePage() {
               lastYear = year;
 
               return (
-                <section key={group.key} data-year={newYear ? year : undefined}>
+                <section key={group.key} data-month-key={group.key}>
                   <div className="sticky top-14 z-[1] -mx-2 flex items-center gap-3 bg-background/95 px-2 py-1.5 backdrop-blur">
                     <span
                       className={`w-[22px] shrink-0 text-right font-mono text-[10px] uppercase tracking-wide ${
@@ -187,7 +175,7 @@ export function TimelinePage() {
                           key={event.id}
                           event={event}
                           index={index}
-                          visible={index < playback.revealed}
+                          revealed={playback.revealed}
                           onOpen={() => openProject(event.projectId)}
                         />
                       );

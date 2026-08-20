@@ -3,6 +3,7 @@ import { BrandIcon } from "@/components/BrandIcon";
 import { frameworkBrand } from "@/lib/brandIcons";
 import { cn } from "@/lib/utils";
 import type { Framework } from "@/lib/types";
+import { revealStyle } from "@/features/timeline/revealStyle";
 import type { TimelineEvent } from "@/hooks/useProjectTimeline";
 
 const KIND_ICON = {
@@ -26,11 +27,12 @@ function dayLabel(iso: string): string {
 interface TimelineRowProps {
   event: TimelineEvent;
   index: number;
-  visible: boolean;
+  revealed: number;
   onOpen: () => void;
 }
 
-export function TimelineRow({ event, index, visible, onOpen }: TimelineRowProps) {
+export function TimelineRow({ event, index, revealed, onOpen }: TimelineRowProps) {
+  const reveal = revealStyle(index, revealed);
   const Icon = KIND_ICON[event.kind] ?? GitCommitHorizontalIcon;
   const brand = frameworkBrand(event.framework as Framework);
   const milestone = event.kind !== "commit";
@@ -41,16 +43,27 @@ export function TimelineRow({ event, index, visible, onOpen }: TimelineRowProps)
       data-timeline-index={index}
       onClick={onOpen}
       className={cn(
-        "group relative flex w-full cursor-pointer items-center gap-4 rounded-lg py-2 pl-16 pr-3 text-left transition-all duration-300 ease-out hover:bg-secondary/40",
-        visible ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-1 opacity-0",
+        "group relative flex w-full cursor-pointer items-center gap-3 rounded-lg pr-3 text-left transition-[opacity,transform] duration-[600ms] ease-out hover:bg-secondary/40 motion-reduce:transition-none",
+        milestone ? "py-2.5 pl-16" : "py-1.5 pl-24",
+        !reveal.interactive && "pointer-events-none",
       )}
+      style={{
+        opacity: reveal.opacity,
+        transform: `translate3d(0, ${reveal.translateY}px, 0)`,
+      }}
     >
       <span
         className={cn(
-          "absolute left-[30px] size-2 rounded-full ring-4 ring-background transition-colors duration-300",
-          milestone ? "bg-brand" : "bg-muted-foreground/40 group-hover:bg-muted-foreground",
+          "absolute rounded-full ring-4 ring-background transition-colors duration-300",
+          milestone
+            ? "left-[29px] size-2.5 bg-brand"
+            : "left-[32px] size-1.5 bg-muted-foreground/35 group-hover:bg-muted-foreground",
         )}
       />
+
+      {!milestone && (
+        <span aria-hidden className="absolute left-[38px] h-px w-[50px] bg-border" />
+      )}
 
       <span
         className={cn(
@@ -61,19 +74,33 @@ export function TimelineRow({ event, index, visible, onOpen }: TimelineRowProps)
         {dayNumber(event.occurredAt)}
       </span>
 
-      <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-secondary/60">
-        {brand ? (
-          <BrandIcon mark={brand} className="size-3.5" />
-        ) : (
-          <Icon className="size-3.5 text-muted-foreground" strokeWidth={1.75} />
-        )}
-      </span>
-
-      <span className="w-32 shrink-0 truncate text-[13px] font-medium text-foreground">
-        {event.projectName}
-      </span>
-
-      <span className="min-w-0 flex-1 truncate text-xs text-muted-foreground">{event.title}</span>
+      {milestone ? (
+        <>
+          <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-secondary">
+            {brand ? (
+              <BrandIcon mark={brand} className="size-4" />
+            ) : (
+              <Icon className="size-4 text-muted-foreground" strokeWidth={1.75} />
+            )}
+          </span>
+          <span className="truncate text-sm font-semibold text-foreground">
+            {event.projectName}
+          </span>
+          <span className="shrink-0 rounded border border-brand/40 px-1.5 py-0.5 text-[10px] font-medium text-brand">
+            {event.kind === "project-created" ? "created" : "first commit"}
+          </span>
+          <span className="min-w-0 flex-1" />
+        </>
+      ) : (
+        <>
+          <span className="w-28 shrink-0 truncate text-[11px] text-muted-foreground/70">
+            {event.projectName}
+          </span>
+          <span className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
+            {event.title}
+          </span>
+        </>
+      )}
 
       <span className="hidden shrink-0 font-mono text-[10px] text-muted-foreground/50 sm:block">
         {dayLabel(event.occurredAt)}

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
-const STEP_MS = 220;
+const STEP_MS = 260;
 
 export function useTimelinePlayback(available: number, onNeedMore: () => void) {
   const [playing, setPlaying] = useState(false);
