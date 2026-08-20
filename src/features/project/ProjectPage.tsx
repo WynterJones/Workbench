@@ -43,7 +43,6 @@ export function ProjectPage() {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="space-y-4 lg:col-span-2">
-          <ScreenshotHero project={project} />
           <Tabs defaultValue="readme">
             <TabsList>
               <TabsTrigger value="readme">README</TabsTrigger>
@@ -67,6 +66,7 @@ export function ProjectPage() {
         </div>
 
         <div className="space-y-4">
+          <ScreenshotHero project={project} />
           <ShipScoreCard projectId={project.id} />
           <div className="rounded-lg border border-border bg-card p-4">
             <p className="mb-3 text-sm font-medium">Timeline</p>

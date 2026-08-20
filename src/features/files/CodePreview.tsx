@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { highlightLine, languageForExtension } from "@/features/files/lib/highlight";
 import { useTextFile, textFileTooLarge } from "@/features/files/lib/useTextFile";
 import { cn } from "@/lib/utils";
+import { BinaryPreview } from "@/features/files/BinaryPreview";
 
 interface CodePreviewProps {
   path: string;
@@ -18,18 +19,44 @@ const TONE_CLASS: Record<string, string> = {
 };
 
 export function CodePreview({ path, extension, size }: CodePreviewProps) {
-  const { data: content, isLoading } = useTextFile(path, size);
+  const { data: content, isLoading, isError } = useTextFile(path, size);
   const lang = languageForExtension(extension);
-  const lines = useMemo(() => (content ? content.split("\n") : []), [content]);
+  const pretty = useMemo(() => {
+    if (content === undefined) return "";
+    if (extension?.toLowerCase() !== "json") return content;
+    try {
+      return JSON.stringify(JSON.parse(content), null, 2);
+    } catch {
+      return content;
+    }
+  }, [content, extension]);
+  const lines = useMemo(() => (pretty ? pretty.split("\n") : []), [pretty]);
 
   if (textFileTooLarge(size)) {
-    return <div className="p-4 text-xs text-muted-foreground">File too large to preview.</div>;
+    return (
+      <BinaryPreview
+        name={path.split("/").pop() ?? path}
+        size={size}
+        modified={null}
+        reason="This file is too large to preview."
+      />
+    );
   }
   if (isLoading) {
     return <div className="p-4 text-xs text-muted-foreground">Loading…</div>;
   }
+  if (isError) {
+    return (
+      <BinaryPreview
+        name={path.split("/").pop() ?? path}
+        size={size}
+        modified={null}
+        reason="This file's contents aren't text, so there is nothing to show."
+      />
+    );
+  }
   if (content === undefined) {
-    return <div className="p-4 text-xs text-muted-foreground">Can't preview this file.</div>;
+    return <div className="p-4 text-xs text-muted-foreground">Nothing to show.</div>;
   }
 
   return (

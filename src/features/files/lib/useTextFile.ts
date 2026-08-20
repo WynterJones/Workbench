@@ -1,16 +1,21 @@
 import { useQuery } from "@tanstack/react-query";
-import { readTextFile } from "@tauri-apps/plugin-fs";
+import { filesApi } from "@/lib/filesApi";
 
-const MAX_PREVIEW_BYTES = 500_000;
+const MAX_PREVIEW_BYTES = 2_000_000;
 
 export function useTextFile(path: string | null, size: number | null) {
   const withinLimit = size === null || size <= MAX_PREVIEW_BYTES;
 
   return useQuery({
     queryKey: ["file-text", path],
-    queryFn: () => readTextFile(path as string),
+    queryFn: async () => {
+      const result = await filesApi.readFile(path as string, MAX_PREVIEW_BYTES);
+      if (result.kind === "binary") throw new Error("binary");
+      return result.text ?? "";
+    },
     enabled: Boolean(path) && withinLimit,
-    staleTime: 5_000,
+    staleTime: 30_000,
+    retry: false,
   });
 }
 

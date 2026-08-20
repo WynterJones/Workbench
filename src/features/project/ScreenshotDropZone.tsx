@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { ImagePlusIcon, Loader2Icon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { CodePeek } from "@/features/library/CodePeek";
 import { useScreenshotImport } from "@/hooks/useScreenshotImport";
 
 interface ScreenshotDropZoneProps {
@@ -42,24 +43,24 @@ export function ScreenshotDropZone({ projectId, variant }: ScreenshotDropZonePro
         if (file) importBlob(file);
       }}
       className={cn(
-        "flex aspect-[16/10] w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-dashed transition-colors duration-150 ease-out",
+        "group relative flex aspect-[16/10] w-full cursor-pointer flex-col items-center justify-center overflow-hidden rounded-lg border border-dashed transition-colors duration-150 ease-out",
         dragging
           ? "border-brand bg-brand/5 text-foreground"
           : "border-border bg-card/40 text-muted-foreground hover:border-muted-foreground/40 hover:text-foreground",
       )}
     >
-      {isPending ? (
-        <Loader2Icon className="size-6 animate-spin" strokeWidth={1.5} />
-      ) : (
-        <ImagePlusIcon className="size-7" strokeWidth={1.25} />
-      )}
-      <span className="text-sm font-medium">
-        {isPending ? "Adding…" : "No screenshot yet"}
-      </span>
-      <span className="max-w-xs text-center text-xs text-muted-foreground">
-        Run the project to capture one, or click to choose an image — you can also paste or drag one
-        here.
-      </span>
+      <CodePeek projectId={projectId} />
+      <div className="relative z-10 flex flex-col items-center gap-1.5 rounded-md bg-background/70 px-3 py-2 backdrop-blur-sm">
+        {isPending ? (
+          <Loader2Icon className="size-5 animate-spin" strokeWidth={1.5} />
+        ) : (
+          <ImagePlusIcon className="size-5" strokeWidth={1.5} />
+        )}
+        <span className="text-xs font-medium">{isPending ? "Adding…" : "Add a screenshot"}</span>
+        <span className="max-w-[220px] text-center text-[11px] leading-snug text-muted-foreground">
+          Click to choose, paste, or drag an image here.
+        </span>
+      </div>
     </button>
   );
 }

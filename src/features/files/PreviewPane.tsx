@@ -6,7 +6,9 @@ import { CodePreview } from "@/features/files/CodePreview";
 import { FolderPreview } from "@/features/files/FolderPreview";
 import { ImagePreview } from "@/features/files/ImagePreview";
 import { MarkdownPreview } from "@/features/files/MarkdownPreview";
-import { previewKindForExtension } from "@/features/files/lib/previewKind";
+import { previewKindForFile } from "@/features/files/lib/previewKind";
+import { MediaPreview } from "@/features/files/MediaPreview";
+import { BinaryPreview } from "@/features/files/BinaryPreview";
 import { baseName, currentDirectory } from "@/features/files/lib/paths";
 
 export function PreviewPane() {
@@ -20,7 +22,8 @@ export function PreviewPane() {
   const activePath = isFolder ? currentDirectory(rootPath, selectedPath, selectedKind) : (selectedPath as string);
   const extension = isFolder ? null : (activePath.split(".").pop() ?? null);
   const { data: fileInfo } = useEntryInfo(isFolder ? null : activePath);
-  const kind = previewKindForExtension(extension);
+  const fileName = baseName(activePath);
+  const kind = previewKindForFile(fileName);
 
   if (!previewOpen) return null;
 
@@ -37,7 +40,14 @@ export function PreviewPane() {
         {!isFolder && kind === "image" && <ImagePreview path={activePath} />}
         {!isFolder && kind === "markdown" && <MarkdownPreview path={activePath} size={fileInfo?.size ?? null} />}
         {!isFolder && kind === "binary" && (
-          <div className="p-4 text-xs text-muted-foreground">No preview available for this file type.</div>
+          <BinaryPreview
+            name={fileName}
+            size={fileInfo?.size ?? null}
+            modified={fileInfo?.modified ?? null}
+          />
+        )}
+        {!isFolder && (kind === "video" || kind === "audio" || kind === "pdf") && (
+          <MediaPreview path={activePath} kind={kind} />
         )}
         {!isFolder && kind === "code" && (
           <CodePreview path={activePath} extension={extension} size={fileInfo?.size ?? null} />
