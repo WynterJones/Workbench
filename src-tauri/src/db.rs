@@ -95,6 +95,9 @@ CREATE TABLE settings (
     concurrent_runs INTEGER NOT NULL DEFAULT 2,
     intro_seen INTEGER NOT NULL DEFAULT 0
 );
+"#,
+r#"
+ALTER TABLE projects ADD COLUMN homepage TEXT;
 "#];
 
 pub fn db_path() -> Result<std::path::PathBuf, String> {
@@ -177,6 +180,7 @@ fn project_core_from_row(row: &Row) -> rusqlite::Result<Project> {
         readme_summary: row.get("readme_summary")?,
         run_cmd: row.get("run_cmd")?,
         run_url: row.get("run_url")?,
+        homepage: row.get("homepage")?,
         port: row.get("port")?,
         status: ProjectStatus::from_str(&status),
         broken_reason: broken_reason.and_then(|s| BrokenReason::from_str(&s)),
@@ -361,6 +365,9 @@ pub fn update_project(
     }
     if let Some(v) = &patch.run_url {
         set_field!("run_url", v.clone());
+    }
+    if let Some(v) = &patch.homepage {
+        set_field!("homepage", v.clone());
     }
     if let Some(v) = patch.port {
         set_field!("port", v);
@@ -728,6 +735,7 @@ mod tests {
 
     fn sample_input(path: &str, name: &str) -> NewProjectInput {
         NewProjectInput {
+            homepage: None,
             path: path.to_string(),
             name: name.to_string(),
             framework: Framework::Vite,
@@ -968,5 +976,27 @@ mod tests {
 
         assert!(get_project(&conn, keep.id).unwrap().is_some());
         assert!(get_project(&conn, drop.id).unwrap().is_none());
+    }
+
+    #[test]
+    fn homepage_round_trips_through_a_patch() {
+        let conn = Connection::open_in_memory().unwrap();
+        run_migrations(&conn).unwrap();
+        let project = upsert_project(&conn, &sample_input("/code/site", "Site")).unwrap();
+        assert!(project.homepage.is_none());
+
+        let patch = ProjectPatch {
+            homepage: Some(Some("https://example.com".to_string())),
+            ..Default::default()
+        };
+        let updated = update_project(&conn, project.id, &patch).unwrap().unwrap();
+        assert_eq!(updated.homepage.as_deref(), Some("https://example.com"));
+
+        let cleared = ProjectPatch {
+            homepage: Some(None),
+            ..Default::default()
+        };
+        let after = update_project(&conn, project.id, &cleared).unwrap().unwrap();
+        assert!(after.homepage.is_none());
     }
 }

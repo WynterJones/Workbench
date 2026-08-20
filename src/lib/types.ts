@@ -47,6 +47,7 @@ export interface Project {
   readmeSummary: string | null;
   runCmd: string | null;
   runUrl: string | null;
+  homepage: string | null;
   port: number | null;
   status: ProjectStatus;
   brokenReason: BrokenReason | null;

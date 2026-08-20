@@ -25,6 +25,7 @@ export function clampRect(rect: Rect, viewport: { width: number; height: number 
 
 interface TerminalState {
   open: boolean;
+  fullscreen: boolean;
   docked: boolean;
   rect: Rect;
   dockedHeight: number;
@@ -33,6 +34,7 @@ interface TerminalState {
   setOpen: (open: boolean) => void;
   toggle: () => void;
   setDocked: (docked: boolean) => void;
+  toggleFullscreen: () => void;
   setRect: (rect: Rect) => void;
   setDockedHeight: (height: number) => void;
   openWith: (cwd: string | null, command?: string) => void;
@@ -43,6 +45,7 @@ export const useTerminalStore = create<TerminalState>()(
   persist(
     (set, get) => ({
       open: false,
+      fullscreen: false,
       docked: true,
       rect: { x: 120, y: 120, width: 760, height: 380 },
       dockedHeight: 320,
@@ -50,7 +53,8 @@ export const useTerminalStore = create<TerminalState>()(
       pending: null,
       setOpen: (open) => set({ open }),
       toggle: () => set((state) => ({ open: !state.open })),
-      setDocked: (docked) => set({ docked }),
+      setDocked: (docked) => set({ docked, fullscreen: false }),
+      toggleFullscreen: () => set((state) => ({ fullscreen: !state.fullscreen, open: true })),
       setRect: (rect) => set({ rect }),
       setDockedHeight: (height) =>
         set({ dockedHeight: Math.min(MAX_HEIGHT, Math.max(MIN_HEIGHT, Math.round(height))) }),
@@ -65,6 +69,7 @@ export const useTerminalStore = create<TerminalState>()(
       name: "workbench-terminal",
       partialize: (state) => ({
         open: state.open,
+        fullscreen: state.fullscreen,
         docked: state.docked,
         rect: state.rect,
         dockedHeight: state.dockedHeight,

@@ -124,6 +124,7 @@ fn scan_one(dir: &Path) -> Option<NewProjectInput> {
     };
 
     Some(NewProjectInput {
+        homepage: None,
         path: dir.display().to_string(),
         name,
         framework: detection.framework,
@@ -199,6 +200,7 @@ fn blank_patch_with_score(score: i64) -> ProjectPatch {
         readme_summary: None,
         run_cmd: None,
         run_url: None,
+        homepage: None,
         port: None,
         status: None,
         broken_reason: None,

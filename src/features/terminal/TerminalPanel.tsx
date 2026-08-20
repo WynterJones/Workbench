@@ -1,5 +1,14 @@
 import { useCallback, useEffect, useRef } from "react";
-import { EraserIcon, GripVerticalIcon, PanelBottomIcon, PictureInPicture2Icon, TerminalIcon, XIcon } from "lucide-react";
+import {
+  EraserIcon,
+  GripVerticalIcon,
+  MaximizeIcon,
+  MinimizeIcon,
+  PanelBottomIcon,
+  PictureInPicture2Icon,
+  TerminalIcon,
+  XIcon,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useXterm } from "@/features/terminal/useXterm";
 import { useDragResize, type Handle } from "@/features/terminal/useDragResize";
@@ -22,6 +31,8 @@ const EDGES: { handle: Handle; className: string }[] = [
 export function TerminalPanel() {
   const open = useTerminalStore((s) => s.open);
   const docked = useTerminalStore((s) => s.docked);
+  const fullscreen = useTerminalStore((s) => s.fullscreen);
+  const toggleFullscreen = useTerminalStore((s) => s.toggleFullscreen);
   const rect = useTerminalStore((s) => s.rect);
   const dockedHeight = useTerminalStore((s) => s.dockedHeight);
   const cwd = useTerminalStore((s) => s.cwd);
@@ -76,23 +87,27 @@ export function TerminalPanel() {
     setDocked(false);
   }
 
-  const style = docked
-    ? { height: dockedHeight }
-    : { left: rect.x, top: rect.y, width: rect.width, height: rect.height };
+  const style = fullscreen
+    ? undefined
+    : docked
+      ? { height: dockedHeight }
+      : { left: rect.x, top: rect.y, width: rect.width, height: rect.height };
 
   return (
     <section
       aria-label="Terminal"
       className={cn(
         "fixed z-40 flex flex-col overflow-hidden border-border bg-[#0b0b0d]",
-        docked
-          ? "inset-x-0 bottom-0 border-t"
-          : "rounded-xl border shadow-[0_24px_70px_-20px_rgba(0,0,0,0.85)]",
+        fullscreen
+          ? "inset-0 border-0"
+          : docked
+            ? "inset-x-0 bottom-0 border-t"
+            : "rounded-xl border shadow-[0_24px_70px_-20px_rgba(0,0,0,0.85)]",
         open ? "visible" : "pointer-events-none invisible",
       )}
       style={style}
     >
-      {docked ? (
+      {fullscreen ? null : docked ? (
         <div
           role="separator"
           aria-orientation="horizontal"
@@ -123,16 +138,16 @@ export function TerminalPanel() {
 
       <header
         onPointerDown={(event) => {
-          if (docked) return;
+          if (docked || fullscreen) return;
           if ((event.target as HTMLElement).closest("button")) return;
           start("move", event);
         }}
         className={cn(
           "flex h-8 shrink-0 items-center gap-2 border-b border-border/60 px-2",
-          docked ? "" : "cursor-grab active:cursor-grabbing",
+          docked || fullscreen ? "" : "cursor-grab active:cursor-grabbing",
         )}
       >
-        {!docked && (
+        {!docked && !fullscreen && (
           <GripVerticalIcon className="size-3.5 shrink-0 text-muted-foreground/50" strokeWidth={1.75} />
         )}
         <TerminalIcon className="size-3.5 shrink-0 text-muted-foreground" strokeWidth={1.75} />
@@ -144,15 +159,30 @@ export function TerminalPanel() {
           size="icon-sm"
           variant="ghost"
           className="cursor-pointer"
-          onClick={() => (docked ? float() : setDocked(true))}
-          title={docked ? "Float terminal" : "Dock to bottom"}
+          onClick={toggleFullscreen}
+          title={fullscreen ? "Exit full screen" : "Full screen"}
         >
-          {docked ? (
-            <PictureInPicture2Icon className="size-3.5" />
+          {fullscreen ? (
+            <MinimizeIcon className="size-3.5" />
           ) : (
-            <PanelBottomIcon className="size-3.5" />
+            <MaximizeIcon className="size-3.5" />
           )}
         </Button>
+        {!fullscreen && (
+          <Button
+            size="icon-sm"
+            variant="ghost"
+            className="cursor-pointer"
+            onClick={() => (docked ? float() : setDocked(true))}
+            title={docked ? "Float terminal" : "Dock to bottom"}
+          >
+            {docked ? (
+              <PictureInPicture2Icon className="size-3.5" />
+            ) : (
+              <PanelBottomIcon className="size-3.5" />
+            )}
+          </Button>
+        )}
         <Button size="icon-sm" variant="ghost" className="cursor-pointer" onClick={clear} title="Clear">
           <EraserIcon className="size-3.5" />
         </Button>

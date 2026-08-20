@@ -10,6 +10,7 @@ import { TimelinePage } from "@/features/timeline/TimelinePage";
 import { MediaPage } from "@/features/media/MediaPage";
 import { StarterLibrary } from "@/features/files/StarterLibrary";
 import { ModelsPage } from "@/features/models/ModelsPage";
+import { McpPage } from "@/features/mcp/McpPage";
 import { useFilesStore } from "@/lib/filesStore";
 import { WindowSweep } from "@/components/WindowSweep";
 import { TerminalPanel } from "@/features/terminal/TerminalPanel";
@@ -58,6 +59,7 @@ export default function App() {
       {route === "files" && <FilesPage />}
       {route === "skills" && <SkillsPage />}
       {route === "models" && <ModelsPage />}
+      {route === "mcp" && <McpPage />}
       {route === "settings" && <SettingsPage />}
       <TerminalPanel />
     </AppShell>

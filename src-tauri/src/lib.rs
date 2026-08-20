@@ -7,6 +7,7 @@ mod detail;
 mod files;
 mod heatmap;
 mod folders;
+mod mcp;
 mod media;
 mod misc;
 mod models;
@@ -97,6 +98,7 @@ pub fn run() {
             skills::install_skill,
             skills::search_skill_registry,
             agents::detect_agents,
+            mcp::list_mcp_servers,
             doctor::system_checks,
             misc::disk_reclaim_scan,
             files::fs_list_dir,

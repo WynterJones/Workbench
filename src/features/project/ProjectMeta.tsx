@@ -1,5 +1,6 @@
 import { ExternalLinkIcon } from "lucide-react";
 import { toast } from "sonner";
+import { HomepageField } from "@/features/project/HomepageField";
 import { FrameworkBadge } from "@/features/library/FrameworkBadge";
 import { StatusBadge } from "@/features/library/StatusBadge";
 import { api } from "@/lib/api";
@@ -46,12 +47,13 @@ export function ProjectMeta({ project }: ProjectMetaProps) {
                   })
                 )
             }
-            className="inline-flex items-center gap-1 hover:text-foreground"
+            className="inline-flex cursor-pointer items-center gap-1 hover:text-foreground"
           >
             GitHub
             <ExternalLinkIcon className="size-3" />
           </button>
         )}
+        <HomepageField project={project} />
       </div>
     </div>
   );

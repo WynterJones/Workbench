@@ -1,7 +1,9 @@
 import { useEffect, useRef } from "react";
-import { Command, Search } from "lucide-react";
+import { Command, Search, TerminalIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { ScanButton } from "@/components/ScanButton";
+import { Button } from "@/components/ui/button";
+import { useTerminalStore } from "@/lib/terminalStore";
 import { useAppStore } from "@/lib/store";
 
 export function TopBar() {
@@ -49,6 +51,16 @@ export function TopBar() {
           <span>K</span>
         </button>
         <div className="flex-1" />
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => useTerminalStore.getState().toggle()}
+          className="cursor-pointer"
+          title="Toggle terminal (⌘`)"
+        >
+          <TerminalIcon />
+          Terminal
+        </Button>
         <ScanButton />
       </div>
     </div>

@@ -189,6 +189,7 @@ pub struct Project {
     pub readme_summary: Option<String>,
     pub run_cmd: Option<String>,
     pub run_url: Option<String>,
+    pub homepage: Option<String>,
     pub port: Option<i64>,
     pub status: ProjectStatus,
     pub broken_reason: Option<BrokenReason>,
@@ -220,13 +221,14 @@ pub struct NewProjectInput {
     pub readme_summary: Option<String>,
     pub run_cmd: Option<String>,
     pub run_url: Option<String>,
+    pub homepage: Option<String>,
     pub port: Option<i64>,
     pub status: ProjectStatus,
     pub deps_installed: bool,
     pub has_env_example: bool,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ProjectPatch {
     pub path: Option<String>,
@@ -243,6 +245,7 @@ pub struct ProjectPatch {
     pub readme_summary: Option<Option<String>>,
     pub run_cmd: Option<Option<String>>,
     pub run_url: Option<Option<String>>,
+    pub homepage: Option<Option<String>>,
     pub port: Option<Option<i64>>,
     pub status: Option<ProjectStatus>,
     pub broken_reason: Option<Option<BrokenReason>>,
