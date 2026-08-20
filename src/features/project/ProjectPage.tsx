@@ -10,6 +10,7 @@ import { ProjectTimeline } from "@/features/project/ProjectTimeline";
 import { ShipScoreCard } from "@/features/project/ShipScoreCard";
 import { ReadmePanel } from "@/features/project/ReadmePanel";
 import { CommitList } from "@/features/project/CommitList";
+import { StatusPicker } from "@/features/project/StatusPicker";
 import { ProjectMediaPanel } from "@/features/media/ProjectMediaPanel";
 import { TodoList } from "@/features/project/TodoList";
 import { RunLogPanel } from "@/features/project/RunLogPanel";
@@ -46,6 +47,7 @@ export function ProjectPage() {
             <ProjectActions project={project} onRunResult={setLastResult} />
           </div>
           <Tabs defaultValue="readme">
+            <div className="flex items-center justify-between gap-3">
             <TabsList>
               <TabsTrigger value="readme">README</TabsTrigger>
               <TabsTrigger value="media">Media</TabsTrigger>
@@ -53,6 +55,8 @@ export function ProjectPage() {
               <TabsTrigger value="todos">TODOs</TabsTrigger>
               <TabsTrigger value="runlog">Run Log</TabsTrigger>
             </TabsList>
+            <StatusPicker projectId={project.id} status={project.status} />
+            </div>
             <TabsContent value="readme" className="mt-3 rounded-lg border border-border bg-card p-5">
               <ReadmePanel projectId={project.id} basePath={project.path} />
             </TabsContent>

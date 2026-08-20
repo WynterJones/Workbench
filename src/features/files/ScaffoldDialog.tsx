@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -14,6 +14,8 @@ import { useStarters, useScaffoldProgress } from "@/hooks/useStarters";
 import { useFilesStore } from "@/lib/filesStore";
 import { useJumpToProject } from "@/features/files/lib/useJumpToProject";
 import { isValidProjectName } from "@/features/files/lib/paths";
+import { FolderIcon } from "lucide-react";
+import { FolderPicker } from "@/components/FolderPicker";
 import type { StarterTemplate } from "@/lib/filesApi";
 
 interface ScaffoldDialogProps {
@@ -24,7 +26,13 @@ interface ScaffoldDialogProps {
 
 export function ScaffoldDialog({ starter, parentDir, onOpenChange }: ScaffoldDialogProps) {
   const [name, setName] = useState("");
+  const [destination, setDestination] = useState(parentDir);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
+
+  useEffect(() => {
+    setDestination(parentDir);
+  }, [parentDir]);
   const { scaffold } = useStarters();
   const progressLines = useScaffoldProgress(confirmed);
   const select = useFilesStore((s) => s.select);
@@ -36,7 +44,7 @@ export function ScaffoldDialog({ starter, parentDir, onOpenChange }: ScaffoldDia
   function launch() {
     if (!starter || !nameValid) return;
     setConfirmed(true);
-    scaffold.mutate({ starterId: starter.id, parentDir, projectName: name, confirmed: true });
+    scaffold.mutate({ starterId: starter.id, parentDir: destination, projectName: name, confirmed: true });
   }
 
   function close(open: boolean) {
@@ -49,6 +57,7 @@ export function ScaffoldDialog({ starter, parentDir, onOpenChange }: ScaffoldDia
   }
 
   return (
+    <>
     <Dialog open={Boolean(starter)} onOpenChange={close}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
@@ -74,9 +83,17 @@ export function ScaffoldDialog({ starter, parentDir, onOpenChange }: ScaffoldDia
             </div>
             <div className="space-y-1.5">
               <Label>Destination</Label>
-              <p className="truncate rounded-md border border-border bg-secondary/30 px-3 py-2 font-mono text-xs text-muted-foreground">
-                {parentDir}/{name || "…"}
-              </p>
+              <button
+                type="button"
+                onClick={() => setPickerOpen(true)}
+                className="flex w-full cursor-pointer items-center gap-2 rounded-md border border-border bg-secondary/30 px-3 py-2 text-left transition-colors duration-150 ease-out hover:border-muted-foreground/40 hover:bg-secondary/50"
+              >
+                <FolderIcon className="size-3.5 shrink-0 text-muted-foreground" strokeWidth={1.75} />
+                <span className="min-w-0 flex-1 truncate font-mono text-xs text-muted-foreground">
+                  {destination}/{name || "…"}
+                </span>
+                <span className="shrink-0 text-[11px] text-muted-foreground/70">Change</span>
+              </button>
             </div>
             <div className="space-y-1.5">
               <Label>Command</Label>
@@ -135,5 +152,14 @@ export function ScaffoldDialog({ starter, parentDir, onOpenChange }: ScaffoldDia
         </DialogFooter>
       </DialogContent>
     </Dialog>
+
+      <FolderPicker
+        open={pickerOpen}
+        onOpenChange={setPickerOpen}
+        onSelect={setDestination}
+        title="Where should this project go?"
+        description="Search your scanned folders, or browse for one."
+      />
+    </>
   );
 }
