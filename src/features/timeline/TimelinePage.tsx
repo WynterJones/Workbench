@@ -26,7 +26,7 @@ export function TimelinePage() {
     if (hasNextPage && !isFetchingNextPage) fetchNextPage();
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  const playback = useTimelinePlayback(events.length, loadMore);
+  const playback = useTimelinePlayback(events.length, loadMore, Boolean(hasNextPage));
   const sentinel = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -109,6 +109,7 @@ export function TimelinePage() {
         speed={playback.speed}
         revealed={Math.min(playback.revealed, events.length)}
         total={summary?.total ?? events.length}
+        buffering={playback.buffering}
         onToggle={playback.toggle}
         onRestart={playback.restart}
         onSpeed={playback.setSpeed}

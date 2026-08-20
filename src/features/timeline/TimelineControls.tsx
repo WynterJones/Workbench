@@ -1,4 +1,4 @@
-import { PauseIcon, PlayIcon, RotateCcwIcon } from "lucide-react";
+import { Loader2Icon, PauseIcon, PlayIcon, RotateCcwIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -6,6 +6,7 @@ const SPEEDS = [1, 2, 4];
 
 interface TimelineControlsProps {
   playing: boolean;
+  buffering: boolean;
   speed: number;
   revealed: number;
   total: number;
@@ -16,6 +17,7 @@ interface TimelineControlsProps {
 
 export function TimelineControls({
   playing,
+  buffering,
   speed,
   revealed,
   total,
@@ -28,8 +30,14 @@ export function TimelineControls({
   return (
     <div className="sticky top-0 z-10 -mx-6 mb-6 flex items-center gap-3 border-b border-border bg-background/95 px-6 py-2.5 backdrop-blur">
       <Button size="sm" onClick={onToggle} className="cursor-pointer">
-        {playing ? <PauseIcon /> : <PlayIcon />}
-        {playing ? "Pause" : "Play"}
+        {buffering ? (
+          <Loader2Icon className="animate-spin" />
+        ) : playing ? (
+          <PauseIcon />
+        ) : (
+          <PlayIcon />
+        )}
+        {buffering ? "Loading…" : playing ? "Pause" : "Play"}
       </Button>
       <Button size="sm" variant="outline" onClick={onRestart} className="cursor-pointer">
         <RotateCcwIcon />
@@ -63,7 +71,7 @@ export function TimelineControls({
       </div>
 
       <span className="shrink-0 font-mono text-[11px] tabular-nums text-muted-foreground">
-        {revealed.toLocaleString()} / {total.toLocaleString()}
+        {buffering ? "loading history…" : `${revealed.toLocaleString()} / ${total.toLocaleString()}`}
       </span>
     </div>
   );

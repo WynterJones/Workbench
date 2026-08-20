@@ -3,13 +3,28 @@ import { QueryState } from "@/components/QueryState";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCommits } from "@/hooks/useCommits";
 import { relativeTime } from "@/lib/format";
+import { InitRepoButton } from "@/features/project/InitRepoButton";
 
 interface CommitListProps {
   projectId: number;
+  projectPath: string;
 }
 
-export function CommitList({ projectId }: CommitListProps) {
+export function CommitList({ projectId, projectPath }: CommitListProps) {
   const { data, isLoading, isError, error, refetch } = useCommits(projectId);
+  const notARepo = isError && /not a git repository/i.test(String(error));
+
+  if (notARepo) {
+    return (
+      <div className="flex flex-col items-center gap-3 py-8 text-center">
+        <p className="text-sm font-medium text-foreground">Not tracked by git</p>
+        <p className="max-w-sm text-sm text-muted-foreground">
+          This folder has no repository, so there is no history to show.
+        </p>
+        <InitRepoButton projectId={projectId} projectPath={projectPath} />
+      </div>
+    );
+  }
 
   return (
     <QueryState

@@ -122,6 +122,25 @@ pub fn project_commits(project_id: i64, limit: Option<usize>) -> Result<Vec<Comm
     read_commits(Path::new(&project.path), limit.unwrap_or(50))
 }
 
+#[tauri::command]
+pub fn init_repository(project_id: i64) -> Result<String, String> {
+    let conn = db::open()?;
+    let project = db::get_project(&conn, project_id)
+        .map_err(|e| e.to_string())?
+        .ok_or_else(|| format!("project {project_id} not found"))?;
+
+    let path = Path::new(&project.path);
+    if !path.is_dir() {
+        return Err(format!("{} no longer exists", project.path));
+    }
+    if Repository::open(path).is_ok() {
+        return Ok(project.path);
+    }
+
+    Repository::init(path).map_err(|e| e.to_string())?;
+    Ok(project.path)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -159,6 +178,20 @@ mod tests {
         let _ = fs::remove_dir_all(&dir);
         fs::create_dir_all(&dir).unwrap();
         assert!(read_commits(&dir, 10).is_err());
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn init_is_a_no_op_on_an_existing_repository() {
+        let dir = std::env::temp_dir().join("wb_detail_reinit");
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(&dir).unwrap();
+        git2::Repository::init(&dir).unwrap();
+
+        let before = fs::metadata(dir.join(".git")).unwrap().len();
+        assert!(git2::Repository::open(&dir).is_ok());
+        let after = fs::metadata(dir.join(".git")).unwrap().len();
+        assert_eq!(before, after);
         let _ = fs::remove_dir_all(&dir);
     }
 }

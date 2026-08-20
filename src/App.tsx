@@ -8,6 +8,7 @@ import { FilesPage } from "@/features/files/FilesPage";
 import { SkillsPage } from "@/features/skills/SkillsPage";
 import { TimelinePage } from "@/features/timeline/TimelinePage";
 import { MediaPage } from "@/features/media/MediaPage";
+import { StarterLibrary } from "@/features/files/StarterLibrary";
 import { ModelsPage } from "@/features/models/ModelsPage";
 import { useFilesStore } from "@/lib/filesStore";
 import { WindowSweep } from "@/components/WindowSweep";
@@ -52,6 +53,7 @@ export default function App() {
       {route === "project" && <ProjectPage />}
       {route === "timeline" && <TimelinePage />}
       {route === "media" && <MediaPage />}
+      {route === "starters" && <StarterLibrary />}
       {route === "files" && <FilesPage />}
       {route === "skills" && <SkillsPage />}
       {route === "models" && <ModelsPage />}

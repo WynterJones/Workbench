@@ -60,7 +60,7 @@ export function ProjectPage() {
               <ProjectMediaPanel projectId={project.id} />
             </TabsContent>
             <TabsContent value="commits" className="mt-3 rounded-lg border border-border bg-card p-5">
-              <CommitList projectId={project.id} />
+              <CommitList projectId={project.id} projectPath={project.path} />
             </TabsContent>
             <TabsContent value="todos" className="mt-3 rounded-lg border border-border bg-card p-5">
               <TodoList projectId={project.id} />

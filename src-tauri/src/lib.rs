@@ -58,6 +58,7 @@ pub fn run() {
             scan::project_todos,
             detail::project_readme,
             detail::project_commits,
+            detail::init_repository,
             run::run_project,
             run::stop_project,
             run::trust_project,
