@@ -494,6 +494,17 @@ pub fn upsert_screenshot(
     Ok(())
 }
 
+pub fn list_all_projects(conn: &Connection) -> rusqlite::Result<Vec<Project>> {
+    let query = ProjectQuery {
+        shelf: ShelfId::All,
+        search: String::new(),
+        frameworks: Vec::new(),
+        tags: Vec::new(),
+        sort: SortMode::Modified,
+    };
+    list_projects(conn, &query)
+}
+
 pub fn list_project_paths(conn: &Connection) -> rusqlite::Result<Vec<String>> {
     let mut stmt = conn.prepare("SELECT path FROM projects WHERE archived = 0")?;
     let rows = stmt.query_map([], |row| row.get::<_, String>(0))?;

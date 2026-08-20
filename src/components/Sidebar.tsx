@@ -1,4 +1,4 @@
-import { Boxes, Cpu, Folder, Plus, Settings, Sparkles } from "lucide-react";
+import { Boxes, Cpu, Folder, GitBranch, Plus, Settings, Sparkles } from "lucide-react";
 import { NavItem } from "@/components/NavItem";
 import { cn } from "@/lib/utils";
 import { useAppStore } from "@/lib/store";
@@ -36,6 +36,12 @@ export function Sidebar() {
           count={counts.all}
           active={route === "library" || route === "project"}
           onClick={() => setRoute("library")}
+        />
+        <NavItem
+          icon={GitBranch}
+          label="Timeline"
+          active={route === "timeline"}
+          onClick={() => setRoute("timeline")}
         />
         <NavItem icon={Folder} label="Files" active={route === "files"} onClick={() => openFiles()} />
         <NavItem icon={Sparkles} label="Skills" active={route === "skills"} onClick={() => setRoute("skills")} />

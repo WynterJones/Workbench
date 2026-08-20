@@ -6,6 +6,7 @@ import { LibraryPage } from "@/features/library/LibraryPage";
 import { ProjectPage } from "@/features/project/ProjectPage";
 import { FilesPage } from "@/features/files/FilesPage";
 import { SkillsPage } from "@/features/skills/SkillsPage";
+import { TimelinePage } from "@/features/timeline/TimelinePage";
 import { ModelsPage } from "@/features/models/ModelsPage";
 import { useFilesStore } from "@/lib/filesStore";
 import { WindowSweep } from "@/components/WindowSweep";
@@ -48,6 +49,7 @@ export default function App() {
     <AppShell>
       {route === "library" && <LibraryPage />}
       {route === "project" && <ProjectPage />}
+      {route === "timeline" && <TimelinePage />}
       {route === "files" && <FilesPage />}
       {route === "skills" && <SkillsPage />}
       {route === "models" && <ModelsPage />}

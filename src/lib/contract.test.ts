@@ -33,8 +33,13 @@ function frontendCalls(): Map<string, Set<string>> {
   return calls;
 }
 
-function rustCommands(): Map<string, Set<string>> {
-  const commands = new Map<string, Set<string>>();
+interface RustParams {
+  required: Set<string>;
+  optional: Set<string>;
+}
+
+function rustCommands(): Map<string, RustParams> {
+  const commands = new Map<string, RustParams>();
   const pattern = /#\[tauri::command[^\]]*\]\s*(?:pub\s+)?(?:async\s+)?fn\s+(\w+)\s*\(([\s\S]*?)\)\s*->/g;
   for (const file of walk(join(ROOT, "src-tauri", "src"), ".rs")) {
     const source = readFileSync(file, "utf8");
@@ -56,14 +61,19 @@ function rustCommands(): Map<string, Set<string>> {
           current = "";
         }
       }
-      const raw = match[2]
-        .split(/,(?![^<(]*[>)])/)
-        .map((p) => p.trim())
-        .filter(Boolean)
-        .filter((p) => !/State<|AppHandle|Window<|WebviewWindow/.test(p))
-        .map((p) => p.split(":")[0].trim())
-        .filter((p) => p && !IGNORED_PARAMS.has(p));
-      commands.set(match[1], new Set(raw));
+      const required = new Set<string>();
+      const optional = new Set<string>();
+      for (const piece of match[2].split(/,(?![^<(]*[>)])/)) {
+        const trimmed = piece.trim();
+        if (!trimmed) continue;
+        if (/State<|AppHandle|Window<|WebviewWindow/.test(trimmed)) continue;
+        const [name, ...rest] = trimmed.split(":");
+        const paramName = name.trim();
+        if (!paramName || IGNORED_PARAMS.has(paramName)) continue;
+        if (/\bOption\s*</.test(rest.join(":"))) optional.add(paramName);
+        else required.add(paramName);
+      }
+      commands.set(match[1], { required, optional });
     }
   }
   return commands;
@@ -83,18 +93,35 @@ describe("tauri command contract", () => {
     expect(missing).toEqual([]);
   });
 
-  it("every invoked command's argument names match its Rust parameters", () => {
-    const mismatches: string[] = [];
+  it("every invoked command sends all required Rust parameters", () => {
+    const missing: string[] = [];
     for (const [name, sent] of frontend) {
       const params = rust.get(name);
       if (!params) continue;
-      const expected = new Set([...params].map(snakeToCamel));
-      const sentSorted = [...sent].sort();
-      const expectedSorted = [...expected].sort();
-      if (JSON.stringify(sentSorted) !== JSON.stringify(expectedSorted)) {
-        mismatches.push(`${name}: frontend sends [${sentSorted}] but Rust expects [${expectedSorted}]`);
+      for (const required of params.required) {
+        const camel = snakeToCamel(required);
+        if (!sent.has(camel)) {
+          missing.push(`${name}: Rust requires "${camel}" but the frontend never sends it`);
+        }
       }
     }
-    expect(mismatches).toEqual([]);
+    expect(missing).toEqual([]);
+  });
+
+  it("no invoked command sends an argument Rust does not accept", () => {
+    const unknown: string[] = [];
+    for (const [name, sent] of frontend) {
+      const params = rust.get(name);
+      if (!params) continue;
+      const accepted = new Set(
+        [...params.required, ...params.optional].map(snakeToCamel),
+      );
+      for (const key of sent) {
+        if (!accepted.has(key)) {
+          unknown.push(`${name}: frontend sends "${key}" but Rust has no such parameter`);
+        }
+      }
+    }
+    expect(unknown).toEqual([]);
   });
 });

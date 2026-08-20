@@ -14,6 +14,7 @@ mod run;
 mod scan;
 mod score;
 mod settings;
+mod timeline;
 mod snippet;
 mod usage;
 mod shots;
@@ -31,6 +32,7 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .manage(run::ProcessRegistry::default())
         .manage(run::CaptureCancel::default())
+        .manage(timeline::TimelineCache::default())
         .setup(|app| {
             let conn = db::open().expect("failed to open workbench database");
             app.manage(DbState(Mutex::new(conn)));
@@ -74,6 +76,7 @@ pub fn run() {
             folders::search_folders,
             heatmap::contribution_heatmap,
             usage::token_usage,
+            timeline::timeline_page,
             snippet::project_snippet,
             skills::list_skills,
             skills::read_skill,
