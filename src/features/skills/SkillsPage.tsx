@@ -1,12 +1,12 @@
 import { useMemo, useState } from "react";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { SegmentedTabs } from "@/components/SegmentedTabs";
 import { SkillSearchPanel } from "@/features/skills/SkillSearchPanel";
 import { QueryState } from "@/components/QueryState";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SkillRow } from "@/features/skills/SkillRow";
 import { SkillViewer } from "@/features/skills/SkillViewer";
-import { InstallSkillPanel } from "@/features/skills/InstallSkillPanel";
 import { useSkills, useToggleSkill } from "@/hooks/useSkills";
 
 const AGENT_LABEL: Record<string, string> = {
@@ -50,14 +50,14 @@ export function SkillsPage() {
           className="flex min-h-0 flex-1 flex-col gap-0"
         >
           <div className="shrink-0 border-b border-border p-2">
-            <TabsList className="w-full">
-              <TabsTrigger value="installed" className="flex-1 cursor-pointer">
-                Installed
-              </TabsTrigger>
-              <TabsTrigger value="search" className="flex-1 cursor-pointer">
-                Search
-              </TabsTrigger>
-            </TabsList>
+            <SegmentedTabs
+              segments={[
+                { value: "installed", label: "Installed", count: data?.length },
+                { value: "search", label: "Search" },
+              ]}
+              value={tab}
+              onChange={(value) => setTab(value as "installed" | "search")}
+            />
           </div>
 
           <TabsContent value="search" className="min-h-0 flex-1">
@@ -71,13 +71,12 @@ export function SkillsPage() {
           </TabsContent>
 
           <TabsContent value="installed" className="flex min-h-0 flex-1 flex-col gap-0">
-        <div className="shrink-0 space-y-2 border-b border-border p-3">
+        <div className="shrink-0 border-b border-border p-3">
           <Input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Filter installed skills…"
           />
-          <InstallSkillPanel />
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto p-2">
           <QueryState

@@ -9,8 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { BrandIcon } from "@/components/BrandIcon";
-import { agentBrand, agentInitial } from "@/features/models/agentBrands";
+import { AgentMarkIcon } from "@/features/models/AgentMarkIcon";
 import { openUrl } from "@/lib/openUrl";
 import type { AgentInfo } from "@/hooks/useAgents";
 
@@ -35,7 +34,6 @@ export function AgentDetailDialog({
   onMakeDefault,
 }: AgentDetailDialogProps) {
   if (!agent) return null;
-  const brand = agentBrand(agent.id);
 
   return (
     <Dialog open onOpenChange={onOpenChange}>
@@ -43,13 +41,11 @@ export function AgentDetailDialog({
         <DialogHeader>
           <div className="flex items-center gap-3">
             <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-secondary/60">
-              {brand ? (
-                <BrandIcon mark={brand} className="size-6" />
-              ) : (
-                <span className="text-lg font-semibold text-muted-foreground">
-                  {agentInitial(agent.id, agent.vendor)}
-                </span>
-              )}
+              <AgentMarkIcon
+                agentId={agent.id}
+                vendor={agent.vendor}
+                className="size-6 text-foreground/90"
+              />
             </span>
             <div className="min-w-0">
               <DialogTitle className="flex items-center gap-2">

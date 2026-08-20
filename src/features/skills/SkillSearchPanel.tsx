@@ -50,7 +50,7 @@ export function SkillSearchPanel({ installedNames, onInstalled }: SkillSearchPan
             onRetry={() => refetch()}
             isEmpty={!data || data.length === 0}
             emptyTitle="No skills matched"
-            emptyMessage="Try a different term, or install a repo directly from the Installed tab."
+            emptyMessage="Try a different term."
             compact
             skeleton={
               <div className="space-y-2">

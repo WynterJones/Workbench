@@ -50,17 +50,17 @@ export function ScreenshotDropZone({ projectId, variant }: ScreenshotDropZonePro
       )}
     >
       <CodePeek projectId={projectId} />
-      <div className="relative z-10 flex flex-col items-center gap-1.5 rounded-md bg-background/70 px-3 py-2 backdrop-blur-sm">
+      <span className="relative z-10 flex items-center gap-1.5 rounded-md border border-border bg-background/85 px-2.5 py-1.5 text-[11px] font-medium text-foreground backdrop-blur-sm transition-colors duration-150 ease-out group-hover:bg-secondary">
         {isPending ? (
-          <Loader2Icon className="size-5 animate-spin" strokeWidth={1.5} />
+          <Loader2Icon className="size-3.5 animate-spin" strokeWidth={1.75} />
         ) : (
-          <ImagePlusIcon className="size-5" strokeWidth={1.5} />
+          <ImagePlusIcon className="size-3.5" strokeWidth={1.75} />
         )}
-        <span className="text-xs font-medium">{isPending ? "Adding…" : "Add a screenshot"}</span>
-        <span className="max-w-[220px] text-center text-[11px] leading-snug text-muted-foreground">
-          Click to choose, paste, or drag an image here.
-        </span>
-      </div>
+        {isPending ? "Adding…" : "Upload image"}
+      </span>
+      <span className="relative z-10 mt-1.5 text-[10px] text-muted-foreground/70">
+        or paste / drag one here
+      </span>
     </button>
   );
 }

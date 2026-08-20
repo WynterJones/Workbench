@@ -1,6 +1,5 @@
 import { CheckIcon } from "lucide-react";
-import { BrandIcon } from "@/components/BrandIcon";
-import { agentBrand, agentInitial } from "@/features/models/agentBrands";
+import { AgentMarkIcon } from "@/features/models/AgentMarkIcon";
 import { cn } from "@/lib/utils";
 import type { AgentInfo } from "@/hooks/useAgents";
 
@@ -11,8 +10,6 @@ interface AgentTileProps {
 }
 
 export function AgentTile({ agent, isDefault, onOpen }: AgentTileProps) {
-  const brand = agentBrand(agent.id);
-
   return (
     <button
       type="button"
@@ -30,13 +27,11 @@ export function AgentTile({ agent, isDefault, onOpen }: AgentTileProps) {
           !agent.installed && "opacity-40 grayscale",
         )}
       >
-        {brand ? (
-          <BrandIcon mark={brand} className="size-7" />
-        ) : (
-          <span className="text-xl font-semibold text-muted-foreground">
-            {agentInitial(agent.id, agent.vendor)}
-          </span>
-        )}
+        <AgentMarkIcon
+          agentId={agent.id}
+          vendor={agent.vendor}
+          className="size-7 text-foreground/90"
+        />
       </span>
 
       <span className="flex min-w-0 flex-col items-center gap-1">

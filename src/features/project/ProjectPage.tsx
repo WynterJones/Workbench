@@ -38,8 +38,15 @@ export function ProjectPage() {
         Back to library
       </Button>
 
-      <ProjectMeta project={project} />
-      <ProjectActions project={project} onRunResult={setLastResult} />
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="space-y-4 lg:col-span-2">
+          <ProjectMeta project={project} />
+          <ProjectActions project={project} onRunResult={setLastResult} />
+        </div>
+        <div className="lg:col-span-1">
+          <ScreenshotHero project={project} />
+        </div>
+      </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="space-y-4 lg:col-span-2">
@@ -66,7 +73,6 @@ export function ProjectPage() {
         </div>
 
         <div className="space-y-4">
-          <ScreenshotHero project={project} />
           <ShipScoreCard projectId={project.id} />
           <div className="rounded-lg border border-border bg-card p-4">
             <p className="mb-3 text-sm font-medium">Timeline</p>

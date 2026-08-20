@@ -34,9 +34,9 @@ interface FilesState {
   noiseCollapsed: boolean;
   toggleNoiseCollapsed: () => void;
 
-  previewOpen: boolean;
+  previewExpanded: boolean;
   togglePreview: () => void;
-  setPreviewOpen: (open: boolean) => void;
+  setPreviewExpanded: (expanded: boolean) => void;
 
   focusedPane: number;
   setFocusedPane: (pane: number) => void;
@@ -104,9 +104,9 @@ export const useFilesStore = create<FilesState>((set, get) => ({
   noiseCollapsed: true,
   toggleNoiseCollapsed: () => set((s) => ({ noiseCollapsed: !s.noiseCollapsed })),
 
-  previewOpen: true,
-  togglePreview: () => set((s) => ({ previewOpen: !s.previewOpen })),
-  setPreviewOpen: (open) => set({ previewOpen: open }),
+  previewExpanded: false,
+  togglePreview: () => set((s) => ({ previewExpanded: !s.previewExpanded })),
+  setPreviewExpanded: (expanded) => set({ previewExpanded: expanded }),
 
   focusedPane: 0,
   setFocusedPane: (pane) => set({ focusedPane: pane }),
