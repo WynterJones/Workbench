@@ -1,3 +1,4 @@
+import { toast } from "sonner";
 import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
@@ -40,10 +41,21 @@ export function useArchiveProject() {
   return useMutation({
     mutationFn: ({ id, archived }: { id: number; archived: boolean }) =>
       api.archiveProject(id, archived),
-    onSuccess: () => {
+    onSuccess: (_, { id, archived }) => {
       queryClient.invalidateQueries({ queryKey: ["projects"] });
+      queryClient.invalidateQueries({ queryKey: ["project", id] });
       queryClient.invalidateQueries({ queryKey: ["libraryStats"] });
+      queryClient.invalidateQueries({ queryKey: ["shelf-count"] });
+      toast.success(archived ? "Project archived" : "Project restored", {
+        description: archived
+          ? "Find it again on the Archived shelf."
+          : "It is back on your shelves.",
+      });
     },
+    onError: (error) =>
+      toast.error("Could not change archive state", {
+        description: error instanceof Error ? error.message : String(error),
+      }),
   });
 }
 

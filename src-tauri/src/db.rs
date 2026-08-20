@@ -637,6 +637,7 @@ fn shelf_clause(shelf: ShelfId) -> &'static str {
             "AND (status = 'broken' OR EXISTS (SELECT 1 FROM tags t WHERE t.project_id = projects.id AND t.label = 'needs-work'))"
         }
         ShelfId::Dead => "AND status = 'dead'",
+        ShelfId::Archived => "",
         ShelfId::All => "",
     }
 }
@@ -651,7 +652,12 @@ fn sort_clause(sort: SortMode) -> &'static str {
 }
 
 pub fn list_projects(conn: &Connection, query: &ProjectQuery) -> rusqlite::Result<Vec<Project>> {
-    let mut sql = String::from("SELECT * FROM projects WHERE archived = 0 ");
+    let archived_filter = if query.shelf == ShelfId::Archived {
+        "archived = 1"
+    } else {
+        "archived = 0"
+    };
+    let mut sql = format!("SELECT * FROM projects WHERE {archived_filter} ");
     sql.push_str(shelf_clause(query.shelf));
     sql.push(' ');
 
@@ -869,5 +875,51 @@ mod tests {
         };
         let all_rows = list_projects(&conn, &query_all).unwrap();
         assert_eq!(all_rows.len(), 4);
+    }
+
+    #[test]
+    fn archived_projects_are_hidden_everywhere_except_the_archived_shelf() {
+        let conn = Connection::open_in_memory().unwrap();
+        run_migrations(&conn).unwrap();
+
+        let live = upsert_project(&conn, &sample_input("/code/live", "Live")).unwrap();
+        let gone = upsert_project(&conn, &sample_input("/code/gone", "Gone")).unwrap();
+        archive_project(&conn, gone.id, true).unwrap();
+
+        let query = |shelf| ProjectQuery {
+            shelf,
+            search: String::new(),
+            frameworks: Vec::new(),
+            tags: Vec::new(),
+            sort: SortMode::Modified,
+        };
+
+        let all = list_projects(&conn, &query(ShelfId::All)).unwrap();
+        assert_eq!(all.len(), 1);
+        assert_eq!(all[0].id, live.id);
+
+        let archived = list_projects(&conn, &query(ShelfId::Archived)).unwrap();
+        assert_eq!(archived.len(), 1);
+        assert_eq!(archived[0].id, gone.id);
+        assert!(archived[0].archived);
+    }
+
+    #[test]
+    fn unarchiving_returns_a_project_to_the_main_shelves() {
+        let conn = Connection::open_in_memory().unwrap();
+        run_migrations(&conn).unwrap();
+
+        let project = upsert_project(&conn, &sample_input("/code/back", "Back")).unwrap();
+        archive_project(&conn, project.id, true).unwrap();
+        archive_project(&conn, project.id, false).unwrap();
+
+        let query = ProjectQuery {
+            shelf: ShelfId::All,
+            search: String::new(),
+            frameworks: Vec::new(),
+            tags: Vec::new(),
+            sort: SortMode::Modified,
+        };
+        assert_eq!(list_projects(&conn, &query).unwrap().len(), 1);
     }
 }

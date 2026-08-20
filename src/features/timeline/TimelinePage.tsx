@@ -4,10 +4,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { TimelineControls } from "@/features/timeline/TimelineControls";
 import { TimelineRow } from "@/features/timeline/TimelineRow";
 import { TimelineYearRail } from "@/features/timeline/TimelineYearRail";
-import { useTimelinePlayback } from "@/features/timeline/useTimelinePlayback";
+import { useAutoScroll } from "@/features/timeline/useAutoScroll";
+import { useSeenRows } from "@/features/timeline/useSeenRows";
 import { useProjectTimeline } from "@/hooks/useProjectTimeline";
 import { groupByMonth, spanInYears, yearOf } from "@/lib/timelineGroups";
-import { LOOKAHEAD } from "@/features/timeline/revealStyle";
 import { useAppStore } from "@/lib/store";
 
 export function TimelinePage() {
@@ -26,7 +26,8 @@ export function TimelinePage() {
     if (hasNextPage && !isFetchingNextPage) fetchNextPage();
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  const playback = useTimelinePlayback(events.length, loadMore, Boolean(hasNextPage));
+  const playback = useAutoScroll(spine);
+  const seen = useSeenRows(spine, events.length);
   const sentinel = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -64,26 +65,11 @@ export function TimelinePage() {
     return () => observer.disconnect();
   }, [groups]);
 
-  useEffect(() => {
-    if (!playback.playing || playback.revealed === 0) return;
-
-    const node = spine.current?.querySelector<HTMLElement>(
-      `[data-timeline-index="${playback.revealed - 1}"]`,
-    );
-    if (!node) return;
-
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    node.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "end" });
-  }, [playback.playing, playback.revealed]);
-
   function jumpToKey(key: string) {
     const node = spine.current?.querySelector<HTMLElement>(`[data-month-key="${key}"]`);
     node?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
-  const renderLimit = playback.playing ? playback.revealed + LOOKAHEAD : events.length;
-
-  let index = -1;
   let lastYear = "";
 
   return (
@@ -107,9 +93,9 @@ export function TimelinePage() {
       <TimelineControls
         playing={playback.playing}
         speed={playback.speed}
-        revealed={Math.min(playback.revealed, events.length)}
+        progress={playback.progress}
+        loaded={events.length}
         total={summary?.total ?? events.length}
-        buffering={playback.buffering}
         onToggle={playback.toggle}
         onRestart={playback.restart}
         onSpeed={playback.setSpeed}
@@ -142,11 +128,6 @@ export function TimelinePage() {
               const newYear = year !== lastYear;
               lastYear = year;
 
-              if (index + 1 >= renderLimit) {
-                index += group.events.length;
-                return null;
-              }
-
               return (
                 <section key={group.key} data-month-key={group.key}>
                   <div className="sticky top-14 z-[1] -mx-2 flex items-center gap-3 bg-background/95 px-2 py-1.5 backdrop-blur">
@@ -167,19 +148,14 @@ export function TimelinePage() {
                   </div>
 
                   <div className="flex flex-col">
-                    {group.events.map((event) => {
-                      index += 1;
-                      if (index >= renderLimit) return null;
-                      return (
-                        <TimelineRow
-                          key={event.id}
-                          event={event}
-                          index={index}
-                          revealed={playback.revealed}
-                          onOpen={() => openProject(event.projectId)}
-                        />
-                      );
-                    })}
+                    {group.events.map((event) => (
+                      <TimelineRow
+                        key={event.id}
+                        event={event}
+                        seen={seen.has(event.id)}
+                        onOpen={() => openProject(event.projectId)}
+                      />
+                    ))}
                   </div>
                 </section>
               );

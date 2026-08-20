@@ -13,6 +13,7 @@ const SHELVES: { id: ShelfId; label: string; explain: string }[] = [
   { id: "shipped", label: "Shipped", explain: "Status set to shipped, or tagged “shipped”." },
   { id: "attention", label: "Broken", explain: "A run was attempted and failed, or tagged “needs-work”." },
   { id: "dead", label: "Dead", explain: "The folder no longer exists at its recorded path." },
+  { id: "archived", label: "Archived", explain: "Hidden from every other shelf until you unarchive it." },
 ];
 
 export function ShelfTabs() {

@@ -1,4 +1,4 @@
-import { Loader2Icon, PauseIcon, PlayIcon, RotateCcwIcon } from "lucide-react";
+import { PauseIcon, PlayIcon, RotateCcwIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -6,9 +6,9 @@ const SPEEDS = [1, 2, 4];
 
 interface TimelineControlsProps {
   playing: boolean;
-  buffering: boolean;
   speed: number;
-  revealed: number;
+  progress: number;
+  loaded: number;
   total: number;
   onToggle: () => void;
   onRestart: () => void;
@@ -17,27 +17,21 @@ interface TimelineControlsProps {
 
 export function TimelineControls({
   playing,
-  buffering,
   speed,
-  revealed,
+  progress,
+  loaded,
   total,
   onToggle,
   onRestart,
   onSpeed,
 }: TimelineControlsProps) {
-  const progress = total === 0 ? 0 : Math.min(100, (revealed / total) * 100);
+  const percent = Math.round(Math.min(1, Math.max(0, progress)) * 100);
 
   return (
     <div className="sticky top-0 z-10 -mx-6 mb-6 flex items-center gap-3 border-b border-border bg-background/95 px-6 py-2.5 backdrop-blur">
       <Button size="sm" onClick={onToggle} className="cursor-pointer">
-        {buffering ? (
-          <Loader2Icon className="animate-spin" />
-        ) : playing ? (
-          <PauseIcon />
-        ) : (
-          <PlayIcon />
-        )}
-        {buffering ? "Loading…" : playing ? "Pause" : "Play"}
+        {playing ? <PauseIcon /> : <PlayIcon />}
+        {playing ? "Pause" : "Play"}
       </Button>
       <Button size="sm" variant="outline" onClick={onRestart} className="cursor-pointer">
         <RotateCcwIcon />
@@ -65,13 +59,13 @@ export function TimelineControls({
         <div className="h-1 w-full overflow-hidden rounded-full bg-secondary">
           <div
             className="h-full rounded-full bg-brand transition-[width] duration-200 ease-out"
-            style={{ width: `${progress}%` }}
+            style={{ width: `${percent}%` }}
           />
         </div>
       </div>
 
       <span className="shrink-0 font-mono text-[11px] tabular-nums text-muted-foreground">
-        {buffering ? "loading history…" : `${revealed.toLocaleString()} / ${total.toLocaleString()}`}
+        {loaded.toLocaleString()} / {total.toLocaleString()}
       </span>
     </div>
   );

@@ -3,7 +3,6 @@ import { BrandIcon } from "@/components/BrandIcon";
 import { frameworkBrand } from "@/lib/brandIcons";
 import { cn } from "@/lib/utils";
 import type { Framework } from "@/lib/types";
-import { revealStyle } from "@/features/timeline/revealStyle";
 import type { TimelineEvent } from "@/hooks/useProjectTimeline";
 
 const KIND_ICON = {
@@ -26,13 +25,11 @@ function dayLabel(iso: string): string {
 
 interface TimelineRowProps {
   event: TimelineEvent;
-  index: number;
-  revealed: number;
+  seen: boolean;
   onOpen: () => void;
 }
 
-export function TimelineRow({ event, index, revealed, onOpen }: TimelineRowProps) {
-  const reveal = revealStyle(index, revealed);
+export function TimelineRow({ event, seen, onOpen }: TimelineRowProps) {
   const Icon = KIND_ICON[event.kind] ?? GitCommitHorizontalIcon;
   const brand = frameworkBrand(event.framework as Framework);
   const milestone = event.kind !== "commit";
@@ -40,17 +37,13 @@ export function TimelineRow({ event, index, revealed, onOpen }: TimelineRowProps
   return (
     <button
       type="button"
-      data-timeline-index={index}
+      data-row-id={event.id}
       onClick={onOpen}
       className={cn(
-        "group relative flex w-full cursor-pointer items-center gap-3 rounded-lg pr-3 text-left transition-[opacity,transform] duration-[600ms] ease-out hover:bg-secondary/40 motion-reduce:transition-none",
+        "group relative flex w-full cursor-pointer items-center gap-3 rounded-lg pr-3 text-left transition-[opacity,transform] duration-500 ease-out hover:bg-secondary/40 motion-reduce:transition-none",
         milestone ? "py-2.5 pl-16" : "py-1.5 pl-24",
-        !reveal.interactive && "pointer-events-none",
+        seen ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0",
       )}
-      style={{
-        opacity: reveal.opacity,
-        transform: `translate3d(0, ${reveal.translateY}px, 0)`,
-      }}
     >
       <span
         className={cn(

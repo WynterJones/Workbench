@@ -367,6 +367,7 @@ pub enum ShelfId {
     Experiments,
     Attention,
     Dead,
+    Archived,
     All,
 }
 
@@ -380,6 +381,7 @@ impl ShelfId {
             "experiments" => ShelfId::Experiments,
             "attention" => ShelfId::Attention,
             "dead" => ShelfId::Dead,
+            "archived" => ShelfId::Archived,
             _ => ShelfId::All,
         }
     }

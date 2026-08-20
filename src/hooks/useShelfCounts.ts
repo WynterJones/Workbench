@@ -10,6 +10,7 @@ const SHELVES: ShelfId[] = [
   "experiments",
   "attention",
   "dead",
+  "archived",
   "all",
 ];
 

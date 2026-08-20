@@ -21,6 +21,11 @@ export function ProjectMeta({ project }: ProjectMetaProps) {
       <div className="flex items-center gap-2">
         <StatusBadge status={project.status} />
         <h1 className="truncate text-2xl font-semibold">{project.name}</h1>
+        {project.archived && (
+          <span className="shrink-0 rounded border border-border px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">
+            Archived
+          </span>
+        )}
       </div>
       <p className="font-mono text-xs text-muted-foreground">{truncatePath(project.path, 64)}</p>
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-muted-foreground">

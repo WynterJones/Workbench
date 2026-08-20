@@ -125,6 +125,7 @@ export type ShelfId =
   | "experiments"
   | "attention"
   | "dead"
+  | "archived"
   | "all";
 
 export interface ProjectQuery {
