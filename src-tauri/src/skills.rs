@@ -93,6 +93,19 @@ pub fn guard(path: &str) -> Result<PathBuf, String> {
 }
 
 pub fn valid_package(pkg: &str) -> bool {
+    let (pkg, skill) = match pkg.split_once('@') {
+        Some((base, skill)) if !pkg.starts_with("https://") => (base, Some(skill)),
+        _ => (pkg, None),
+    };
+    if let Some(skill) = skill {
+        let valid_skill = !skill.is_empty()
+            && skill
+                .chars()
+                .all(|c| c.is_ascii_alphanumeric() || "._-:".contains(c));
+        if !valid_skill {
+            return false;
+        }
+    }
     if let Some(rest) = pkg.strip_prefix("https://github.com/") {
         return !rest.is_empty()
             && rest
@@ -314,6 +327,122 @@ pub fn install_skill(pkg: String, agents: Vec<String>) -> Result<String, String>
     }
 }
 
+#[derive(Serialize, Clone, PartialEq, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct RegistrySkill {
+    pub id: String,
+    pub owner: String,
+    pub repo: String,
+    pub skill: String,
+    pub installs: u64,
+    pub installs_label: String,
+    pub url: String,
+}
+
+fn strip_ansi(line: &str) -> String {
+    let mut out = String::with_capacity(line.len());
+    let mut chars = line.chars().peekable();
+    while let Some(c) = chars.next() {
+        if c == '\u{1b}' {
+            for next in chars.by_ref() {
+                if next.is_ascii_alphabetic() {
+                    break;
+                }
+            }
+        } else {
+            out.push(c);
+        }
+    }
+    out
+}
+
+fn parse_installs(label: &str) -> u64 {
+    let cleaned = label.trim().trim_end_matches("installs").trim();
+    let (number, multiplier) = match cleaned.chars().last() {
+        Some('K') | Some('k') => (&cleaned[..cleaned.len() - 1], 1_000.0),
+        Some('M') | Some('m') => (&cleaned[..cleaned.len() - 1], 1_000_000.0),
+        _ => (cleaned, 1.0),
+    };
+    number
+        .replace(',', "")
+        .parse::<f64>()
+        .map(|n| (n * multiplier) as u64)
+        .unwrap_or(0)
+}
+
+pub fn parse_search_output(raw: &str) -> Vec<RegistrySkill> {
+    let mut results = Vec::new();
+
+    for line in raw.lines() {
+        let clean = strip_ansi(line);
+        let trimmed = clean.trim();
+        if trimmed.is_empty() || trimmed.starts_with("Install with") || trimmed.starts_with('\u{2514}')
+        {
+            continue;
+        }
+
+        let Some((left, right)) = trimmed.split_once(char::is_whitespace) else {
+            continue;
+        };
+        if !right.contains("installs") {
+            continue;
+        }
+        let Some((package, skill)) = left.split_once('@') else {
+            continue;
+        };
+        let Some((owner, repo)) = package.split_once('/') else {
+            continue;
+        };
+        if owner.is_empty() || repo.is_empty() || skill.is_empty() {
+            continue;
+        }
+
+        let installs_label = right.trim().replace(" installs", "");
+        results.push(RegistrySkill {
+            id: format!("{owner}/{repo}@{skill}"),
+            installs: parse_installs(right),
+            installs_label,
+            url: format!("https://skills.sh/{owner}/{repo}/{skill}"),
+            owner: owner.to_string(),
+            repo: repo.to_string(),
+            skill: skill.to_string(),
+        });
+    }
+
+    results
+}
+
+#[tauri::command]
+pub async fn search_skill_registry(query: String) -> Result<Vec<RegistrySkill>, String> {
+    let trimmed = query.trim().to_string();
+    if trimmed.len() < 2 {
+        return Ok(Vec::new());
+    }
+    if !trimmed
+        .chars()
+        .all(|c| c.is_ascii_alphanumeric() || " -_.".contains(c))
+    {
+        return Err("Search terms can only contain letters, numbers, spaces and - _ .".into());
+    }
+
+    tauri::async_runtime::spawn_blocking(move || {
+        let output = std::process::Command::new("npx")
+            .args(["-y", "skills@latest", "find", &trimmed])
+            .stdin(std::process::Stdio::null())
+            .output()
+            .map_err(|e| format!("could not run npx: {e}"))?;
+
+        let combined = format!(
+            "{}{}",
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
+        );
+        Ok(parse_search_output(&combined))
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -376,5 +505,62 @@ mod tests {
         let home = dirs::home_dir().unwrap();
         let escape = home.join(".claude/skills/../../../etc/passwd");
         assert!(guard(escape.to_str().unwrap()).is_err());
+    }
+
+    const SAMPLE: &str = "\u{1b}[38;5;102mInstall with\u{1b}[0m npx skills add <owner/repo@skill>\n\n\u{1b}[38;5;145mheygen-com/hyperframes@tailwind\u{1b}[0m \u{1b}[36m72.1K installs\u{1b}[0m\n\u{1b}[38;5;102m\u{2514} https://skills.sh/heygen-com/hyperframes/tailwind\u{1b}[0m\n\n\u{1b}[38;5;145mwshobson/agents@tailwind-design-system\u{1b}[0m \u{1b}[36m60.1K installs\u{1b}[0m\n\u{1b}[38;5;102m\u{2514} https://skills.sh/wshobson/agents/tailwind-design-system\u{1b}[0m\n";
+
+    #[test]
+    fn strips_ansi_escape_codes() {
+        assert_eq!(strip_ansi("\u{1b}[36mhello\u{1b}[0m"), "hello");
+        assert_eq!(strip_ansi("plain"), "plain");
+    }
+
+    #[test]
+    fn parses_the_real_cli_output() {
+        let results = parse_search_output(SAMPLE);
+        assert_eq!(results.len(), 2);
+
+        let first = &results[0];
+        assert_eq!(first.owner, "heygen-com");
+        assert_eq!(first.repo, "hyperframes");
+        assert_eq!(first.skill, "tailwind");
+        assert_eq!(first.id, "heygen-com/hyperframes@tailwind");
+        assert_eq!(first.installs, 72_100);
+        assert_eq!(first.installs_label, "72.1K");
+        assert_eq!(first.url, "https://skills.sh/heygen-com/hyperframes/tailwind");
+
+        assert_eq!(results[1].skill, "tailwind-design-system");
+    }
+
+    #[test]
+    fn skips_the_header_and_url_lines() {
+        let results = parse_search_output(SAMPLE);
+        assert!(results.iter().all(|r| !r.owner.contains("Install")));
+        assert!(results.iter().all(|r| !r.owner.starts_with("http")));
+    }
+
+    #[test]
+    fn parses_every_install_count_format() {
+        assert_eq!(parse_installs("646.3K installs"), 646_300);
+        assert_eq!(parse_installs("1.2M installs"), 1_200_000);
+        assert_eq!(parse_installs("842 installs"), 842);
+        assert_eq!(parse_installs("1,024 installs"), 1_024);
+        assert_eq!(parse_installs("weird"), 0);
+    }
+
+    #[test]
+    fn empty_or_garbage_output_yields_no_rows_rather_than_panicking() {
+        assert!(parse_search_output("").is_empty());
+        assert!(parse_search_output("no results found").is_empty());
+        assert!(parse_search_output("@@@ ///  installs").is_empty());
+        assert!(parse_search_output("owner/repo-without-at 5 installs").is_empty());
+    }
+
+    #[test]
+    fn install_accepts_the_owner_repo_at_skill_form() {
+        assert!(valid_package("vercel-labs/agent-skills"));
+        assert!(valid_package("heygen-com/hyperframes@tailwind"));
+        assert!(!valid_package("owner/repo@skill; rm -rf /"));
+        assert!(!valid_package("owner/repo@`whoami`"));
     }
 }

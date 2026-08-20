@@ -1,5 +1,7 @@
 import { useMemo, useState } from "react";
 import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { SkillSearchPanel } from "@/features/skills/SkillSearchPanel";
 import { QueryState } from "@/components/QueryState";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SkillRow } from "@/features/skills/SkillRow";
@@ -17,6 +19,12 @@ export function SkillsPage() {
   const toggle = useToggleSkill();
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<string | null>(null);
+  const [tab, setTab] = useState<"installed" | "search">("installed");
+
+  const installedNames = useMemo(
+    () => new Set((data ?? []).map((skill) => skill.name.toLowerCase())),
+    [data],
+  );
 
   const grouped = useMemo(() => {
     const needle = search.toLowerCase();
@@ -36,11 +44,38 @@ export function SkillsPage() {
   return (
     <div className="flex h-full min-h-0">
       <div className="flex w-[340px] shrink-0 flex-col border-r border-border">
+        <Tabs
+          value={tab}
+          onValueChange={(value) => setTab(value as "installed" | "search")}
+          className="flex min-h-0 flex-1 flex-col gap-0"
+        >
+          <div className="shrink-0 border-b border-border p-2">
+            <TabsList className="w-full">
+              <TabsTrigger value="installed" className="flex-1 cursor-pointer">
+                Installed
+              </TabsTrigger>
+              <TabsTrigger value="search" className="flex-1 cursor-pointer">
+                Search
+              </TabsTrigger>
+            </TabsList>
+          </div>
+
+          <TabsContent value="search" className="min-h-0 flex-1">
+            <SkillSearchPanel
+              installedNames={installedNames}
+              onInstalled={() => {
+                setTab("installed");
+                refetch();
+              }}
+            />
+          </TabsContent>
+
+          <TabsContent value="installed" className="flex min-h-0 flex-1 flex-col gap-0">
         <div className="shrink-0 space-y-2 border-b border-border p-3">
           <Input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search skills…"
+            placeholder="Filter installed skills…"
           />
           <InstallSkillPanel />
         </div>
@@ -82,6 +117,8 @@ export function SkillsPage() {
             ))}
           </QueryState>
         </div>
+          </TabsContent>
+        </Tabs>
       </div>
       <div className="flex min-w-0 flex-1 flex-col">
         <SkillViewer path={selected} />

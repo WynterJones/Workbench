@@ -78,6 +78,7 @@ pub fn run() {
             skills::read_skill,
             skills::toggle_skill,
             skills::install_skill,
+            skills::search_skill_registry,
             agents::detect_agents,
             misc::disk_reclaim_scan,
             files::fs_list_dir,
