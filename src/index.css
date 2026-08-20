@@ -138,14 +138,14 @@
     --wb-sweep-angle: 0deg;
     opacity: 0;
   }
-  4% {
-    opacity: 1;
-  }
-  26% {
-    --wb-sweep-angle: 360deg;
+  3% {
     opacity: 1;
   }
   32% {
+    --wb-sweep-angle: 360deg;
+    opacity: 1;
+  }
+  38% {
     --wb-sweep-angle: 360deg;
     opacity: 0;
   }
@@ -194,7 +194,7 @@
   -webkit-mask:
     linear-gradient(#000 0 0) content-box exclude,
     linear-gradient(#000 0 0);
-  animation: wb-border-sweep 5s linear infinite;
+  animation: wb-border-sweep 14s linear infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
