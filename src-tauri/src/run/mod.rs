@@ -1,4 +1,4 @@
-mod capture;
+pub mod capture;
 mod process;
 pub mod store;
 

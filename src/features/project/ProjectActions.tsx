@@ -3,6 +3,7 @@ import {
   ArchiveIcon,
   ArchiveRestoreIcon,
   CodeIcon,
+  EllipsisIcon,
   FolderOpenIcon,
   GlobeIcon,
   PlayIcon,
@@ -12,6 +13,13 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { AiLaunchDialog } from "@/features/project/AiLaunchDialog";
 import { TrustDialog } from "@/features/project/TrustDialog";
 import { useQueryClient } from "@tanstack/react-query";
@@ -97,34 +105,49 @@ export function ProjectActions({ project, onRunResult }: ProjectActionsProps) {
         <CameraIcon />
         {capturing ? "Capturing…" : "Screenshot"}
       </Button>
-      <Button size="sm" variant="outline" onClick={() => openIn("editor")}>
-        <CodeIcon />
-        Open Code
-      </Button>
-      <Button size="sm" variant="outline" onClick={() => openIn("browser")} disabled={!project.runUrl}>
-        <GlobeIcon />
-        Open Browser
-      </Button>
-      <Button size="sm" variant="outline" onClick={() => openIn("finder")}>
-        <FolderOpenIcon />
-        Finder
-      </Button>
-      <Button size="sm" variant="outline" onClick={() => openIn("terminal")}>
-        <TerminalIcon />
-        Terminal
-      </Button>
-      <Button size="sm" variant="outline" onClick={() => setAiOpen(true)}>
+      <Button size="sm" variant="outline" onClick={() => setAiOpen(true)} className="cursor-pointer">
         <SparklesIcon />
         Continue with AI
       </Button>
-      <Button
-        size="sm"
-        variant="ghost"
-        onClick={() => archiveProject.mutate({ id: project.id, archived: !project.archived })}
-      >
-        {project.archived ? <ArchiveRestoreIcon /> : <ArchiveIcon />}
-        {project.archived ? "Unarchive" : "Archive"}
-      </Button>
+
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button size="sm" variant="outline" className="cursor-pointer">
+            <EllipsisIcon />
+            More
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-52">
+          <DropdownMenuItem onClick={() => openIn("editor")} className="cursor-pointer">
+            <CodeIcon />
+            Open in editor
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => openIn("browser")}
+            disabled={!project.runUrl}
+            className="cursor-pointer"
+          >
+            <GlobeIcon />
+            Open in browser
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => openIn("finder")} className="cursor-pointer">
+            <FolderOpenIcon />
+            Reveal in Finder
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => openIn("terminal")} className="cursor-pointer">
+            <TerminalIcon />
+            Open terminal here
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onClick={() => archiveProject.mutate({ id: project.id, archived: !project.archived })}
+            className="cursor-pointer"
+          >
+            {project.archived ? <ArchiveRestoreIcon /> : <ArchiveIcon />}
+            {project.archived ? "Unarchive project" : "Archive project"}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
 
       <AiLaunchDialog project={project} open={aiOpen} onOpenChange={setAiOpen} />
       <TrustDialog

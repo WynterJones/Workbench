@@ -3,7 +3,7 @@ import { convertFileSrc } from "@tauri-apps/api/core";
 import { ExpandIcon } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { frameworkIcon } from "@/lib/format";
+import { ScreenshotDropZone } from "@/features/project/ScreenshotDropZone";
 import type { Project } from "@/lib/types";
 
 interface ScreenshotHeroProps {
@@ -16,7 +16,6 @@ export function ScreenshotHero({ project }: ScreenshotHeroProps) {
 
   const path = variant === "desktop" ? project.screenshotDesktop : project.screenshotMobile;
   const hasBoth = Boolean(project.screenshotDesktop && project.screenshotMobile);
-  const Icon = frameworkIcon(project.framework);
 
   return (
     <div className="space-y-2">
@@ -43,22 +42,21 @@ export function ScreenshotHero({ project }: ScreenshotHeroProps) {
         )}
       </div>
 
+      {path ? (
       <button
         type="button"
-        onClick={() => path && setEnlarged(true)}
-        className="flex max-h-[520px] min-h-[240px] w-full items-center justify-center overflow-hidden rounded-lg border border-border bg-gradient-to-br from-secondary to-background disabled:cursor-default"
-        disabled={!path}
+        onClick={() => setEnlarged(true)}
+        className="flex max-h-[520px] min-h-[240px] w-full cursor-pointer items-center justify-center overflow-hidden rounded-lg border border-border bg-gradient-to-br from-secondary to-background"
       >
-        {path ? (
           <img
             src={convertFileSrc(path)}
             alt={`${project.name} ${variant} screenshot`}
             className="max-h-[520px] w-full object-contain"
           />
-        ) : (
-          <Icon className="size-14 text-muted-foreground/40" strokeWidth={1.25} />
-        )}
       </button>
+      ) : (
+        <ScreenshotDropZone projectId={project.id} variant={variant} />
+      )}
 
       <Dialog open={enlarged} onOpenChange={setEnlarged}>
         <DialogContent className="max-w-5xl">

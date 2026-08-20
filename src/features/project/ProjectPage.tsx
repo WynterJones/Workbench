@@ -52,7 +52,7 @@ export function ProjectPage() {
               <TabsTrigger value="runlog">Run Log</TabsTrigger>
             </TabsList>
             <TabsContent value="readme">
-              <ReadmePanel projectId={project.id} />
+              <ReadmePanel projectId={project.id} basePath={project.path} />
             </TabsContent>
             <TabsContent value="commits">
               <CommitList projectId={project.id} />

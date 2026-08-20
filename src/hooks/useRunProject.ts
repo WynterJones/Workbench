@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { explainBrokenReason } from "@/lib/brokenReason";
 import { api } from "@/lib/api";
 import type { Project } from "@/lib/types";
 
@@ -33,8 +34,9 @@ export function useRunProject() {
           description: result.url ?? undefined,
         });
       } else {
-        toast.error("Project failed to start", {
-          description: result.reason ?? result.logTail.slice(0, 200),
+        const explained = explainBrokenReason(result.reason);
+        toast.error(explained?.title ?? "Project failed to start", {
+          description: explained?.detail ?? result.logTail.slice(0, 200),
         });
       }
     },

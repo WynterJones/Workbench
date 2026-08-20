@@ -1,11 +1,13 @@
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { resolveAsset } from "@/lib/resolveAsset";
 
 interface MarkdownProps {
   children: string;
+  basePath?: string | null;
 }
 
-export function Markdown({ children }: MarkdownProps) {
+export function Markdown({ children, basePath = null }: MarkdownProps) {
   return (
     <div className="text-sm leading-relaxed text-muted-foreground">
       <ReactMarkdown
@@ -38,7 +40,14 @@ export function Markdown({ children }: MarkdownProps) {
           ),
           th: (props) => <th className="border border-border px-2 py-1 text-left font-medium text-foreground" {...props} />,
           td: (props) => <td className="border border-border px-2 py-1" {...props} />,
-          img: (props) => <img className="my-2 inline-block max-w-full rounded" {...props} />,
+          img: ({ src, ...rest }) => (
+            <img
+              {...rest}
+              src={resolveAsset(typeof src === "string" ? src : undefined, basePath)}
+              loading="lazy"
+              className="my-2 inline-block max-w-full rounded"
+            />
+          ),
           hr: () => <hr className="my-4 border-border" />,
         }}
       >

@@ -12,6 +12,7 @@ mod run;
 mod scan;
 mod score;
 mod settings;
+mod shots;
 mod skills;
 
 use std::sync::Mutex;
@@ -55,6 +56,9 @@ pub fn run() {
             run::trust_project,
             run::capture_all,
             run::capture_project,
+            shots::import_screenshot_file,
+            shots::import_screenshot_bytes,
+            shots::pick_image_file,
             run::capture_cancel,
             ai::build_ai_prompt,
             ai::start_ai_session,

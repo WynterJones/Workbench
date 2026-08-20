@@ -5,9 +5,10 @@ import { useReadme } from "@/hooks/useReadme";
 
 interface ReadmePanelProps {
   projectId: number;
+  basePath: string;
 }
 
-export function ReadmePanel({ projectId }: ReadmePanelProps) {
+export function ReadmePanel({ projectId, basePath }: ReadmePanelProps) {
   const { data, isLoading, isError, error, refetch } = useReadme(projectId);
 
   return (
@@ -29,7 +30,7 @@ export function ReadmePanel({ projectId }: ReadmePanelProps) {
       }
     >
       <div className="max-h-[520px] overflow-y-auto pr-1">
-        <Markdown>{data ?? ""}</Markdown>
+        <Markdown basePath={basePath}>{data ?? ""}</Markdown>
       </div>
     </QueryState>
   );
