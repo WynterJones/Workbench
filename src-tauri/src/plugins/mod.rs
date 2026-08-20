@@ -34,6 +34,16 @@ pub struct PluginItem {
     pub meta: Option<String>,
 }
 
+#[derive(Debug, Clone, Serialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct PluginItemDetail {
+    pub summary: String,
+    pub frames: Vec<String>,
+    pub request: Option<String>,
+    pub tags: Vec<String>,
+    pub occurred: Option<String>,
+}
+
 #[derive(Debug, Clone, Copy, Serialize, PartialEq)]
 #[serde(rename_all = "lowercase")]
 pub enum Tone {
@@ -60,6 +70,14 @@ pub fn nested(value: &Value, path: &[&str]) -> Option<String> {
         cursor = cursor.get(key)?;
     }
     None
+}
+
+pub fn nested_array<'a>(value: &'a Value, path: &[&str]) -> Option<Vec<&'a Value>> {
+    let mut cursor = value;
+    for key in path {
+        cursor = cursor.get(key)?;
+    }
+    Some(cursor.as_array()?.iter().collect())
 }
 
 pub fn client() -> &'static reqwest::Client {
@@ -129,8 +147,10 @@ pub fn set_plugin_credential(
     token: String,
 ) -> Result<PluginState, String> {
     store::is_known(&id)?;
-    store::write_credential(&id, token.trim())?;
+    let token = token.trim();
+    store::write_credential(&id, token)?;
     let conn = state.0.lock().map_err(|e| e.to_string())?;
+    store::write_has_credential(&conn, &id, !token.is_empty()).map_err(|e| e.to_string())?;
     store::state_for(&conn, &id)
 }
 
@@ -188,9 +208,37 @@ pub async fn plugin_items(state: State<'_, DbState>, id: String) -> Result<Vec<P
     }
 }
 
+#[tauri::command]
+pub async fn plugin_source_members(id: String, source: String) -> Result<Vec<PluginSource>, String> {
+    store::is_known(&id)?;
+    let token = credential(&id)?;
+    match id.as_str() {
+        "github-pulls" => github::members(&token, &source).await,
+        _ => Ok(Vec::new()),
+    }
+}
+
+#[tauri::command]
+pub async fn plugin_item_detail(id: String, item_id: String) -> Result<PluginItemDetail, String> {
+    store::is_known(&id)?;
+    let token = credential(&id)?;
+    match id.as_str() {
+        "sentry" => sentry::issue_detail(&token, item_id.trim_start_matches("sentry:")).await,
+        _ => Err(format!("{} has no item detail view.", id)),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn nested_array_reaches_a_list_or_gives_up() {
+        let value: Value = serde_json::json!({ "a": { "b": [1, 2] }, "c": { "b": 5 } });
+        assert_eq!(nested_array(&value, &["a", "b"]).map(|v| v.len()), Some(2));
+        assert!(nested_array(&value, &["c", "b"]).is_none());
+        assert!(nested_array(&value, &["nope"]).is_none());
+    }
 
     #[test]
     fn nested_walks_object_paths() {

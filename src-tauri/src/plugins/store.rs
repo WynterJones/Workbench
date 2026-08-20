@@ -37,6 +37,26 @@ pub fn read_row(conn: &Connection, id: &str) -> rusqlite::Result<(bool, Vec<Stri
     })
 }
 
+pub fn read_has_credential(conn: &Connection, id: &str) -> rusqlite::Result<bool> {
+    let flag: Option<i64> = conn
+        .query_row(
+            "SELECT has_credential FROM plugins WHERE id = ?1",
+            params![id],
+            |row| row.get(0),
+        )
+        .optional()?;
+    Ok(flag.unwrap_or(0) != 0)
+}
+
+pub fn write_has_credential(conn: &Connection, id: &str, has: bool) -> rusqlite::Result<()> {
+    conn.execute(
+        "INSERT INTO plugins (id, has_credential) VALUES (?1, ?2)
+         ON CONFLICT(id) DO UPDATE SET has_credential = excluded.has_credential",
+        params![id, has as i64],
+    )?;
+    Ok(())
+}
+
 pub fn parse_selected(raw: &str) -> Vec<String> {
     serde_json::from_str(raw).unwrap_or_default()
 }
@@ -89,7 +109,7 @@ pub fn state_for(conn: &Connection, id: &str) -> Result<PluginState, String> {
     Ok(PluginState {
         id: id.to_string(),
         enabled,
-        has_credential: read_credential(id).is_some(),
+        has_credential: read_has_credential(conn, id).map_err(|e| e.to_string())?,
         selected,
     })
 }
@@ -135,6 +155,23 @@ mod tests {
         let (enabled, selected) = read_row(&conn, "sentry").unwrap();
         assert!(!enabled);
         assert_eq!(selected.len(), 2);
+    }
+
+    #[test]
+    fn credential_presence_is_tracked_without_touching_the_keychain() {
+        let conn = memory_db();
+        assert!(!read_has_credential(&conn, "sentry").unwrap());
+
+        write_has_credential(&conn, "sentry", true).unwrap();
+        assert!(read_has_credential(&conn, "sentry").unwrap());
+        assert_eq!(state_for(&conn, "sentry").unwrap().has_credential, true);
+
+        write_selected(&conn, "sentry", &["acme/web".into()]).unwrap();
+        assert!(read_has_credential(&conn, "sentry").unwrap());
+
+        write_has_credential(&conn, "sentry", false).unwrap();
+        assert!(!read_has_credential(&conn, "sentry").unwrap());
+        assert_eq!(read_row(&conn, "sentry").unwrap().1.len(), 1);
     }
 
     #[test]

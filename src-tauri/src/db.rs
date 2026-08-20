@@ -105,6 +105,10 @@ CREATE TABLE plugins (
     enabled INTEGER NOT NULL DEFAULT 0,
     selected TEXT NOT NULL DEFAULT '[]'
 );
+"#,
+r#"
+ALTER TABLE plugins ADD COLUMN has_credential INTEGER NOT NULL DEFAULT 0;
+UPDATE plugins SET has_credential = 1 WHERE enabled = 1 OR selected != '[]';
 "#];
 
 pub fn db_path() -> Result<std::path::PathBuf, String> {

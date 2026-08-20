@@ -10,7 +10,7 @@ export function CheckboxDot({ checked }: CheckboxDotProps) {
       className={cn(
         "flex size-[16px] shrink-0 items-center justify-center rounded-[5px] border transition-colors duration-150 ease-out",
         checked
-          ? "border-brand bg-brand text-[#1a1206]"
+          ? "border-brand/70 bg-brand/15 text-brand"
           : "border-muted-foreground/40 bg-transparent",
       )}
     >
@@ -26,7 +26,7 @@ export function CheckboxDot({ checked }: CheckboxDotProps) {
         <path
           d="M3.5 8.5L6.5 11.5L12.5 5"
           stroke="currentColor"
-          strokeWidth="2.6"
+          strokeWidth="2.2"
           strokeLinecap="round"
           strokeLinejoin="round"
         />

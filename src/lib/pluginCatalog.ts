@@ -13,6 +13,7 @@ export interface PluginMeta {
   sourceHint: string;
   itemsLabel: string;
   emptyMessage: string;
+  filterByAuthor?: boolean;
 }
 
 export const PLUGIN_CATALOG: PluginMeta[] = [
@@ -54,9 +55,10 @@ export const PLUGIN_CATALOG: PluginMeta[] = [
     tokenHint: "A fine-grained token with read access to Pull requests and Metadata.",
     tokenUrl: "https://github.com/settings/tokens",
     sourceLabel: "Repositories",
-    sourceHint: "Pick the repositories to track pull requests for.",
+    sourceHint: "Pick repositories, then narrow each one to the people you want to watch.",
     itemsLabel: "Open pull requests",
-    emptyMessage: "No open pull requests in the selected repositories.",
+    emptyMessage: "No open pull requests from the people you watch.",
+    filterByAuthor: true,
   },
 ];
 

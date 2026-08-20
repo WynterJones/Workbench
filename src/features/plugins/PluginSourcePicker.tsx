@@ -1,10 +1,11 @@
 import { RefreshCwIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { CheckboxDot } from "@/components/CheckboxDot";
+import { PluginSourceRow } from "@/features/plugins/PluginSourceRow";
 import { QueryState } from "@/components/QueryState";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePluginSources } from "@/hooks/usePluginData";
 import { useSetPluginSelection } from "@/hooks/usePlugins";
+import { authorsFor, selectedSources, toggleAuthor, toggleSource } from "@/lib/pluginSelection";
 import type { PluginMeta } from "@/lib/pluginCatalog";
 
 interface PluginSourcePickerProps {
@@ -16,12 +17,7 @@ export function PluginSourcePicker({ meta, selected }: PluginSourcePickerProps) 
   const { data, isLoading, isError, error, refetch, isFetching } = usePluginSources(meta.id, true);
   const save = useSetPluginSelection();
 
-  function toggle(id: string) {
-    const next = selected.includes(id)
-      ? selected.filter((entry) => entry !== id)
-      : [...selected, id];
-    save.mutate({ id: meta.id, selected: next });
-  }
+  const sources = selectedSources(selected);
 
   return (
     <div className="flex flex-col gap-2">
@@ -56,22 +52,22 @@ export function PluginSourcePicker({ meta, selected }: PluginSourcePickerProps) 
           </div>
         }
       >
-        <div className="max-h-64 space-y-0.5 overflow-y-auto rounded-md border border-border p-1">
+        <div className="max-h-72 space-y-0.5 overflow-y-auto rounded-md border border-border p-1">
           {(data ?? []).map((source) => (
-            <button
+            <PluginSourceRow
               key={source.id}
-              type="button"
-              onClick={() => toggle(source.id)}
-              className="flex w-full cursor-pointer items-center gap-2.5 rounded px-2 py-1.5 text-left transition-colors duration-150 hover:bg-secondary/60"
-            >
-              <CheckboxDot checked={selected.includes(source.id)} />
-              <span className="truncate text-sm text-foreground">{source.name}</span>
-              {source.detail && (
-                <span className="ml-auto shrink-0 truncate font-mono text-[10px] text-muted-foreground/60">
-                  {source.detail}
-                </span>
-              )}
-            </button>
+              pluginId={meta.id}
+              source={source}
+              checked={sources.includes(source.id)}
+              authors={authorsFor(selected, source.id)}
+              filterable={Boolean(meta.filterByAuthor)}
+              onToggle={() =>
+                save.mutate({ id: meta.id, selected: toggleSource(selected, source.id) })
+              }
+              onToggleAuthor={(author) =>
+                save.mutate({ id: meta.id, selected: toggleAuthor(selected, source.id, author) })
+              }
+            />
           ))}
         </div>
       </QueryState>

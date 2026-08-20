@@ -166,6 +166,94 @@ fn read(path: PathBuf) -> Option<String> {
     fs::read_to_string(path).ok()
 }
 
+pub const WORKBENCH_SERVER: &str = "workbench";
+
+#[derive(Serialize, Clone, PartialEq, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct WorkbenchMcp {
+    pub binary: String,
+    pub command_line: String,
+    pub config_snippet: String,
+    pub installed_for: Vec<String>,
+}
+
+fn workbench_binary() -> Result<String, String> {
+    std::env::current_exe()
+        .map(|p| p.to_string_lossy().to_string())
+        .map_err(|e| e.to_string())
+}
+
+pub fn claude_entry(binary: &str) -> serde_json::Value {
+    serde_json::json!({ "command": binary, "args": ["mcp"] })
+}
+
+pub fn codex_block(binary: &str) -> String {
+    format!("\n[mcp_servers.{WORKBENCH_SERVER}]\ncommand = \"{binary}\"\nargs = [\"mcp\"]\n")
+}
+
+fn install_into_json(path: PathBuf, binary: &str) -> Result<(), String> {
+    let mut root = read(path.clone())
+        .and_then(|raw| serde_json::from_str::<serde_json::Value>(&raw).ok())
+        .unwrap_or_else(|| serde_json::json!({}));
+
+    if !root.is_object() {
+        return Err(format!("{} is not a JSON object", path.display()));
+    }
+    root["mcpServers"][WORKBENCH_SERVER] = claude_entry(binary);
+
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+    }
+    fs::write(&path, serde_json::to_string_pretty(&root).map_err(|e| e.to_string())?)
+        .map_err(|e| e.to_string())
+}
+
+fn install_into_codex(path: PathBuf, binary: &str) -> Result<(), String> {
+    let existing = read(path.clone()).unwrap_or_default();
+    if existing.contains(&format!("[mcp_servers.{WORKBENCH_SERVER}]")) {
+        return Ok(());
+    }
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+    }
+    fs::write(&path, format!("{}{}", existing, codex_block(binary))).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub async fn workbench_mcp() -> Result<WorkbenchMcp, String> {
+    let binary = workbench_binary()?;
+    let installed_for = list_mcp_servers()
+        .await?
+        .into_iter()
+        .filter(|server| server.name == WORKBENCH_SERVER)
+        .map(|server| server.agent)
+        .collect();
+
+    Ok(WorkbenchMcp {
+        command_line: format!("{binary} mcp"),
+        config_snippet: serde_json::to_string_pretty(&serde_json::json!({
+            "mcpServers": { WORKBENCH_SERVER: claude_entry(&binary) }
+        }))
+        .unwrap_or_default(),
+        binary,
+        installed_for,
+    })
+}
+
+#[tauri::command]
+pub async fn install_workbench_mcp(agent: String) -> Result<(), String> {
+    let binary = workbench_binary()?;
+    let home = dirs::home_dir().ok_or("could not resolve home directory")?;
+
+    match agent.as_str() {
+        "claude-code" => install_into_json(home.join(".claude.json"), &binary),
+        "codex" => install_into_codex(home.join(".codex/config.toml"), &binary),
+        "gemini-cli" => install_into_json(home.join(".gemini/settings.json"), &binary),
+        "cursor-agent" => install_into_json(home.join(".cursor/mcp.json"), &binary),
+        other => Err(format!("Workbench cannot configure {other} automatically.")),
+    }
+}
+
 #[tauri::command]
 pub async fn list_mcp_servers() -> Result<Vec<McpServer>, String> {
     tauri::async_runtime::spawn_blocking(|| {
@@ -238,6 +326,31 @@ NODE_REPL_TOKEN = "super-secret"
 [mcp_servers.computer-use]
 command = "computer-use"
 "#;
+
+    #[test]
+    fn installing_preserves_everything_else_in_the_config() {
+        let mut root: serde_json::Value = serde_json::from_str(CLAUDE).unwrap();
+        root["mcpServers"][WORKBENCH_SERVER] = claude_entry("/Applications/Workbench.app/wb");
+
+        assert!(root["mcpServers"]["imagegen"].is_object());
+        assert!(root["projects"]["/Users/me/code/app"].is_object());
+        assert_eq!(root["mcpServers"]["workbench"]["args"][0], "mcp");
+
+        let servers = parse_claude_servers(&root.to_string());
+        let installed = servers.iter().find(|s| s.name == WORKBENCH_SERVER).unwrap();
+        assert_eq!(installed.command.as_deref(), Some("/Applications/Workbench.app/wb"));
+        assert_eq!(installed.args, vec!["mcp"]);
+    }
+
+    #[test]
+    fn the_codex_block_round_trips_through_the_codex_parser() {
+        let toml = format!("{}{}", CODEX, codex_block("/Applications/Workbench.app/wb"));
+        let servers = parse_codex_servers(&toml);
+        let installed = servers.iter().find(|s| s.name == WORKBENCH_SERVER).unwrap();
+        assert_eq!(installed.command.as_deref(), Some("/Applications/Workbench.app/wb"));
+        assert_eq!(installed.args, vec!["mcp"]);
+        assert_eq!(servers.len(), 3);
+    }
 
     #[test]
     fn never_exposes_environment_values() {

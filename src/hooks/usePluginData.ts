@@ -21,12 +21,40 @@ export interface PluginItem {
   meta: string | null;
 }
 
+export interface PluginItemDetail {
+  summary: string;
+  frames: string[];
+  request: string | null;
+  tags: string[];
+  occurred: string | null;
+}
+
+export function usePluginItemDetail(id: string, itemId: string | null) {
+  return useQuery({
+    queryKey: ["plugin-item-detail", id, itemId],
+    queryFn: () => invoke<PluginItemDetail>("plugin_item_detail", { id, itemId }),
+    enabled: Boolean(itemId),
+    staleTime: 300_000,
+    retry: false,
+  });
+}
+
 export function usePluginSources(id: string, enabled: boolean) {
   return useQuery({
     queryKey: ["plugin-sources", id],
     queryFn: () => invoke<PluginSource[]>("plugin_sources", { id }),
     enabled,
     staleTime: 300_000,
+    retry: false,
+  });
+}
+
+export function usePluginSourceMembers(id: string, source: string | null) {
+  return useQuery({
+    queryKey: ["plugin-source-members", id, source],
+    queryFn: () => invoke<PluginSource[]>("plugin_source_members", { id, source }),
+    enabled: Boolean(source),
+    staleTime: 600_000,
     retry: false,
   });
 }

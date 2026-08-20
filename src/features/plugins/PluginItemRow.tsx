@@ -1,4 +1,4 @@
-import { ExternalLinkIcon } from "lucide-react";
+import { ExternalLinkIcon, MaximizeIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { relativeTime } from "@/lib/format";
 import { openUrl } from "@/lib/openUrl";
@@ -20,20 +20,23 @@ const TONE_TEXT: Record<PluginTone, string> = {
 
 interface PluginItemRowProps {
   item: PluginItem;
+  onInspect?: (item: PluginItem) => void;
 }
 
-export function PluginItemRow({ item }: PluginItemRowProps) {
-  const interactive = Boolean(item.url);
+export function PluginItemRow({ item, onInspect }: PluginItemRowProps) {
+  const activate = onInspect ? () => onInspect(item) : item.url ? () => openUrl(item.url!) : null;
+  const interactive = Boolean(activate);
+  const Icon = onInspect ? MaximizeIcon : ExternalLinkIcon;
 
   return (
     <div
       role={interactive ? "button" : undefined}
       tabIndex={interactive ? 0 : undefined}
-      onClick={() => item.url && openUrl(item.url)}
+      onClick={() => activate?.()}
       onKeyDown={(event) => {
-        if (item.url && (event.key === "Enter" || event.key === " ")) {
+        if (activate && (event.key === "Enter" || event.key === " ")) {
           event.preventDefault();
-          openUrl(item.url);
+          activate();
         }
       }}
       className={cn(
@@ -66,7 +69,7 @@ export function PluginItemRow({ item }: PluginItemRowProps) {
       )}
 
       {interactive && (
-        <ExternalLinkIcon className="size-3.5 shrink-0 text-muted-foreground/0 transition-colors group-hover:text-muted-foreground" />
+        <Icon className="size-3.5 shrink-0 text-muted-foreground/0 transition-colors group-hover:text-muted-foreground" />
       )}
     </div>
   );

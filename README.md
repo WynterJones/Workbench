@@ -77,8 +77,8 @@ trust flag is per-project.
 ## Building from source
 
 ```bash
-git clone https://github.com/WynterJones/Workbench-App.git
-cd Workbench-App
+git clone https://github.com/WynterJones/Workbench.git
+cd Workbench
 npm install
 npm run tauri dev
 ```

@@ -2,9 +2,9 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { explainBrokenReason } from "@/lib/brokenReason";
 import { api } from "@/lib/api";
-import type { Project } from "@/lib/types";
+import type { Project, RunResult } from "@/lib/types";
 
-export function useRunProject() {
+export function useRunProject(onFailure?: (result: RunResult) => void) {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -33,12 +33,16 @@ export function useRunProject() {
         toast.success("Project is running", {
           description: result.url ?? undefined,
         });
-      } else {
-        const explained = explainBrokenReason(result.reason);
-        toast.error(explained?.title ?? "Project failed to start", {
-          description: explained?.detail ?? result.logTail.slice(0, 200),
-        });
+        return;
       }
+      if (onFailure) {
+        onFailure(result);
+        return;
+      }
+      const explained = explainBrokenReason(result.reason);
+      toast.error(explained?.title ?? "Project failed to start", {
+        description: explained?.detail ?? result.logTail.slice(0, 200),
+      });
     },
     onSettled: (_result, _error, id) => {
       queryClient.invalidateQueries({ queryKey: ["project", id] });

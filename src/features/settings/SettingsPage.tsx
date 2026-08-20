@@ -5,6 +5,7 @@ import { ScanRootsSettings } from "@/features/settings/ScanRootsSettings";
 import { AiProviderSettings } from "@/features/settings/AiProviderSettings";
 import { EditorTerminalSettings } from "@/features/settings/EditorTerminalSettings";
 import { RunSettings } from "@/features/settings/RunSettings";
+import { McpServerSettings } from "@/features/settings/McpServerSettings";
 import { useSaveSettings, useSettings } from "@/hooks/useSettings";
 import { useAppStore } from "@/lib/store";
 import type { Settings } from "@/lib/types";
@@ -39,6 +40,7 @@ export function SettingsPage() {
       <AiProviderSettings settings={settings} onChange={updateSettings} />
       <EditorTerminalSettings settings={settings} onChange={updateSettings} />
       <RunSettings settings={settings} onChange={updateSettings} />
+      <McpServerSettings />
       <SystemChecksSettings />
     </div>
   );

@@ -11,7 +11,18 @@ interface AgentMarkIconProps {
 export function AgentMarkIcon({ agentId, vendor, className }: AgentMarkIconProps) {
   const mark = AGENT_MARKS[agentId];
 
-  if (!mark) {
+  if (mark?.image) {
+    return (
+      <img
+        src={mark.image}
+        alt=""
+        aria-hidden
+        className={cn("shrink-0 object-contain", className)}
+      />
+    );
+  }
+
+  if (!mark?.svg) {
     return (
       <span className={cn("font-semibold text-muted-foreground", className)}>
         {agentInitial(agentId, vendor)}

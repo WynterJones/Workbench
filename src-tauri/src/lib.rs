@@ -5,9 +5,11 @@ mod db;
 mod doctor;
 mod detail;
 mod files;
+mod handoff;
 mod heatmap;
 mod folders;
 mod mcp;
+pub mod mcp_server;
 mod media;
 mod misc;
 mod models;
@@ -106,6 +108,12 @@ pub fn run() {
             plugins::set_plugin_selection,
             plugins::plugin_sources,
             plugins::plugin_items,
+            plugins::plugin_item_detail,
+            plugins::plugin_source_members,
+            mcp::workbench_mcp,
+            mcp::install_workbench_mcp,
+            handoff::start_run_fix,
+            handoff::poll_handoff,
             doctor::system_checks,
             misc::disk_reclaim_scan,
             files::fs_list_dir,

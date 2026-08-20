@@ -1,19 +1,22 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { RefreshCwIcon, SettingsIcon } from "lucide-react";
 import { BrandIcon } from "@/components/BrandIcon";
 import { Button } from "@/components/ui/button";
 import { QueryState } from "@/components/QueryState";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PluginItemRow } from "@/features/plugins/PluginItemRow";
+import { PluginIssueDialog } from "@/features/plugins/PluginIssueDialog";
 import { brandByName } from "@/lib/brandIcons";
 import { pluginMeta } from "@/lib/pluginCatalog";
 import { usePluginItems } from "@/hooks/usePluginData";
+import type { PluginItem } from "@/hooks/usePluginData";
 import { usePlugin } from "@/hooks/usePlugins";
 import { useAppStore } from "@/lib/store";
 
 export function PluginDashboard() {
   const activePluginId = useAppStore((s) => s.activePluginId);
   const setRoute = useAppStore((s) => s.setRoute);
+  const [inspecting, setInspecting] = useState<PluginItem | null>(null);
   const meta = pluginMeta(activePluginId ?? "");
   const state = usePlugin(activePluginId ?? "");
   const ready = Boolean(meta && state?.enabled && state.hasCredential && state.selected.length > 0);
@@ -108,13 +111,23 @@ export function PluginDashboard() {
               </p>
               <div className="space-y-1.5">
                 {(items ?? []).map((item) => (
-                  <PluginItemRow key={item.id} item={item} />
+                  <PluginItemRow
+                    key={item.id}
+                    item={item}
+                    onInspect={activePluginId === "sentry" ? setInspecting : undefined}
+                  />
                 ))}
               </div>
             </section>
           ))}
         </QueryState>
       )}
+
+      <PluginIssueDialog
+        pluginId={activePluginId ?? ""}
+        item={inspecting}
+        onOpenChange={(open) => !open && setInspecting(null)}
+      />
     </div>
   );
 }

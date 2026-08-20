@@ -23,11 +23,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { AiLaunchDialog } from "@/features/project/AiLaunchDialog";
 import { TrustDialog } from "@/features/project/TrustDialog";
+import { RunFixDialog } from "@/features/project/RunFixDialog";
+import { ManualRunDialog } from "@/features/project/ManualRunDialog";
 import { DeleteProjectDialog } from "@/features/project/DeleteProjectDialog";
 import { useQueryClient } from "@tanstack/react-query";
 import { useArchiveProject } from "@/hooks/useProjects";
 import { useRunProject } from "@/hooks/useRunProject";
 import { api } from "@/lib/api";
+import { manualRun } from "@/lib/manualRun";
 import type { Project, RunResult } from "@/lib/types";
 
 interface ProjectActionsProps {
@@ -36,7 +39,11 @@ interface ProjectActionsProps {
 }
 
 export function ProjectActions({ project, onRunResult }: ProjectActionsProps) {
-  const runProject = useRunProject();
+  const [failure, setFailure] = useState<RunResult | null>(null);
+  const [manualOpen, setManualOpen] = useState(false);
+  const guide = manualRun(project.framework);
+  const manualOnly = Boolean(guide && !project.runCmd);
+  const runProject = useRunProject(setFailure);
   const archiveProject = useArchiveProject();
   const [aiOpen, setAiOpen] = useState(false);
   const [trustOpen, setTrustOpen] = useState(false);
@@ -55,13 +62,15 @@ export function ProjectActions({ project, onRunResult }: ProjectActionsProps) {
   }
 
   function run() {
+    if (manualOnly) {
+      setManualOpen(true);
+      return;
+    }
     if (!project.trusted) {
       setTrustOpen(true);
       return;
     }
-    runProject.mutate(project.id, {
-      onSuccess: (result) => onRunResult?.(result),
-    });
+    runProject.mutate(project.id, { onSuccess: (result) => onRunResult?.(result) });
   }
 
   async function trustAndRun() {
@@ -69,9 +78,7 @@ export function ProjectActions({ project, onRunResult }: ProjectActionsProps) {
       await api.trustProject(project.id, true);
       await queryClient.invalidateQueries({ queryKey: ["project", project.id] });
       setTrustOpen(false);
-      runProject.mutate(project.id, {
-        onSuccess: (result) => onRunResult?.(result),
-      });
+      runProject.mutate(project.id, { onSuccess: (result) => onRunResult?.(result) });
     } catch (error) {
       toast.error("Could not trust project", {
         description: error instanceof Error ? error.message : String(error),
@@ -102,7 +109,7 @@ export function ProjectActions({ project, onRunResult }: ProjectActionsProps) {
     <div className="flex flex-wrap gap-2">
       <Button size="sm" onClick={run} disabled={runProject.isPending}>
         <PlayIcon />
-        {runProject.isPending ? "Running…" : "Run"}
+        {manualOnly ? "How to run" : runProject.isPending ? "Running…" : "Run"}
       </Button>
       <Button size="sm" variant="outline" onClick={screenshot} disabled={capturing} className="cursor-pointer">
         <CameraIcon />
@@ -160,6 +167,21 @@ export function ProjectActions({ project, onRunResult }: ProjectActionsProps) {
         </DropdownMenuContent>
       </DropdownMenu>
 
+      {guide && (
+        <ManualRunDialog
+          project={project}
+          guide={guide}
+          open={manualOpen}
+          onOpenChange={setManualOpen}
+        />
+      )}
+      <RunFixDialog
+        project={project}
+        reason={failure?.reason ?? null}
+        logTail={failure?.logTail ?? ""}
+        open={failure !== null}
+        onOpenChange={(open) => !open && setFailure(null)}
+      />
       <AiLaunchDialog project={project} open={aiOpen} onOpenChange={setAiOpen} />
       <DeleteProjectDialog project={project} open={deleteOpen} onOpenChange={setDeleteOpen} />
       <TrustDialog

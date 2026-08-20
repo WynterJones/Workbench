@@ -23,6 +23,7 @@ interface AppState {
 
   frameworks: Framework[];
   setFrameworks: (frameworks: Framework[]) => void;
+  filterByFramework: (framework: Framework) => void;
 
   tags: string[];
   setTags: (tags: string[]) => void;
@@ -64,6 +65,8 @@ export const useAppStore = create<AppState>((set) => ({
 
   frameworks: [],
   setFrameworks: (frameworks) => set({ frameworks }),
+  filterByFramework: (framework) =>
+    set({ frameworks: [framework], route: "library", selectedProjectId: null }),
 
   tags: [],
   setTags: (tags) => set({ tags }),
