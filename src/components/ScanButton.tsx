@@ -1,5 +1,5 @@
 import { Loader2, ScanLine } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { CtaButton } from "@/components/CtaButton";
 import { useScan } from "@/hooks/useScan";
 
 function truncateFromLeft(path: string, max: number) {
@@ -27,9 +27,9 @@ export function ScanButton() {
   }
 
   return (
-    <Button onClick={startScan} className="gap-2">
-      <ScanLine className="size-4" />
+    <CtaButton onClick={startScan}>
+      <ScanLine />
       Scan &amp; Refresh Library
-    </Button>
+    </CtaButton>
   );
 }

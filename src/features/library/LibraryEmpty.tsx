@@ -1,5 +1,6 @@
 import { FolderSearchIcon, ScanIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { CtaButton } from "@/components/CtaButton";
 
 interface LibraryEmptyProps {
   variant: "never-scanned" | "no-results";
@@ -19,9 +20,10 @@ export function LibraryEmpty({ variant, onScan, onClearFilters }: LibraryEmptyPr
           </p>
         </div>
         {onScan && (
-          <Button size="sm" onClick={onScan} className="mt-2">
+          <CtaButton onClick={onScan} className="mt-2">
+            <ScanIcon />
             Scan now
-          </Button>
+          </CtaButton>
         )}
       </div>
     );

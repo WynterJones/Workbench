@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Camera, LayoutGrid, ScanLine, type LucideIcon } from "lucide-react";
 import { IntroLoopStep } from "@/features/intro/IntroLoopStep";
+import { CtaButton } from "@/components/CtaButton";
 
 interface IntroStepDiagramProps {
   reducedMotion: boolean;
@@ -67,13 +68,9 @@ export function IntroStepDiagram({ reducedMotion, onNext }: IntroStepDiagramProp
         ))}
       </div>
 
-      <button
-        type="button"
-        onClick={onNext}
-        className="cursor-pointer rounded-lg bg-brand px-6 py-2.5 text-base font-semibold text-background transition-opacity duration-150 ease-out hover:opacity-90"
-      >
+      <CtaButton size="lg" onClick={onNext}>
         Continue
-      </button>
+      </CtaButton>
     </div>
   );
 }

@@ -1,5 +1,6 @@
-import { FolderPlus, X } from "lucide-react";
+import { FolderPlus, ScanLine, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { CtaButton } from "@/components/CtaButton";
 import { useScanRoots } from "@/hooks/useScanRoots";
 import { cn } from "@/lib/utils";
 
@@ -50,9 +51,10 @@ export function IntroStepFolders({ reducedMotion, onFinish }: IntroStepFoldersPr
           ))}
         </ul>
       )}
-      <Button size="lg" disabled={roots.length === 0} onClick={onFinish} className="w-full">
+      <CtaButton size="lg" disabled={roots.length === 0} onClick={onFinish}>
+        <ScanLine />
         Scan my drive
-      </Button>
+      </CtaButton>
     </div>
   );
 }
