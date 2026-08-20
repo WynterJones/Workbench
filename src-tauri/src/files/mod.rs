@@ -4,6 +4,7 @@ mod listing;
 mod scaffold;
 mod starters;
 mod watch;
+mod cache;
 mod read;
 
 pub use watch::WatcherState;

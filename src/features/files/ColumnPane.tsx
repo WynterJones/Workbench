@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef } from "react";
 import { useDirectory } from "@/hooks/useDirectory";
 import { useFilesStore } from "@/lib/filesStore";
 import { useFsMutations } from "@/features/files/lib/useFsMutations";
-import { useAddToCart } from "@/features/files/lib/useAddToCart";
 import { useJumpToProject } from "@/features/files/lib/useJumpToProject";
 import { useVirtualRows } from "@/features/files/lib/useVirtualRows";
 import { partitionEntries } from "@/features/files/lib/noise";
@@ -46,7 +45,6 @@ export function ColumnPane({
   const setRenamingPath = useFilesStore((s) => s.setRenamingPath);
   const select = useFilesStore((s) => s.select);
   const { renameEntry, moveEntries, copyEntries } = useFsMutations();
-  const { toggleEntry, has } = useAddToCart();
   const jumpToProject = useJumpToProject();
 
   useEffect(() => {
@@ -104,7 +102,6 @@ export function ColumnPane({
                   selected={entry.name === highlightName}
                   active={focused && entry.name === highlightName}
                   renaming={renamingPath === entry.path}
-                  inCart={has(entry.path)}
                   onSelect={() => {
                     onFocusPane();
                     onSelectEntry(entry);
@@ -129,7 +126,6 @@ export function ColumnPane({
                   }}
                   onCancelRename={() => setRenamingPath(null)}
                   onStartRename={() => setRenamingPath(entry.path)}
-                  onAddToCart={() => toggleEntry(entry)}
                   onTrash={() => onRequestTrash([entry.path])}
                   onJumpToProject={entry.projectFramework ? () => jumpToProject(entry.path) : undefined}
                   onDragStart={(e) => e.dataTransfer.setData("text/plain", JSON.stringify([entry.path]))}

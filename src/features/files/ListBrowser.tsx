@@ -3,7 +3,6 @@ import { ArrowDownIcon, ArrowUpIcon } from "lucide-react";
 import { useDirectory } from "@/hooks/useDirectory";
 import { useFilesStore } from "@/lib/filesStore";
 import { useFsMutations } from "@/features/files/lib/useFsMutations";
-import { useAddToCart } from "@/features/files/lib/useAddToCart";
 import { useJumpToProject } from "@/features/files/lib/useJumpToProject";
 import { useVirtualRows } from "@/features/files/lib/useVirtualRows";
 import { partitionEntries } from "@/features/files/lib/noise";
@@ -42,7 +41,6 @@ export function ListBrowser() {
   const rows = visible.slice(startIndex, endIndex);
 
   const { renameEntry, trashEntries, moveEntries, copyEntries } = useFsMutations();
-  const { toggleEntry, has } = useAddToCart();
   const jumpToProject = useJumpToProject();
   const [pendingTrash, setPendingTrash] = useState<string[] | null>(null);
 
@@ -72,7 +70,6 @@ export function ListBrowser() {
                 selected={selectedPath === entry.path}
                 active={selectedPath === entry.path}
                 renaming={renamingPath === entry.path}
-                inCart={has(entry.path)}
                 onSelect={() => select(entry.path, entry.kind)}
                 onActivate={() => select(entry.path, entry.kind)}
                 onRename={(newName) =>
@@ -83,7 +80,6 @@ export function ListBrowser() {
                 }
                 onCancelRename={() => setRenamingPath(null)}
                 onStartRename={() => setRenamingPath(entry.path)}
-                onAddToCart={() => toggleEntry(entry)}
                 onTrash={() => setPendingTrash([entry.path])}
                 onJumpToProject={entry.projectFramework ? () => jumpToProject(entry.path) : undefined}
                 onDragStart={(e) => e.dataTransfer.setData("text/plain", JSON.stringify([entry.path]))}

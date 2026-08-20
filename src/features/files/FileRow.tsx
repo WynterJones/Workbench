@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowUpRightIcon, PlusIcon, Trash2Icon } from "lucide-react";
+import { ArrowUpRightIcon, CopyIcon, Trash2Icon } from "lucide-react";
+import { toast } from "sonner";
+import { EntryIcon } from "@/features/files/EntryIcon";
+import { filesApi } from "@/lib/filesApi";
 import {
   ContextMenu,
   ContextMenuContent,
@@ -10,7 +13,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import type { FsEntry } from "@/lib/filesApi";
 import { formatBytes, formatModified, gitGutterColor } from "@/features/files/lib/format";
-import { iconForEntry } from "@/features/files/lib/icons";
 import { cn } from "@/lib/utils";
 
 interface FileRowProps {
@@ -18,13 +20,11 @@ interface FileRowProps {
   selected: boolean;
   active: boolean;
   renaming: boolean;
-  inCart: boolean;
   onSelect: (event: React.MouseEvent) => void;
   onActivate: () => void;
   onRename: (newName: string) => void;
   onCancelRename: () => void;
   onStartRename: () => void;
-  onAddToCart: () => void;
   onTrash: () => void;
   onJumpToProject?: () => void;
   showMeta?: boolean;
@@ -38,13 +38,11 @@ export function FileRow({
   selected,
   active,
   renaming,
-  inCart,
   onSelect,
   onActivate,
   onRename,
   onCancelRename,
   onStartRename,
-  onAddToCart,
   onTrash,
   onJumpToProject,
   showMeta = true,
@@ -52,7 +50,6 @@ export function FileRow({
   onDragStart,
   onDropInto,
 }: FileRowProps) {
-  const Icon = iconForEntry(entry);
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
 
@@ -64,6 +61,32 @@ export function FileRow({
     const value = inputRef.current?.value.trim();
     if (value && value !== entry.name) onRename(value);
     else onCancelRename();
+  }
+
+  async function copyPath() {
+    await navigator.clipboard.writeText(entry.path);
+    toast.success("Path copied");
+  }
+
+  async function copyEntry() {
+    if (entry.kind === "dir") {
+      await copyPath();
+      return;
+    }
+    try {
+      const file = await filesApi.readFile(entry.path);
+      if (file.kind !== "text" || file.text === null) {
+        await copyPath();
+        toast.message("Copied the path instead — that file isn't text.");
+        return;
+      }
+      await navigator.clipboard.writeText(file.text);
+      toast.success(`Copied ${entry.name}`);
+    } catch (error) {
+      toast.error("Could not copy", {
+        description: error instanceof Error ? error.message : String(error),
+      });
+    }
   }
 
   return (
@@ -94,7 +117,7 @@ export function FileRow({
           )}
           style={{ borderLeftColor: gitGutterColor(entry.gitStatus) }}
         >
-          <Icon className="size-4 shrink-0 text-muted-foreground" strokeWidth={1.75} />
+          <EntryIcon entry={entry} />
           {renaming ? (
             <input
               ref={inputRef}
@@ -127,15 +150,12 @@ export function FileRow({
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                onAddToCart();
+                copyEntry();
               }}
-              className={cn(
-                "absolute right-2 hidden shrink-0 cursor-pointer items-center gap-1 rounded-md bg-secondary px-1.5 py-0.5 text-[10px] font-medium text-foreground transition-colors duration-150 ease-out hover:bg-accent group-hover:flex",
-                inCart && "flex bg-brand/15 text-brand hover:bg-brand/25",
-              )}
+              className="absolute right-2 hidden shrink-0 cursor-pointer items-center gap-1 rounded-md bg-secondary px-1.5 py-0.5 text-[10px] font-medium text-foreground transition-colors duration-150 ease-out hover:bg-accent group-hover:flex"
             >
-              <PlusIcon className="size-3" />
-              {inCart ? "In context" : "Add to Context"}
+              <CopyIcon className="size-3" />
+              Copy
             </button>
           )}
         </div>
@@ -143,9 +163,8 @@ export function FileRow({
       <ContextMenuContent className="w-48">
         <ContextMenuItem onSelect={onActivate}>Open</ContextMenuItem>
         <ContextMenuItem onSelect={onStartRename}>Rename</ContextMenuItem>
-        <ContextMenuItem onSelect={onAddToCart}>
-          {inCart ? "Remove from context" : "Add to context"}
-        </ContextMenuItem>
+        <ContextMenuItem onSelect={copyEntry}>Copy contents</ContextMenuItem>
+        <ContextMenuItem onSelect={() => copyPath()}>Copy path</ContextMenuItem>
         {entry.projectFramework && onJumpToProject && (
           <ContextMenuItem onSelect={onJumpToProject}>
             <ArrowUpRightIcon />

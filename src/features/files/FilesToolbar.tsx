@@ -7,7 +7,6 @@ import {
   HardDriveIcon,
   LayoutListIcon,
   RocketIcon,
-  FileStackIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,7 +16,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useFilesStore } from "@/lib/filesStore";
-import { useContextCart } from "@/hooks/useContextCart";
 import { NewFileMenu } from "@/features/files/NewFileMenu";
 import { currentDirectory } from "@/features/files/lib/paths";
 import type { FsSortBy } from "@/lib/filesApi";
@@ -30,11 +28,8 @@ const SORT_LABELS: Record<FsSortBy, string> = {
   kind: "Kind",
 };
 
-interface FilesToolbarProps {
-  onOpenCart: () => void;
-}
 
-export function FilesToolbar({ onOpenCart }: FilesToolbarProps) {
+export function FilesToolbar() {
   const view = useFilesStore((s) => s.view);
   const setView = useFilesStore((s) => s.setView);
   const showHidden = useFilesStore((s) => s.showHidden);
@@ -48,7 +43,6 @@ export function FilesToolbar({ onOpenCart }: FilesToolbarProps) {
   const rootPath = useFilesStore((s) => s.rootPath);
   const selectedPath = useFilesStore((s) => s.selectedPath);
   const selectedKind = useFilesStore((s) => s.selectedKind);
-  const { count } = useContextCart();
 
   const dir = currentDirectory(rootPath, selectedPath, selectedKind);
 
@@ -111,15 +105,7 @@ export function FilesToolbar({ onOpenCart }: FilesToolbarProps) {
         <RocketIcon />
         Starters
       </Button>
-      <Button variant="outline" size="sm" onClick={onOpenCart} className="cursor-pointer gap-2">
-        <FileStackIcon />
-        Context
-        {count > 0 && (
-          <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-ok px-1 text-[10px] font-semibold text-background">
-            {count}
-          </span>
-        )}
-      </Button>
+
     </div>
   );
 }

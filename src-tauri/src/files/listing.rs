@@ -6,7 +6,6 @@ use serde::{Deserialize, Serialize};
 
 use crate::files::fs_ops::{guard_existing, system_time_to_rfc3339};
 
-const CHILD_COUNT_CAP: usize = 2_000;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -56,7 +55,7 @@ impl Default for SortBy {
     }
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ListOptions {
     #[serde(default)]
@@ -175,15 +174,6 @@ fn git_status_map(dir: &Path) -> HashMap<String, GitStatus> {
     map
 }
 
-fn count_children(dir: &Path, cap: usize) -> u64 {
-    let mut count = 0u64;
-    if let Ok(read_dir) = fs::read_dir(dir) {
-        for _ in read_dir.flatten().take(cap) {
-            count += 1;
-        }
-    }
-    count
-}
 
 pub fn list_dir(
     path: &str,
@@ -234,12 +224,6 @@ pub fn list_dir(
         let entry_path = item.path();
         let is_package = is_package_dir(is_dir, &extension);
 
-        let child_count = if is_dir && !is_package {
-            Some(count_children(&entry_path, CHILD_COUNT_CAP))
-        } else {
-            None
-        };
-
         let project_framework = if is_dir && !is_package {
             detect_framework_cheap(&entry_path)
         } else {
@@ -258,7 +242,7 @@ pub fn list_dir(
             extension,
             is_hidden,
             is_package,
-            child_count,
+            child_count: None,
             git_status: statuses.get(&name).copied(),
             project_framework,
         });

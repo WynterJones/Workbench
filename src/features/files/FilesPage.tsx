@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { FolderOpenIcon, Loader2Icon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useFilesStore } from "@/lib/filesStore";
@@ -10,7 +10,6 @@ import { FilesToolbar } from "@/features/files/FilesToolbar";
 import { ColumnBrowser } from "@/features/files/ColumnBrowser";
 import { ListBrowser } from "@/features/files/ListBrowser";
 import { PreviewPane } from "@/features/files/PreviewPane";
-import { ContextCart } from "@/features/files/ContextCart";
 import { StarterLibrary } from "@/features/files/StarterLibrary";
 import { DiskReclaim } from "@/features/files/DiskReclaim";
 import { useFilesCommandItems } from "@/features/files/FilesCommandItems";
@@ -21,7 +20,6 @@ export function FilesPage() {
   const view = useFilesStore((s) => s.view);
   const mode = useFilesStore((s) => s.mode);
   const { roots, isLoading } = useScanRoots();
-  const [cartOpen, setCartOpen] = useState(false);
 
   useFsWatch();
   useFilesCommandItems();
@@ -63,12 +61,11 @@ export function FilesPage() {
   return (
     <div className="flex h-full flex-col">
       <BreadcrumbBar />
-      <FilesToolbar onOpenCart={() => setCartOpen(true)} />
+      <FilesToolbar />
       <div className="flex min-h-0 flex-1">
         {view === "columns" ? <ColumnBrowser /> : <ListBrowser />}
         <PreviewPane />
       </div>
-      <ContextCart open={cartOpen} onOpenChange={setCartOpen} />
     </div>
   );
 }
