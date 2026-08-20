@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import type { Framework, ShelfId } from "@/lib/types";
 
-export type Route = "intro" | "library" | "project" | "settings";
+export type Route = "intro" | "library" | "project" | "settings" | "files";
 
 export interface CommandPaletteItem {
   id: string;
@@ -42,6 +42,9 @@ interface AppState {
 
   commandItems: CommandPaletteItem[];
   setCommandItems: (items: CommandPaletteItem[]) => void;
+
+  filesPath: string | null;
+  openFiles: (path?: string) => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -75,4 +78,7 @@ export const useAppStore = create<AppState>((set) => ({
 
   commandItems: [],
   setCommandItems: (items) => set({ commandItems: items }),
+
+  filesPath: null,
+  openFiles: (path) => set({ filesPath: path ?? null, route: "files" }),
 }));

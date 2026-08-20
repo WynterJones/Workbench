@@ -1,20 +1,31 @@
+mod ai;
 mod commands;
 mod db;
+mod files;
+mod misc;
 mod models;
+mod openers;
+mod run;
+mod scan;
+mod score;
 mod settings;
 
 use std::sync::Mutex;
 
 use db::DbState;
+use files::WatcherState;
 use tauri::Manager;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .manage(run::ProcessRegistry::default())
+        .manage(run::CaptureCancel::default())
         .setup(|app| {
             let conn = db::open().expect("failed to open workbench database");
             app.manage(DbState(Mutex::new(conn)));
+            app.manage(WatcherState::default());
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -30,7 +41,46 @@ pub fn run() {
             commands::project_activity,
             commands::get_settings,
             commands::save_settings,
+            scan::start_scan,
+            scan::ship_score,
+            scan::project_todos,
+            run::run_project,
+            run::stop_project,
+            run::trust_project,
+            run::capture_all,
+            run::capture_cancel,
+            ai::build_ai_prompt,
+            ai::start_ai_session,
+            ai::list_ai_sessions,
+            ai::kill_ai_session,
+            ai::detect_ai_clis,
+            openers::open_in,
+            misc::pick_folder,
+            misc::disk_reclaim_scan,
+            files::fs_list_dir,
+            files::fs_create_dir,
+            files::fs_create_file,
+            files::fs_rename,
+            files::fs_move_entries,
+            files::fs_copy_entries,
+            files::fs_trash_entries,
+            files::fs_get_info,
+            files::fs_watch_directory,
+            files::fs_unwatch_directory,
+            files::fs_list_starters,
+            files::fs_save_starter,
+            files::fs_delete_starter,
+            files::fs_save_folder_as_starter,
+            files::fs_file_templates,
+            files::fs_create_from_template,
+            files::fs_scaffold_starter,
+            files::fs_build_context,
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while running tauri application")
+        .run(|app_handle, event| {
+            if let tauri::RunEvent::ExitRequested { .. } = event {
+                run::kill_all_on_exit(&app_handle.state::<run::ProcessRegistry>());
+            }
+        });
 }

@@ -1,4 +1,4 @@
-import { Settings } from "lucide-react";
+import { Folder as FolderIcon, Settings } from "lucide-react";
 import { ShelfNav } from "@/components/ShelfNav";
 import { cn } from "@/lib/utils";
 import { useAppStore } from "@/lib/store";
@@ -15,13 +15,27 @@ export function Sidebar() {
         collapsed ? "w-0 overflow-hidden border-r-0" : "w-60",
       )}
     >
-      <div data-tauri-drag-region className="flex h-16 shrink-0 items-end px-4 pb-3 pt-7">
-        <span className="text-sm font-bold tracking-[0.1em] text-foreground">WORKBENCH</span>
+      <div data-tauri-drag-region className="flex h-16 shrink-0 items-end gap-2.5 px-4 pb-3 pt-7">
+        <img src="/logo.png" alt="Workbench" className="size-7 shrink-0 rounded-[7px]" />
+        <span className="pb-0.5 text-sm font-semibold tracking-tight text-foreground">Workbench</span>
       </div>
       <div className="flex-1 overflow-y-auto py-2">
         <ShelfNav />
       </div>
       <div className="border-t border-border p-2">
+        <button
+          type="button"
+          onClick={() => useAppStore.getState().openFiles()}
+          className={cn(
+            "flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm transition-colors duration-150 ease-out",
+            route === "files"
+              ? "bg-secondary text-foreground"
+              : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground",
+          )}
+        >
+          <FolderIcon className="size-4 shrink-0" strokeWidth={1.75} />
+          <span>Files</span>
+        </button>
         <button
           type="button"
           onClick={() => setRoute("settings")}
