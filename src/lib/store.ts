@@ -53,7 +53,7 @@ export const useAppStore = create<AppState>((set) => ({
   route: "intro",
   setRoute: (route) => set({ route }),
 
-  shelf: "continue",
+  shelf: "all",
   setShelf: (shelf) => set({ shelf, route: "library" }),
 
   search: "",

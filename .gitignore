@@ -27,3 +27,4 @@ dist-ssr
 outputs/
 .farmwork/
 *.icns
+docs/dist/
