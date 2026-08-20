@@ -1,32 +1,59 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
+export const MIN_WIDTH = 380;
+export const MIN_HEIGHT = 160;
+export const MAX_HEIGHT = 900;
+
+export interface Rect {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+export function clampRect(rect: Rect, viewport: { width: number; height: number }): Rect {
+  const width = Math.max(MIN_WIDTH, Math.min(rect.width, viewport.width));
+  const height = Math.max(MIN_HEIGHT, Math.min(rect.height, Math.min(MAX_HEIGHT, viewport.height)));
+  return {
+    width: Math.round(width),
+    height: Math.round(height),
+    x: Math.round(Math.max(0, Math.min(rect.x, viewport.width - width))),
+    y: Math.round(Math.max(0, Math.min(rect.y, viewport.height - height))),
+  };
+}
+
 interface TerminalState {
   open: boolean;
-  height: number;
+  docked: boolean;
+  rect: Rect;
+  dockedHeight: number;
   cwd: string | null;
   pending: string | null;
   setOpen: (open: boolean) => void;
   toggle: () => void;
-  setHeight: (height: number) => void;
+  setDocked: (docked: boolean) => void;
+  setRect: (rect: Rect) => void;
+  setDockedHeight: (height: number) => void;
   openWith: (cwd: string | null, command?: string) => void;
   consumePending: () => string | null;
 }
-
-export const MIN_HEIGHT = 160;
-export const MAX_HEIGHT = 760;
 
 export const useTerminalStore = create<TerminalState>()(
   persist(
     (set, get) => ({
       open: false,
-      height: 320,
+      docked: true,
+      rect: { x: 120, y: 120, width: 760, height: 380 },
+      dockedHeight: 320,
       cwd: null,
       pending: null,
       setOpen: (open) => set({ open }),
       toggle: () => set((state) => ({ open: !state.open })),
-      setHeight: (height) =>
-        set({ height: Math.min(MAX_HEIGHT, Math.max(MIN_HEIGHT, Math.round(height))) }),
+      setDocked: (docked) => set({ docked }),
+      setRect: (rect) => set({ rect }),
+      setDockedHeight: (height) =>
+        set({ dockedHeight: Math.min(MAX_HEIGHT, Math.max(MIN_HEIGHT, Math.round(height))) }),
       openWith: (cwd, command) => set({ open: true, cwd, pending: command ?? null }),
       consumePending: () => {
         const { pending } = get();
@@ -36,7 +63,12 @@ export const useTerminalStore = create<TerminalState>()(
     }),
     {
       name: "workbench-terminal",
-      partialize: (state) => ({ height: state.height, open: state.open }),
+      partialize: (state) => ({
+        open: state.open,
+        docked: state.docked,
+        rect: state.rect,
+        dockedHeight: state.dockedHeight,
+      }),
     },
   ),
 );

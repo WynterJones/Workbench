@@ -6,7 +6,6 @@ import {
   EyeOffIcon,
   HardDriveIcon,
   LayoutListIcon,
-  RocketIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -97,13 +96,9 @@ export function FilesToolbar() {
 
       <div className="flex-1" />
 
-      <Button variant="ghost" size="sm" onClick={() => setMode("reclaim")}>
+      <Button variant="ghost" size="sm" onClick={() => setMode("reclaim")} className="cursor-pointer">
         <HardDriveIcon />
         Reclaim
-      </Button>
-      <Button variant="ghost" size="sm" onClick={() => setMode("starters")}>
-        <RocketIcon />
-        Starters
       </Button>
 
     </div>
