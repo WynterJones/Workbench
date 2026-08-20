@@ -1,4 +1,4 @@
-import { Boxes, Cpu, Folder, Settings, Sparkles } from "lucide-react";
+import { Boxes, Cpu, Folder, Plus, Settings, Sparkles } from "lucide-react";
 import { NavItem } from "@/components/NavItem";
 import { cn } from "@/lib/utils";
 import { useAppStore } from "@/lib/store";
@@ -9,6 +9,7 @@ export function Sidebar() {
   const route = useAppStore((s) => s.route);
   const setRoute = useAppStore((s) => s.setRoute);
   const openFiles = useAppStore((s) => s.openFiles);
+  const openStarters = useAppStore((s) => s.openStarters);
   const counts = useShelfCounts();
 
   return (
@@ -33,6 +34,13 @@ export function Sidebar() {
         <NavItem icon={Folder} label="Files" active={route === "files"} onClick={() => openFiles()} />
         <NavItem icon={Sparkles} label="Skills" active={route === "skills"} onClick={() => setRoute("skills")} />
         <NavItem icon={Cpu} label="Models" active={route === "models"} onClick={() => setRoute("models")} />
+        <div className="my-1 h-px bg-border" />
+        <NavItem
+          icon={Plus}
+          label="New Project"
+          active={route === "starters"}
+          onClick={openStarters}
+        />
       </nav>
       <div className="border-t border-border p-2">
         <NavItem

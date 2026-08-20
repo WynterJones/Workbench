@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import type { Framework, ShelfId } from "@/lib/types";
 
-export type Route = "intro" | "library" | "project" | "settings" | "files" | "skills" | "models";
+export type Route = "intro" | "library" | "project" | "settings" | "files" | "skills" | "models" | "starters";
 
 export interface CommandPaletteItem {
   id: string;
@@ -45,6 +45,8 @@ interface AppState {
 
   filesPath: string | null;
   openFiles: (path?: string) => void;
+
+  openStarters: () => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -81,4 +83,6 @@ export const useAppStore = create<AppState>((set) => ({
 
   filesPath: null,
   openFiles: (path) => set({ filesPath: path ?? null, route: "files" }),
+
+  openStarters: () => set({ route: "starters" }),
 }));

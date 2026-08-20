@@ -3,6 +3,7 @@ mod commands;
 mod db;
 mod detail;
 mod files;
+mod folders;
 mod misc;
 mod models;
 mod openers;
@@ -60,6 +61,7 @@ pub fn run() {
             ai::detect_ai_clis,
             openers::open_in,
             misc::pick_folder,
+            folders::search_folders,
             misc::disk_reclaim_scan,
             files::fs_list_dir,
             files::fs_create_dir,
