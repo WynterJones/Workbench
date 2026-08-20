@@ -252,3 +252,26 @@
     color: var(--brand);
   }
 }
+
+.timeline-row {
+  content-visibility: auto;
+  contain-intrinsic-size: auto none auto 44px;
+}
+
+.timeline-row-commit {
+  contain-intrinsic-size: auto none auto 28px;
+}
+
+.timeline-cinema {
+  scrollbar-width: none;
+  mask-image: linear-gradient(to bottom, transparent 0, #000 96px);
+}
+
+.timeline-cinema::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+.timeline-cinema .timeline-month {
+  position: static;
+}

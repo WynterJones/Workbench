@@ -12,6 +12,7 @@ mod media;
 mod misc;
 mod models;
 mod openers;
+mod plugins;
 mod pty;
 mod run;
 mod scan;
@@ -99,6 +100,12 @@ pub fn run() {
             skills::search_skill_registry,
             agents::detect_agents,
             mcp::list_mcp_servers,
+            plugins::list_plugins,
+            plugins::set_plugin_enabled,
+            plugins::set_plugin_credential,
+            plugins::set_plugin_selection,
+            plugins::plugin_sources,
+            plugins::plugin_items,
             doctor::system_checks,
             misc::disk_reclaim_scan,
             files::fs_list_dir,

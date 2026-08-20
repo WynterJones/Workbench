@@ -1,5 +1,6 @@
-import { Boxes, Cpu, Folder, GitBranch, Images, Plug, Plus, Settings, Sparkles } from "lucide-react";
+import { Blocks, Boxes, Cpu, Folder, GitBranch, Images, Plug, Plus, Settings, Sparkles } from "lucide-react";
 import { NavItem } from "@/components/NavItem";
+import { PluginNavLinks } from "@/features/plugins/PluginNavLinks";
 import { cn } from "@/lib/utils";
 import { useAppStore } from "@/lib/store";
 import { useShelfCounts } from "@/hooks/useShelfCounts";
@@ -47,6 +48,7 @@ export function Sidebar() {
         <NavItem icon={Sparkles} label="Skills" active={route === "skills"} onClick={() => setRoute("skills")} />
         <NavItem icon={Plug} label="MCPs" active={route === "mcp"} onClick={() => setRoute("mcp")} />
         <NavItem icon={Cpu} label="Models" active={route === "models"} onClick={() => setRoute("models")} />
+        <PluginNavLinks />
         <div className="my-1 h-px bg-border" />
         <NavItem
           icon={Plus}
@@ -61,6 +63,12 @@ export function Sidebar() {
           label="Timeline"
           active={route === "timeline"}
           onClick={() => setRoute("timeline")}
+        />
+        <NavItem
+          icon={Blocks}
+          label="Plugins"
+          active={route === "plugins"}
+          onClick={() => setRoute("plugins")}
         />
         <NavItem
           icon={Settings}

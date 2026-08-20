@@ -11,6 +11,8 @@ import { MediaPage } from "@/features/media/MediaPage";
 import { StarterLibrary } from "@/features/files/StarterLibrary";
 import { ModelsPage } from "@/features/models/ModelsPage";
 import { McpPage } from "@/features/mcp/McpPage";
+import { PluginsPage } from "@/features/plugins/PluginsPage";
+import { PluginDashboard } from "@/features/plugins/PluginDashboard";
 import { useFilesStore } from "@/lib/filesStore";
 import { WindowSweep } from "@/components/WindowSweep";
 import { TerminalPanel } from "@/features/terminal/TerminalPanel";
@@ -60,6 +62,8 @@ export default function App() {
       {route === "skills" && <SkillsPage />}
       {route === "models" && <ModelsPage />}
       {route === "mcp" && <McpPage />}
+      {route === "plugins" && <PluginsPage />}
+      {route === "plugin" && <PluginDashboard />}
       {route === "settings" && <SettingsPage />}
       <TerminalPanel />
     </AppShell>

@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import type { Framework, ShelfId } from "@/lib/types";
 
-export type Route = "intro" | "library" | "project" | "settings" | "files" | "skills" | "models" | "starters" | "timeline" | "media" | "mcp";
+export type Route = "intro" | "library" | "project" | "settings" | "files" | "skills" | "models" | "starters" | "timeline" | "media" | "mcp" | "plugins" | "plugin";
 
 export interface CommandPaletteItem {
   id: string;
@@ -47,6 +47,9 @@ interface AppState {
   openFiles: (path?: string) => void;
 
   openStarters: () => void;
+
+  activePluginId: string | null;
+  openPlugin: (id: string) => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -85,4 +88,7 @@ export const useAppStore = create<AppState>((set) => ({
   openFiles: (path) => set({ filesPath: path ?? null, route: "files" }),
 
   openStarters: () => set({ route: "starters" }),
+
+  activePluginId: null,
+  openPlugin: (id) => set({ activePluginId: id, route: "plugin" }),
 }));

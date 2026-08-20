@@ -29,6 +29,13 @@ export function useAutoScroll(anchor: React.RefObject<HTMLElement | null>) {
   }, [anchor]);
 
   useEffect(() => {
+    const container = scrollableAncestor(anchor.current);
+    if (!container) return;
+    container.classList.toggle("timeline-cinema", playing);
+    return () => container.classList.remove("timeline-cinema");
+  }, [playing, anchor]);
+
+  useEffect(() => {
     if (!playing) return;
 
     const container = scrollableAncestor(anchor.current);

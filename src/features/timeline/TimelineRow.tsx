@@ -40,8 +40,8 @@ export function TimelineRow({ event, seen, onOpen }: TimelineRowProps) {
       data-row-id={event.id}
       onClick={onOpen}
       className={cn(
-        "group relative flex w-full cursor-pointer items-center gap-3 rounded-lg pr-3 text-left transition-[opacity,transform] duration-500 ease-out hover:bg-secondary/40 motion-reduce:transition-none",
-        milestone ? "py-2.5 pl-16" : "py-1.5 pl-24",
+        "timeline-row group relative flex w-full cursor-pointer items-center gap-3 rounded-lg pr-3 text-left transition-[opacity,transform] duration-500 ease-out hover:bg-secondary/40 motion-reduce:transition-none",
+        milestone ? "py-2.5 pl-16" : "timeline-row-commit py-1.5 pl-24",
         seen ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0",
       )}
     >

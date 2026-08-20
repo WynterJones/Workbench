@@ -130,7 +130,7 @@ export function TimelinePage() {
 
               return (
                 <section key={group.key} data-month-key={group.key}>
-                  <div className="sticky top-14 z-[1] -mx-2 flex items-center gap-3 bg-background/95 px-2 py-1.5 backdrop-blur">
+                  <div className="timeline-month sticky top-14 z-[1] -mx-2 flex items-center gap-3 bg-background/95 px-2 py-1.5 backdrop-blur">
                     <span
                       className={`w-[22px] shrink-0 text-right font-mono text-[10px] uppercase tracking-wide ${
                         newYear ? "text-brand" : "text-transparent"

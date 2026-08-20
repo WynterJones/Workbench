@@ -98,6 +98,13 @@ CREATE TABLE settings (
 "#,
 r#"
 ALTER TABLE projects ADD COLUMN homepage TEXT;
+"#,
+r#"
+CREATE TABLE plugins (
+    id TEXT PRIMARY KEY,
+    enabled INTEGER NOT NULL DEFAULT 0,
+    selected TEXT NOT NULL DEFAULT '[]'
+);
 "#];
 
 pub fn db_path() -> Result<std::path::PathBuf, String> {

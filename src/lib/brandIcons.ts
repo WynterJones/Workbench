@@ -84,6 +84,9 @@ const EXTRA_KEYS: Record<string, string> = {
   opencode: "siOpencode",
   cline: "siCline",
   ollama: "siOllama",
+  railway: "siRailway",
+  sentry: "siSentry",
+  github: "siGithub",
 };
 
 export function frameworkBrand(framework: Framework): BrandMark | null {
