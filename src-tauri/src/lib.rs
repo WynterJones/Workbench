@@ -11,6 +11,7 @@ mod media;
 mod misc;
 mod models;
 mod openers;
+mod pty;
 mod run;
 mod scan;
 mod score;
@@ -34,6 +35,7 @@ pub fn run() {
         .manage(run::ProcessRegistry::default())
         .manage(run::CaptureCancel::default())
         .manage(timeline::TimelineCache::default())
+        .manage(pty::PtyRegistry::default())
         .setup(|app| {
             let conn = db::open().expect("failed to open workbench database");
             app.manage(DbState(Mutex::new(conn)));
@@ -46,6 +48,8 @@ pub fn run() {
             commands::update_project,
             commands::set_tags,
             commands::archive_project,
+            commands::forget_project,
+            commands::trash_project_folder,
             commands::list_roots,
             commands::add_root,
             commands::remove_root,
@@ -75,6 +79,11 @@ pub fn run() {
             ai::detect_ai_clis,
             openers::open_in,
             misc::pick_folder,
+            pty::pty_open,
+            pty::pty_write,
+            pty::pty_resize,
+            pty::pty_close,
+            pty::pty_is_open,
             folders::search_folders,
             heatmap::contribution_heatmap,
             usage::token_usage,

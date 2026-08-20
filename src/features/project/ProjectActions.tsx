@@ -8,6 +8,7 @@ import {
   GlobeIcon,
   PlayIcon,
   CameraIcon,
+  Trash2Icon,
   SparklesIcon,
   TerminalIcon,
 } from "lucide-react";
@@ -22,6 +23,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { AiLaunchDialog } from "@/features/project/AiLaunchDialog";
 import { TrustDialog } from "@/features/project/TrustDialog";
+import { DeleteProjectDialog } from "@/features/project/DeleteProjectDialog";
 import { useQueryClient } from "@tanstack/react-query";
 import { useArchiveProject } from "@/hooks/useProjects";
 import { useRunProject } from "@/hooks/useRunProject";
@@ -39,6 +41,7 @@ export function ProjectActions({ project, onRunResult }: ProjectActionsProps) {
   const [aiOpen, setAiOpen] = useState(false);
   const [trustOpen, setTrustOpen] = useState(false);
   const [capturing, setCapturing] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const queryClient = useQueryClient();
 
   async function openIn(target: "editor" | "browser" | "finder" | "terminal") {
@@ -146,10 +149,19 @@ export function ProjectActions({ project, onRunResult }: ProjectActionsProps) {
             {project.archived ? <ArchiveRestoreIcon /> : <ArchiveIcon />}
             {project.archived ? "Unarchive project" : "Archive project"}
           </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => setDeleteOpen(true)}
+            variant="destructive"
+            className="cursor-pointer"
+          >
+            <Trash2Icon />
+            Delete project…
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
 
       <AiLaunchDialog project={project} open={aiOpen} onOpenChange={setAiOpen} />
+      <DeleteProjectDialog project={project} open={deleteOpen} onOpenChange={setDeleteOpen} />
       <TrustDialog
         project={project}
         open={trustOpen}

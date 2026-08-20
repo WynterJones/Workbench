@@ -419,6 +419,15 @@ pub fn set_tags(conn: &Connection, id: i64, tags: &[String]) -> rusqlite::Result
     Ok(())
 }
 
+pub fn delete_project(conn: &Connection, id: i64) -> rusqlite::Result<()> {
+    conn.execute("DELETE FROM screenshots WHERE project_id = ?1", params![id])?;
+    conn.execute("DELETE FROM tags WHERE project_id = ?1", params![id])?;
+    conn.execute("DELETE FROM activity WHERE project_id = ?1", params![id])?;
+    conn.execute("DELETE FROM run_log WHERE project_id = ?1", params![id])?;
+    conn.execute("DELETE FROM projects WHERE id = ?1", params![id])?;
+    Ok(())
+}
+
 pub fn archive_project(conn: &Connection, id: i64, archived: bool) -> rusqlite::Result<()> {
     conn.execute(
         "UPDATE projects SET archived = ?1 WHERE id = ?2",
@@ -921,5 +930,43 @@ mod tests {
             sort: SortMode::Modified,
         };
         assert_eq!(list_projects(&conn, &query).unwrap().len(), 1);
+    }
+
+    #[test]
+    fn deleting_a_project_removes_its_related_rows() {
+        let conn = Connection::open_in_memory().unwrap();
+        run_migrations(&conn).unwrap();
+
+        let project = upsert_project(&conn, &sample_input("/code/doomed", "Doomed")).unwrap();
+        set_tags(&conn, project.id, &["prototype".to_string()]).unwrap();
+        upsert_screenshot(&conn, project.id, "desktop", "/tmp/a.png").unwrap();
+
+        delete_project(&conn, project.id).unwrap();
+
+        assert!(get_project(&conn, project.id).unwrap().is_none());
+        let tags: i64 = conn
+            .query_row("SELECT COUNT(*) FROM tags WHERE project_id = ?1", params![project.id], |r| r.get(0))
+            .unwrap();
+        let shots: i64 = conn
+            .query_row("SELECT COUNT(*) FROM screenshots WHERE project_id = ?1", params![project.id], |r| r.get(0))
+            .unwrap();
+        let activity: i64 = conn
+            .query_row("SELECT COUNT(*) FROM activity WHERE project_id = ?1", params![project.id], |r| r.get(0))
+            .unwrap();
+        assert_eq!((tags, shots, activity), (0, 0, 0));
+    }
+
+    #[test]
+    fn deleting_one_project_leaves_others_intact() {
+        let conn = Connection::open_in_memory().unwrap();
+        run_migrations(&conn).unwrap();
+
+        let keep = upsert_project(&conn, &sample_input("/code/keep", "Keep")).unwrap();
+        let drop = upsert_project(&conn, &sample_input("/code/drop", "Drop")).unwrap();
+
+        delete_project(&conn, drop.id).unwrap();
+
+        assert!(get_project(&conn, keep.id).unwrap().is_some());
+        assert!(get_project(&conn, drop.id).unwrap().is_none());
     }
 }

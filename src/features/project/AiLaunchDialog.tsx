@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { CopyIcon, TerminalIcon } from "lucide-react";
+import { CopyIcon, SplitSquareVerticalIcon, TerminalIcon } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { useTerminalStore } from "@/lib/terminalStore";
 import {
   Dialog,
   DialogContent,
@@ -55,6 +56,15 @@ export function AiLaunchDialog({ project, open, onOpenChange }: AiLaunchDialogPr
 
   const session = startSession.data;
 
+  function launchInTerminal() {
+    const cli = provider === "codex" ? "codex" : "claude";
+    useTerminalStore.getState().openWith(project.path, cli);
+    onOpenChange(false);
+    toast.success("Terminal opened", {
+      description: `Running ${cli} in ${project.name}.`,
+    });
+  }
+
   function launch() {
     startSession.mutate({ id: project.id, provider });
   }
@@ -65,7 +75,8 @@ export function AiLaunchDialog({ project, open, onOpenChange }: AiLaunchDialogPr
         <DialogHeader>
           <DialogTitle>Continue with AI</DialogTitle>
           <DialogDescription>
-            Launches a detached tmux session in the project directory with this context.
+            Run it in the built-in terminal, or launch a detached tmux session that survives
+            quitting Workbench.
           </DialogDescription>
         </DialogHeader>
 
@@ -112,8 +123,13 @@ export function AiLaunchDialog({ project, open, onOpenChange }: AiLaunchDialogPr
         )}
 
         <DialogFooter>
-          <Button onClick={launch} disabled={startSession.isPending}>
-            {startSession.isPending ? "Starting…" : "Start session"}
+          <Button variant="outline" onClick={launch} disabled={startSession.isPending} className="cursor-pointer">
+            <SplitSquareVerticalIcon />
+            {startSession.isPending ? "Starting…" : "Detached tmux session"}
+          </Button>
+          <Button onClick={launchInTerminal} className="cursor-pointer">
+            <TerminalIcon />
+            Run in terminal
           </Button>
         </DialogFooter>
       </DialogContent>

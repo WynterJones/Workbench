@@ -12,6 +12,7 @@ import { StarterLibrary } from "@/features/files/StarterLibrary";
 import { ModelsPage } from "@/features/models/ModelsPage";
 import { useFilesStore } from "@/lib/filesStore";
 import { WindowSweep } from "@/components/WindowSweep";
+import { TerminalPanel } from "@/features/terminal/TerminalPanel";
 import { useAppStore } from "@/lib/store";
 import { useSettings } from "@/hooks/useSettings";
 
@@ -58,6 +59,7 @@ export default function App() {
       {route === "skills" && <SkillsPage />}
       {route === "models" && <ModelsPage />}
       {route === "settings" && <SettingsPage />}
+      <TerminalPanel />
     </AppShell>
   );
 }

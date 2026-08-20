@@ -88,3 +88,36 @@ pub fn save_settings(state: State<DbState>, settings: Settings) -> Result<Settin
     let conn = state.0.lock().map_err(|e| e.to_string())?;
     settings::save_settings(&conn, &settings).map_err(|e| e.to_string())
 }
+
+#[tauri::command]
+pub fn forget_project(state: State<DbState>, id: i64) -> Result<(), String> {
+    let conn = state.0.lock().map_err(|e| e.to_string())?;
+    db::delete_project(&conn, id).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn trash_project_folder(state: State<DbState>, id: i64) -> Result<String, String> {
+    let conn = state.0.lock().map_err(|e| e.to_string())?;
+    let project = db::get_project(&conn, id)
+        .map_err(|e| e.to_string())?
+        .ok_or_else(|| format!("project {id} not found"))?;
+
+    let path = std::path::Path::new(&project.path);
+    if !path.is_dir() {
+        db::delete_project(&conn, id).map_err(|e| e.to_string())?;
+        return Ok(project.path);
+    }
+
+    let home = dirs::home_dir().ok_or("could not resolve your home directory")?;
+    let resolved = path.canonicalize().map_err(|e| e.to_string())?;
+    if resolved == home || home.starts_with(&resolved) {
+        return Err("refusing to trash your home directory or one of its parents".into());
+    }
+    if resolved.components().count() < 3 {
+        return Err(format!("refusing to trash {}, it is too close to the root", resolved.display()));
+    }
+
+    trash::delete(&resolved).map_err(|e| e.to_string())?;
+    db::delete_project(&conn, id).map_err(|e| e.to_string())?;
+    Ok(project.path)
+}

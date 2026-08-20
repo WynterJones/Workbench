@@ -5,6 +5,7 @@ import { TopBar } from "@/components/TopBar";
 import { ShelfTabs } from "@/components/ShelfTabs";
 import { CommandPalette } from "@/components/CommandPalette";
 import { useAppStore } from "@/lib/store";
+import { useTerminalStore } from "@/lib/terminalStore";
 
 interface AppShellProps {
   children: ReactNode;
@@ -25,6 +26,10 @@ export function AppShell({ children }: AppShellProps) {
       if (meta && event.key === "\\") {
         event.preventDefault();
         toggleSidebar();
+      }
+      if (meta && event.key === "`") {
+        event.preventDefault();
+        useTerminalStore.getState().toggle();
       }
     }
     window.addEventListener("keydown", onKeyDown);
