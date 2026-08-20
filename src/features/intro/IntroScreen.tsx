@@ -5,13 +5,14 @@ import { useState } from "react";
 import { IntroStepWordmark } from "@/features/intro/IntroStepWordmark";
 import { IntroStepDiagram } from "@/features/intro/IntroStepDiagram";
 import { IntroStepFolders } from "@/features/intro/IntroStepFolders";
+import { IntroStepScan } from "@/features/intro/IntroStepScan";
 import { usePrefersReducedMotion } from "@/features/intro/usePrefersReducedMotion";
 import { useAppStore } from "@/lib/store";
 import { useSettings, useSaveSettings } from "@/hooks/useSettings";
 import { useScan } from "@/hooks/useScan";
 import type { Settings } from "@/lib/types";
 
-const STEP_COUNT = 3;
+const STEP_COUNT = 4;
 
 const FALLBACK_SETTINGS: Settings = {
   aiProvider: "claude-code",
@@ -65,7 +66,8 @@ export function IntroScreen() {
         />
       )}
       {step === 1 && <IntroStepDiagram reducedMotion={reducedMotion} onNext={() => setStep(2)} />}
-      {step === 2 && <IntroStepFolders reducedMotion={reducedMotion} onFinish={finishAndScan} />}
+      {step === 2 && <IntroStepFolders reducedMotion={reducedMotion} onNext={() => goToStep(3)} />}
+      {step === 3 && <IntroStepScan reducedMotion={reducedMotion} onFinish={finishAndScan} />}
       </div>
       <MadeBy reducedMotion={reducedMotion} />
       <div className="absolute bottom-8 z-20 flex gap-1.5">

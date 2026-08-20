@@ -1,4 +1,4 @@
-import { FolderPlus, ScanLine, X } from "lucide-react";
+import { ArrowRightIcon, FolderPlus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CtaButton } from "@/components/CtaButton";
 import { useScanRoots } from "@/hooks/useScanRoots";
@@ -6,10 +6,10 @@ import { cn } from "@/lib/utils";
 
 interface IntroStepFoldersProps {
   reducedMotion: boolean;
-  onFinish: () => void;
+  onNext: () => void;
 }
 
-export function IntroStepFolders({ reducedMotion, onFinish }: IntroStepFoldersProps) {
+export function IntroStepFolders({ reducedMotion, onNext }: IntroStepFoldersProps) {
   const { roots, pickAndAddRoot, removeRoot } = useScanRoots();
 
   return (
@@ -51,10 +51,13 @@ export function IntroStepFolders({ reducedMotion, onFinish }: IntroStepFoldersPr
           ))}
         </ul>
       )}
-      <CtaButton size="lg" disabled={roots.length === 0} onClick={onFinish}>
-        <ScanLine />
-        Scan my drive
+      <CtaButton size="lg" disabled={roots.length === 0} onClick={onNext}>
+        Continue
+        <ArrowRightIcon />
       </CtaButton>
+      {roots.length === 0 && (
+        <p className="-mt-3 text-xs text-muted-foreground">Add at least one folder to continue.</p>
+      )}
     </div>
   );
 }
