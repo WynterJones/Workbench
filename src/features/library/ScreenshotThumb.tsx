@@ -1,5 +1,6 @@
 import { convertFileSrc } from "@tauri-apps/api/core";
 import { cn } from "@/lib/utils";
+import { CodePeek } from "@/features/library/CodePeek";
 import { frameworkIcon } from "@/lib/format";
 import type { Framework } from "@/lib/types";
 
@@ -7,6 +8,7 @@ interface ScreenshotThumbProps {
   screenshotPath: string | null;
   framework: Framework;
   name: string;
+  projectId?: number;
   className?: string;
 }
 
@@ -14,6 +16,7 @@ export function ScreenshotThumb({
   screenshotPath,
   framework,
   name,
+  projectId,
   className,
 }: ScreenshotThumbProps) {
   const Icon = frameworkIcon(framework);
@@ -22,11 +25,12 @@ export function ScreenshotThumb({
     return (
       <div
         className={cn(
-          "flex aspect-[16/10] w-full items-center justify-center rounded-t-lg bg-gradient-to-br from-secondary to-background",
+          "relative flex aspect-[16/10] w-full items-center justify-center overflow-hidden rounded-t-lg bg-gradient-to-br from-secondary to-background",
           className
         )}
       >
-        <Icon className="size-10 text-muted-foreground/40" strokeWidth={1.25} />
+        <Icon className="size-10 text-muted-foreground/30" strokeWidth={1.25} />
+        {projectId !== undefined && <CodePeek projectId={projectId} />}
       </div>
     );
   }

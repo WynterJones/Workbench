@@ -55,6 +55,7 @@ export function ProjectCard({ project, onOpen }: ProjectCardProps) {
             screenshotPath={project.screenshotDesktop}
             framework={project.framework}
             name={project.name}
+            projectId={project.id}
           />
           <div className="absolute inset-x-0 bottom-0 flex items-center justify-center gap-1.5 bg-gradient-to-t from-background/90 to-transparent p-2 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
             <Tooltip>
