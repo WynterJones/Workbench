@@ -38,7 +38,9 @@ export function ProjectTimeline({ project }: ProjectTimelineProps) {
       error={error}
       onRetry={refetch}
       isEmpty={entries.length === 0}
-      emptyMessage="No activity recorded yet."
+      emptyTitle="No activity yet"
+      emptyMessage="Scan or run this project and its history will appear here."
+      compact
       skeleton={
         <div className="space-y-3">
           {[0, 1, 2, 3].map((i) => (

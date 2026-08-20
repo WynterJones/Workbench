@@ -1,4 +1,5 @@
-import { CopyIcon, FolderOpenIcon } from "lucide-react";
+import { BookOpenIcon, CopyIcon, FolderOpenIcon } from "lucide-react";
+import { EmptyStateBlock } from "@/components/EmptyStateBlock";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,8 +18,12 @@ export function SkillViewer({ path }: SkillViewerProps) {
 
   if (!path) {
     return (
-      <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-        Select a skill to read it.
+      <div className="flex h-full items-center justify-center">
+        <EmptyStateBlock
+          icon={BookOpenIcon}
+          title="Select a skill"
+          message="Pick a skill on the left to read its instructions and files."
+        />
       </div>
     );
   }

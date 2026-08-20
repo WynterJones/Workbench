@@ -51,7 +51,9 @@ export function SkillsPage() {
             error={error}
             onRetry={() => refetch()}
             isEmpty={grouped.length === 0}
-            emptyMessage="No skills installed for Claude Code or Codex yet."
+            emptyTitle="No skills yet"
+            emptyMessage="Install one with the field above, or browse skills.sh."
+            compact
             skeleton={
               <div className="space-y-2">
                 {[0, 1, 2, 3, 4].map((i) => (
@@ -81,7 +83,7 @@ export function SkillsPage() {
           </QueryState>
         </div>
       </div>
-      <div className="min-w-0 flex-1">
+      <div className="flex min-w-0 flex-1 flex-col">
         <SkillViewer path={selected} />
       </div>
     </div>

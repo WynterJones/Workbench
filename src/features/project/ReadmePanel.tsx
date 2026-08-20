@@ -17,7 +17,9 @@ export function ReadmePanel({ projectId }: ReadmePanelProps) {
       error={error}
       onRetry={() => refetch()}
       isEmpty={!data}
-      emptyMessage="No README found in this project."
+      emptyTitle="No README"
+      emptyMessage="This project has no README.md, readme.md or README file."
+      compact
       skeleton={
         <div className="space-y-2">
           <Skeleton className="h-4 w-40" />

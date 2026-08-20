@@ -69,7 +69,9 @@ export function FolderPicker({
             error={error}
             onRetry={() => refetch()}
             isEmpty={!data || data.length === 0}
-            emptyMessage="No folders matched. Try a different name, or browse below."
+            emptyTitle="No folders matched"
+            emptyMessage="Try a different name, or browse for a folder below."
+            compact
             skeleton={
               <div className="space-y-1.5">
                 {[0, 1, 2, 3].map((i) => (

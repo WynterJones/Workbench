@@ -1,5 +1,8 @@
 import type { ReactNode } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ErrorState } from "@/components/ErrorState";
+import { EmptyStateBlock } from "@/components/EmptyStateBlock";
+import { explainError } from "@/lib/errorMessage";
 
 interface QueryStateProps {
   isLoading: boolean;
@@ -7,8 +10,10 @@ interface QueryStateProps {
   error?: unknown;
   onRetry?: () => void;
   isEmpty?: boolean;
+  emptyTitle?: string;
   emptyMessage?: string;
   skeleton?: ReactNode;
+  compact?: boolean;
   children: ReactNode;
 }
 
@@ -18,8 +23,10 @@ export function QueryState({
   error,
   onRetry,
   isEmpty,
-  emptyMessage = "Nothing here.",
+  emptyTitle = "Nothing here yet",
+  emptyMessage,
   skeleton,
+  compact,
   children,
 }: QueryStateProps) {
   if (isLoading) {
@@ -27,20 +34,20 @@ export function QueryState({
   }
 
   if (isError) {
+    const explained = explainError(error);
     return (
-      <div className="flex items-center gap-2 py-2 text-xs text-muted-foreground">
-        <span>{error instanceof Error ? error.message : String(error ?? "Something went wrong.")}</span>
-        {onRetry && (
-          <button type="button" onClick={onRetry} className="cursor-pointer underline underline-offset-2">
-            Retry
-          </button>
-        )}
-      </div>
+      <ErrorState
+        title={explained.title}
+        message={explained.message}
+        hint={explained.hint}
+        onRetry={onRetry}
+        compact={compact}
+      />
     );
   }
 
   if (isEmpty) {
-    return <p className="py-2 text-xs text-muted-foreground">{emptyMessage}</p>;
+    return <EmptyStateBlock title={emptyTitle} message={emptyMessage} compact={compact} />;
   }
 
   return <>{children}</>;

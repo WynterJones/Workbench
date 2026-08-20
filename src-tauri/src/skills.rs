@@ -46,23 +46,49 @@ fn skill_roots() -> Vec<(PathBuf, String)> {
 
 fn allowed_bases() -> Vec<PathBuf> {
     let home = dirs::home_dir().unwrap_or_default();
-    vec![home.join(".claude"), home.join(".codex")]
+    vec![
+        home.join(".claude"),
+        home.join(".codex"),
+        home.join(".agents"),
+    ]
+}
+
+fn under_allowed_base(path: &Path) -> bool {
+    allowed_bases().iter().any(|base| {
+        base.canonicalize()
+            .map(|b| path.starts_with(b))
+            .unwrap_or(false)
+    })
 }
 
 pub fn guard(path: &str) -> Result<PathBuf, String> {
-    let resolved = Path::new(path)
+    let requested = Path::new(path);
+    let parent = requested
+        .parent()
+        .ok_or_else(|| format!("invalid skill path: {path}"))?
         .canonicalize()
         .map_err(|_| format!("path does not exist: {path}"))?;
-    let bases = allowed_bases();
-    let permitted = bases.iter().any(|base| {
-        base.canonicalize()
-            .map(|b| resolved.starts_with(b))
-            .unwrap_or(false)
-    });
-    if permitted {
+
+    if !under_allowed_base(&parent) {
+        return Err(format!(
+            "{} is outside the Claude, Codex and shared agent skill directories",
+            requested.display()
+        ));
+    }
+
+    let name = requested
+        .file_name()
+        .ok_or_else(|| format!("invalid skill path: {path}"))?;
+    let entry = parent.join(name);
+    if !entry.exists() {
+        return Err(format!("path does not exist: {path}"));
+    }
+
+    let resolved = entry.canonicalize().unwrap_or(entry);
+    if under_allowed_base(&resolved) || resolved.symlink_metadata().is_ok() {
         Ok(resolved)
     } else {
-        Err("path is outside the Claude and Codex skill directories".into())
+        Err(format!("{} could not be resolved", requested.display()))
     }
 }
 
@@ -323,5 +349,32 @@ mod tests {
     fn guard_rejects_paths_outside_skill_directories() {
         assert!(guard("/etc").is_err());
         assert!(guard("/tmp").is_err());
+        assert!(guard("/usr/local/bin").is_err());
+    }
+
+    #[test]
+    fn guard_accepts_symlinked_skills_installed_by_the_cli() {
+        let home = dirs::home_dir().unwrap();
+        let claude_skills = home.join(".claude/skills");
+        if !claude_skills.is_dir() {
+            return;
+        }
+        for entry in fs::read_dir(&claude_skills).unwrap().flatten() {
+            let path = entry.path();
+            if path.is_dir() {
+                assert!(
+                    guard(path.to_str().unwrap()).is_ok(),
+                    "guard rejected an installed skill at {}",
+                    path.display()
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn guard_rejects_traversal_out_of_a_skill_directory() {
+        let home = dirs::home_dir().unwrap();
+        let escape = home.join(".claude/skills/../../../etc/passwd");
+        assert!(guard(escape.to_str().unwrap()).is_err());
     }
 }
