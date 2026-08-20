@@ -13,6 +13,7 @@ mod run;
 mod scan;
 mod score;
 mod settings;
+mod usage;
 mod shots;
 mod skills;
 
@@ -70,6 +71,7 @@ pub fn run() {
             misc::pick_folder,
             folders::search_folders,
             heatmap::contribution_heatmap,
+            usage::token_usage,
             skills::list_skills,
             skills::read_skill,
             skills::toggle_skill,

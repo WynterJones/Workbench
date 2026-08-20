@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { InsightsBar } from "@/features/library/InsightsBar";
 import { ContributionHeatmap } from "@/features/library/ContributionHeatmap";
+import { TokenUsageStrip } from "@/features/library/TokenUsageStrip";
 import { FilterBar } from "@/features/library/FilterBar";
 import { ProjectGrid } from "@/features/library/ProjectGrid";
 import { useLibraryProjects, useLibraryStats } from "@/hooks/useProjects";
@@ -58,6 +59,7 @@ export function LibraryPage() {
     <div className="space-y-4 px-6 pb-6 pt-4">
       <ContributionHeatmap />
       <InsightsBar />
+      <TokenUsageStrip />
       <FilterBar
         availableFrameworks={availableFrameworks}
         availableTags={availableTags}

@@ -7,7 +7,7 @@ import { heatmapWeeks, monthLabels, levelFor } from "@/lib/heatmap";
 import { cn } from "@/lib/utils";
 
 const LEVEL_CLASS = [
-  "bg-secondary/60",
+  "bg-secondary/50",
   "bg-brand/25",
   "bg-brand/45",
   "bg-brand/70",
@@ -15,8 +15,7 @@ const LEVEL_CLASS = [
 ];
 
 function dayLabel(day: HeatmapDay) {
-  const date = new Date(`${day.date}T00:00:00`);
-  const pretty = date.toLocaleDateString(undefined, {
+  const pretty = new Date(`${day.date}T00:00:00`).toLocaleDateString(undefined, {
     weekday: "short",
     month: "short",
     day: "numeric",
@@ -42,66 +41,64 @@ export function ContributionHeatmap() {
       error={error}
       onRetry={() => refetch()}
       compact
-      skeleton={<Skeleton className="h-[132px] w-full rounded-lg" />}
+      skeleton={<Skeleton className="h-16 w-full rounded-md" />}
     >
       {data && (
-        <div className="space-y-2 rounded-lg border border-border bg-card p-4">
-          <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <p className="text-sm text-foreground">
-              <span className="font-semibold tabular-nums">{data.total.toLocaleString()}</span>{" "}
-              <span className="text-muted-foreground">commits in the last year</span>
+        <div className="space-y-1.5">
+          <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+            <p className="text-xs text-muted-foreground">
+              <span className="font-semibold tabular-nums text-foreground">
+                {data.total.toLocaleString()}
+              </span>{" "}
+              commits in the last year across {data.reposScanned} scanned repos
             </p>
-            <p className="text-[11px] text-muted-foreground">
-              {data.reposScanned} repos · {data.currentStreak}d streak · longest{" "}
-              {data.longestStreak}d
+            <p className="flex items-center gap-3 text-[11px] text-muted-foreground">
+              <span>{data.currentStreak}d streak</span>
+              <span>longest {data.longestStreak}d</span>
+              <span className="flex items-center gap-1">
+                Less
+                {LEVEL_CLASS.map((className) => (
+                  <span key={className} className={cn("size-2 rounded-[2px]", className)} />
+                ))}
+                More
+              </span>
             </p>
           </div>
 
-          <div className="overflow-x-auto pb-1">
-            <div className="inline-flex flex-col gap-1">
-              <div className="flex gap-[3px] pl-0 text-[10px] text-muted-foreground">
-                {months.map((month) => (
-                  <span
-                    key={`${month.label}-${month.index}`}
-                    style={{ width: `${month.span * 13 - 3}px` }}
-                    className="shrink-0 text-left"
-                  >
-                    {month.label}
-                  </span>
-                ))}
+          <div className="flex w-full gap-[2px]">
+            {weeks.map((week, weekIndex) => (
+              <div key={weekIndex} className="flex min-w-0 flex-1 flex-col gap-[2px]">
+                {week.map((day, dayIndex) =>
+                  day ? (
+                    <Tooltip key={day.date}>
+                      <TooltipTrigger asChild>
+                        <span
+                          className={cn(
+                            "aspect-square w-full rounded-[2px]",
+                            LEVEL_CLASS[levelFor(day.count, max)],
+                          )}
+                        />
+                      </TooltipTrigger>
+                      <TooltipContent side="top">{dayLabel(day)}</TooltipContent>
+                    </Tooltip>
+                  ) : (
+                    <span key={dayIndex} className="aspect-square w-full" />
+                  ),
+                )}
               </div>
-              <div className="flex gap-[3px]">
-                {weeks.map((week, weekIndex) => (
-                  <div key={weekIndex} className="flex flex-col gap-[3px]">
-                    {week.map((day, dayIndex) =>
-                      day ? (
-                        <Tooltip key={day.date}>
-                          <TooltipTrigger asChild>
-                            <span
-                              className={cn(
-                                "size-[10px] rounded-[2px]",
-                                LEVEL_CLASS[levelFor(day.count, max)],
-                              )}
-                            />
-                          </TooltipTrigger>
-                          <TooltipContent side="top">{dayLabel(day)}</TooltipContent>
-                        </Tooltip>
-                      ) : (
-                        <span key={dayIndex} className="size-[10px]" />
-                      ),
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-end gap-1.5 text-[10px] text-muted-foreground">
-            Less
-            {LEVEL_CLASS.map((className) => (
-              <span key={className} className={cn("size-[10px] rounded-[2px]", className)} />
             ))}
-            More
+          </div>
+
+          <div className="flex w-full gap-[2px] text-[9px] uppercase tracking-wide text-muted-foreground/70">
+            {months.map((month) => (
+              <span
+                key={`${month.label}-${month.index}`}
+                className="min-w-0 truncate"
+                style={{ flex: `${month.span} 1 0%` }}
+              >
+                {month.label}
+              </span>
+            ))}
           </div>
         </div>
       )}
