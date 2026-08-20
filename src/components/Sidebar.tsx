@@ -20,8 +20,14 @@ export function Sidebar() {
         collapsed ? "w-0 overflow-hidden border-r-0" : "w-56",
       )}
     >
-      <div data-tauri-drag-region className="flex h-16 shrink-0 items-end px-4 pb-3 pt-7">
-        <img src="/wordmark.png" alt="Workbench" className="h-[26px] w-auto select-none" draggable={false} />
+      <div data-tauri-drag-region className="flex h-[96px] shrink-0 items-end px-3 pb-4 pt-14">
+        <img
+          src="/wordmark.png"
+          srcSet="/wordmark.png 1x, /wordmark@2x.png 2x"
+          alt="Workbench"
+          draggable={false}
+          className="w-full select-none"
+        />
       </div>
       <nav data-tauri-drag-region className="flex flex-1 flex-col gap-0.5 p-2">
         <NavItem

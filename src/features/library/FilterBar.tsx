@@ -13,7 +13,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ActiveFilterChips } from "@/features/library/ActiveFilterChips";
-import { frameworkLabel } from "@/lib/format";
+
+import { FrameworkOption } from "@/features/library/FrameworkOption";
 import type { Framework, ProjectQuery, ProjectStatus } from "@/lib/types";
 
 const SORT_LABELS: Record<ProjectQuery["sort"], string> = {
@@ -88,7 +89,7 @@ export function FilterBar({
                 onCheckedChange={() => toggleFramework(framework)}
                 onSelect={(event) => event.preventDefault()}
               >
-                {frameworkLabel(framework)}
+                <FrameworkOption framework={framework} />
               </DropdownMenuCheckboxItem>
             ))}
           </DropdownMenuContent>
