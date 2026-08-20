@@ -77,6 +77,13 @@ const EXTRA_KEYS: Record<string, string> = {
   sveltekit: "siSvelte",
   supabase: "siSupabase",
   tailwindcss: "siTailwindcss",
+  anthropic: "siAnthropic",
+  googlegemini: "siGooglegemini",
+  cursor: "siCursor",
+  githubcopilot: "siGithubcopilot",
+  opencode: "siOpencode",
+  cline: "siCline",
+  ollama: "siOllama",
 };
 
 export function frameworkBrand(framework: Framework): BrandMark | null {

@@ -1,9 +1,11 @@
+import { useState } from "react";
 import { RefreshCwIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { QueryState } from "@/components/QueryState";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AgentCard } from "@/features/models/AgentCard";
-import { useAgents } from "@/hooks/useAgents";
+import { AgentTile } from "@/features/models/AgentTile";
+import { AgentDetailDialog } from "@/features/models/AgentDetailDialog";
+import { useAgents, type AgentInfo } from "@/hooks/useAgents";
 import { useSettings, useSaveSettings } from "@/hooks/useSettings";
 
 const DEFAULTABLE = new Set(["claude-code", "codex"]);
@@ -12,15 +14,17 @@ export function ModelsPage() {
   const { data, isLoading, isError, error, refetch, isFetching } = useAgents();
   const { data: settings } = useSettings();
   const saveSettings = useSaveSettings();
+  const [openAgent, setOpenAgent] = useState<AgentInfo | null>(null);
 
-  const installed = (data ?? []).filter((agent) => agent.installed);
-  const available = (data ?? []).filter((agent) => !agent.installed);
+  const agents = data ?? [];
+  const installedCount = agents.filter((agent) => agent.installed).length;
+  const sorted = [...agents].sort((a, b) => Number(b.installed) - Number(a.installed));
 
   return (
-    <div className="space-y-5 px-6 pb-6 pt-4">
+    <div className="space-y-5 px-6 pb-8 pt-4">
       <div className="flex items-center justify-between gap-3">
         <p className="text-sm text-muted-foreground">
-          {data ? `${installed.length} of ${data.length} agents installed` : "Detecting agents…"}
+          {data ? `${installedCount} of ${agents.length} agents installed` : "Detecting agents…"}
         </p>
         <Button
           size="sm"
@@ -40,44 +44,40 @@ export function ModelsPage() {
         error={error}
         onRetry={() => refetch()}
         skeleton={
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {[0, 1, 2, 3, 4, 5].map((i) => (
-              <Skeleton key={i} className="h-44 w-full" />
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
+              <Skeleton key={i} className="h-[164px] w-full rounded-xl" />
             ))}
           </div>
         }
       >
-        <section className="space-y-2">
-          <h2 className="text-xs uppercase tracking-wide text-muted-foreground">Installed</h2>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {installed.map((agent) => (
-              <AgentCard
-                key={agent.id}
-                agent={agent}
-                isDefault={settings?.aiProvider === agent.id}
-                onMakeDefault={
-                  settings && DEFAULTABLE.has(agent.id)
-                    ? () =>
-                        saveSettings.mutate({
-                          ...settings,
-                          aiProvider: agent.id as "claude-code" | "codex",
-                        })
-                    : undefined
-                }
-              />
-            ))}
-          </div>
-        </section>
-
-        <section className="mt-6 space-y-2">
-          <h2 className="text-xs uppercase tracking-wide text-muted-foreground">Available</h2>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {available.map((agent) => (
-              <AgentCard key={agent.id} agent={agent} isDefault={false} />
-            ))}
-          </div>
-        </section>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {sorted.map((agent) => (
+            <AgentTile
+              key={agent.id}
+              agent={agent}
+              isDefault={settings?.aiProvider === agent.id}
+              onOpen={() => setOpenAgent(agent)}
+            />
+          ))}
+        </div>
       </QueryState>
+
+      <AgentDetailDialog
+        agent={openAgent}
+        isDefault={settings?.aiProvider === openAgent?.id}
+        canBeDefault={openAgent ? DEFAULTABLE.has(openAgent.id) : false}
+        onOpenChange={(open) => !open && setOpenAgent(null)}
+        onMakeDefault={() => {
+          if (settings && openAgent) {
+            saveSettings.mutate({
+              ...settings,
+              aiProvider: openAgent.id as "claude-code" | "codex",
+            });
+            setOpenAgent(null);
+          }
+        }}
+      />
     </div>
   );
 }
