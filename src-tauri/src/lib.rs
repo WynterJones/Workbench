@@ -7,6 +7,7 @@ mod detail;
 mod files;
 mod heatmap;
 mod folders;
+mod media;
 mod misc;
 mod models;
 mod openers;
@@ -77,6 +78,8 @@ pub fn run() {
             heatmap::contribution_heatmap,
             usage::token_usage,
             timeline::timeline_page,
+            media::project_media,
+            media::media_details,
             snippet::project_snippet,
             skills::list_skills,
             skills::read_skill,

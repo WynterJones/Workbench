@@ -10,6 +10,7 @@ import { ProjectTimeline } from "@/features/project/ProjectTimeline";
 import { ShipScoreCard } from "@/features/project/ShipScoreCard";
 import { ReadmePanel } from "@/features/project/ReadmePanel";
 import { CommitList } from "@/features/project/CommitList";
+import { ProjectMediaPanel } from "@/features/media/ProjectMediaPanel";
 import { TodoList } from "@/features/project/TodoList";
 import { RunLogPanel } from "@/features/project/RunLogPanel";
 import { useProject } from "@/hooks/useProject";
@@ -47,12 +48,16 @@ export function ProjectPage() {
           <Tabs defaultValue="readme">
             <TabsList>
               <TabsTrigger value="readme">README</TabsTrigger>
+              <TabsTrigger value="media">Media</TabsTrigger>
               <TabsTrigger value="commits">Commits</TabsTrigger>
               <TabsTrigger value="todos">TODOs</TabsTrigger>
               <TabsTrigger value="runlog">Run Log</TabsTrigger>
             </TabsList>
             <TabsContent value="readme" className="mt-3 rounded-lg border border-border bg-card p-5">
               <ReadmePanel projectId={project.id} basePath={project.path} />
+            </TabsContent>
+            <TabsContent value="media" className="mt-3 rounded-lg border border-border bg-card p-5">
+              <ProjectMediaPanel projectId={project.id} />
             </TabsContent>
             <TabsContent value="commits" className="mt-3 rounded-lg border border-border bg-card p-5">
               <CommitList projectId={project.id} />
