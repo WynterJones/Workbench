@@ -7,6 +7,7 @@ import { TimelineYearRail } from "@/features/timeline/TimelineYearRail";
 import { useTimelinePlayback } from "@/features/timeline/useTimelinePlayback";
 import { useProjectTimeline } from "@/hooks/useProjectTimeline";
 import { groupByMonth, spanInYears, yearOf } from "@/lib/timelineGroups";
+import { LOOKAHEAD } from "@/features/timeline/revealStyle";
 import { useAppStore } from "@/lib/store";
 
 export function TimelinePage() {
@@ -63,14 +64,8 @@ export function TimelinePage() {
     return () => observer.disconnect();
   }, [groups]);
 
-  const lastScrolled = useRef(-1);
-
   useEffect(() => {
     if (!playback.playing || playback.revealed === 0) return;
-
-    const stride = playback.speed === 1 ? 4 : 8;
-    if (playback.revealed - lastScrolled.current < stride) return;
-    lastScrolled.current = playback.revealed;
 
     const node = spine.current?.querySelector<HTMLElement>(
       `[data-timeline-index="${playback.revealed - 1}"]`,
@@ -78,17 +73,15 @@ export function TimelinePage() {
     if (!node) return;
 
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    node.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "center" });
-  }, [playback.playing, playback.revealed, playback.speed]);
-
-  useEffect(() => {
-    if (!playback.playing) lastScrolled.current = -1;
-  }, [playback.playing]);
+    node.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "end" });
+  }, [playback.playing, playback.revealed]);
 
   function jumpToKey(key: string) {
     const node = spine.current?.querySelector<HTMLElement>(`[data-month-key="${key}"]`);
     node?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
+
+  const renderLimit = playback.playing ? playback.revealed + LOOKAHEAD : events.length;
 
   let index = -1;
   let lastYear = "";
@@ -148,6 +141,11 @@ export function TimelinePage() {
               const newYear = year !== lastYear;
               lastYear = year;
 
+              if (index + 1 >= renderLimit) {
+                index += group.events.length;
+                return null;
+              }
+
               return (
                 <section key={group.key} data-month-key={group.key}>
                   <div className="sticky top-14 z-[1] -mx-2 flex items-center gap-3 bg-background/95 px-2 py-1.5 backdrop-blur">
@@ -170,6 +168,7 @@ export function TimelinePage() {
                   <div className="flex flex-col">
                     {group.events.map((event) => {
                       index += 1;
+                      if (index >= renderLimit) return null;
                       return (
                         <TimelineRow
                           key={event.id}

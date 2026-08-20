@@ -3,6 +3,8 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { SegmentedTabs } from "@/components/SegmentedTabs";
 import { SkillSearchPanel } from "@/features/skills/SkillSearchPanel";
+import { SkillAgentFilter, type SkillAgentFilterValue } from "@/features/skills/SkillAgentFilter";
+import { AgentMarkIcon } from "@/features/models/AgentMarkIcon";
 import { QueryState } from "@/components/QueryState";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SkillRow } from "@/features/skills/SkillRow";
@@ -20,18 +22,29 @@ export function SkillsPage() {
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<string | null>(null);
   const [tab, setTab] = useState<"installed" | "search">("installed");
+  const [agentFilter, setAgentFilter] = useState<SkillAgentFilterValue>("all");
 
   const installedNames = useMemo(
     () => new Set((data ?? []).map((skill) => skill.name.toLowerCase())),
     [data],
   );
 
+  const agentCounts = useMemo(() => {
+    const counts: Record<string, number> = { all: 0, "claude-code": 0, codex: 0 };
+    for (const skill of data ?? []) {
+      counts.all += 1;
+      counts[skill.agent] = (counts[skill.agent] ?? 0) + 1;
+    }
+    return counts;
+  }, [data]);
+
   const grouped = useMemo(() => {
     const needle = search.toLowerCase();
     const filtered = (data ?? []).filter(
       (skill) =>
-        skill.name.toLowerCase().includes(needle) ||
-        skill.description.toLowerCase().includes(needle),
+        (agentFilter === "all" || skill.agent === agentFilter) &&
+        (skill.name.toLowerCase().includes(needle) ||
+          skill.description.toLowerCase().includes(needle)),
     );
     return Object.entries(
       filtered.reduce<Record<string, typeof filtered>>((acc, skill) => {
@@ -39,7 +52,7 @@ export function SkillsPage() {
         return acc;
       }, {}),
     );
-  }, [data, search]);
+  }, [data, search, agentFilter]);
 
   return (
     <div className="flex h-full min-h-0">
@@ -71,7 +84,12 @@ export function SkillsPage() {
           </TabsContent>
 
           <TabsContent value="installed" className="flex min-h-0 flex-1 flex-col gap-0">
-        <div className="shrink-0 border-b border-border p-3">
+        <div className="shrink-0 space-y-2 border-b border-border p-3">
+          <SkillAgentFilter
+            value={agentFilter}
+            counts={agentCounts}
+            onChange={setAgentFilter}
+          />
           <Input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
@@ -85,8 +103,12 @@ export function SkillsPage() {
             error={error}
             onRetry={() => refetch()}
             isEmpty={grouped.length === 0}
-            emptyTitle="No skills yet"
-            emptyMessage="Install one with the field above, or browse skills.sh."
+            emptyTitle={agentFilter === "all" ? "No skills yet" : "Nothing for this agent"}
+            emptyMessage={
+              agentFilter === "all"
+                ? "Find one in the Search tab to get started."
+                : "Try All, or install one from the Search tab."
+            }
             compact
             skeleton={
               <div className="space-y-2">
@@ -98,9 +120,16 @@ export function SkillsPage() {
           >
             {grouped.map(([agent, skills]) => (
               <div key={agent} className="mb-4">
-                <p className="px-2.5 pb-1 text-[11px] uppercase tracking-wide text-muted-foreground">
-                  {AGENT_LABEL[agent] ?? agent} · {skills.length}
-                </p>
+                {agentFilter === "all" && (
+                  <p className="flex items-center gap-1.5 px-2.5 pb-1.5 text-[11px] uppercase tracking-wide text-muted-foreground">
+                    <AgentMarkIcon
+                      agentId={agent}
+                      vendor={agent === "codex" ? "OpenAI" : "Anthropic"}
+                      className="size-3 text-current"
+                    />
+                    {AGENT_LABEL[agent] ?? agent} · {skills.length}
+                  </p>
+                )}
                 <div className="space-y-0.5">
                   {skills.map((skill) => (
                     <SkillRow

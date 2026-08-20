@@ -4,7 +4,7 @@ export interface RevealStyle {
   interactive: boolean;
 }
 
-const LOOKAHEAD = 3;
+export const LOOKAHEAD = 3;
 const TRAIL = [0.5, 0.24, 0.1];
 
 export function revealStyle(index: number, revealed: number): RevealStyle {
