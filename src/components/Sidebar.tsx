@@ -37,12 +37,6 @@ export function Sidebar() {
           active={route === "library" || route === "project"}
           onClick={() => setRoute("library")}
         />
-        <NavItem
-          icon={GitBranch}
-          label="Timeline"
-          active={route === "timeline"}
-          onClick={() => setRoute("timeline")}
-        />
         <NavItem icon={Folder} label="Files" active={route === "files"} onClick={() => openFiles()} />
         <NavItem
           icon={Images}
@@ -61,6 +55,12 @@ export function Sidebar() {
         />
       </nav>
       <div className="border-t border-border p-2">
+        <NavItem
+          icon={GitBranch}
+          label="Timeline"
+          active={route === "timeline"}
+          onClick={() => setRoute("timeline")}
+        />
         <NavItem
           icon={Settings}
           label="Settings"
