@@ -21,7 +21,7 @@ export function NoiseCollapse({ entries, onOpen }: NoiseCollapseProps) {
       <button
         type="button"
         onClick={() => setExpanded((v) => !v)}
-        className="flex h-7 w-full items-center gap-2 px-2 text-left text-xs text-muted-foreground/70 hover:text-muted-foreground"
+        className="cursor-pointer flex h-7 w-full items-center gap-2 px-2 text-left text-xs text-muted-foreground/70 hover:text-muted-foreground"
       >
         <ChevronRightIcon className={cn("size-3 shrink-0 transition-transform duration-150", expanded && "rotate-90")} />
         <PackageIcon className="size-3.5 shrink-0" />
@@ -37,7 +37,7 @@ export function NoiseCollapse({ entries, onOpen }: NoiseCollapseProps) {
               type="button"
               onDoubleClick={() => onOpen(entry)}
               onClick={() => onOpen(entry)}
-              className="flex h-7 w-full items-center gap-2 pl-7 pr-2 text-left text-xs text-muted-foreground/60 hover:bg-secondary/40 hover:text-muted-foreground"
+              className="cursor-pointer flex h-7 w-full items-center gap-2 pl-7 pr-2 text-left text-xs text-muted-foreground/60 hover:bg-secondary/40 hover:text-muted-foreground"
             >
               <span className="min-w-0 flex-1 truncate">{entry.name}</span>
               <span className="font-mono">{formatBytes(entry.size)}</span>

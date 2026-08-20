@@ -49,7 +49,7 @@ export function useFilesCommandItems() {
       },
       {
         id: `${PREFIX}copy-cart`,
-        label: "Copy cart as prompt context",
+        label: "Copy context as prompt",
         hint: `${cart.count} item${cart.count === 1 ? "" : "s"}`,
         group: "Files",
         onSelect: () => cart.copyAsContext(),

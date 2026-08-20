@@ -7,7 +7,7 @@ import {
   HardDriveIcon,
   LayoutListIcon,
   RocketIcon,
-  ShoppingCartIcon,
+  FileStackIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -111,9 +111,9 @@ export function FilesToolbar({ onOpenCart }: FilesToolbarProps) {
         <RocketIcon />
         Starters
       </Button>
-      <Button variant="outline" size="sm" onClick={onOpenCart} className="gap-2">
-        <ShoppingCartIcon />
-        Cart
+      <Button variant="outline" size="sm" onClick={onOpenCart} className="cursor-pointer gap-2">
+        <FileStackIcon />
+        Context
         {count > 0 && (
           <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-ok px-1 text-[10px] font-semibold text-background">
             {count}

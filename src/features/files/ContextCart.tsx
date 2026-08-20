@@ -44,10 +44,15 @@ export function ContextCart({ open, onOpenChange }: ContextCartProps) {
         className="inset-y-0 left-auto right-0 top-0 flex h-full max-h-none w-full max-w-sm translate-x-0 translate-y-0 flex-col gap-0 rounded-none border-l border-border p-0 sm:max-w-sm data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right"
       >
         <div className="flex h-12 shrink-0 items-center justify-between border-b border-border px-4">
-          <span className="text-sm font-semibold">Context Cart · {cart.count}</span>
+          <span className="flex flex-col">
+            <span className="text-sm font-semibold">Context · {cart.count}</span>
+            <span className="text-[11px] font-normal text-muted-foreground">
+              Files staged for an AI prompt
+            </span>
+          </span>
           <div className="flex items-center gap-1">
             {cart.count > 0 && (
-              <Button variant="ghost" size="icon-sm" onClick={cart.clear} title="Clear all">
+              <Button variant="ghost" size="icon-sm" onClick={cart.clear} title="Clear all" className="cursor-pointer">
                 <Trash2Icon className="size-3.5" />
               </Button>
             )}
@@ -77,7 +82,7 @@ export function ContextCart({ open, onOpenChange }: ContextCartProps) {
                     <button
                       type="button"
                       onClick={() => cart.remove(entry.path)}
-                      className="hidden size-4 shrink-0 items-center justify-center text-muted-foreground hover:text-destructive group-hover:flex"
+                      className="cursor-pointer hidden size-4 shrink-0 items-center justify-center text-muted-foreground hover:text-destructive group-hover:flex"
                     >
                       <XIcon className="size-3" />
                     </button>
@@ -89,13 +94,13 @@ export function ContextCart({ open, onOpenChange }: ContextCartProps) {
         </div>
 
         <div className="flex shrink-0 flex-col gap-2 border-t border-border p-3">
-          <Button onClick={cart.copyAsContext} disabled={cart.count === 0} className="gap-2">
+          <Button onClick={cart.copyAsContext} disabled={cart.count === 0} className="cursor-pointer gap-2">
             <CopyIcon className="size-4" />
             Copy as prompt context
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" disabled={cart.count === 0} className="gap-2">
+              <Button variant="outline" disabled={cart.count === 0} className="cursor-pointer gap-2">
                 <RocketIcon className="size-4" />
                 Launch AI
               </Button>

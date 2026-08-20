@@ -55,7 +55,9 @@ export function useContextCart() {
 
   async function copyAsContext() {
     if (entries.length === 0) {
-      toast.error("Cart is empty");
+      toast.error("Nothing in context yet", {
+        description: "Add files with ⌘⏎ or the Add to Context button.",
+      });
       return;
     }
     try {
@@ -75,7 +77,7 @@ export function useContextCart() {
   async function launchAi(provider: AiProvider, rootOverride?: string) {
     const root = rootOverride ?? entries[0]?.projectRoot;
     if (!root) {
-      toast.error("No project detected in cart", {
+      toast.error("No project detected in context", {
         description: "Copy as context instead, or add a file from inside a scanned project.",
       });
       return;

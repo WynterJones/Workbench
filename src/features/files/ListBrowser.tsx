@@ -54,7 +54,7 @@ export function ListBrowser() {
             key={col.key}
             type="button"
             onClick={() => setSort(col.key, sortBy === col.key ? !sortDesc : false)}
-            className={cn("flex items-center justify-end gap-1 hover:text-foreground", col.className)}
+            className={cn("cursor-pointer flex items-center justify-end gap-1 hover:text-foreground", col.className)}
           >
             {col.key === "name" && <span className="mr-auto">{col.label}</span>}
             {col.key !== "name" && col.label}

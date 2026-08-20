@@ -11,7 +11,7 @@ export function StarterCard({ starter, onSelect }: StarterCardProps) {
     <button
       type="button"
       onClick={onSelect}
-      className="group flex flex-col gap-2 rounded-lg border border-border bg-card p-4 text-left transition-colors hover:border-muted-foreground/40"
+      className="cursor-pointer group flex flex-col gap-2 rounded-lg border border-border bg-card p-4 text-left transition-colors hover:border-muted-foreground/40"
     >
       <div className="flex items-start justify-between gap-2">
         <span className="text-sm font-medium">{starter.name}</span>

@@ -17,7 +17,7 @@ export function Checkbox({ checked, onChange }: CheckboxProps) {
         onChange();
       }}
       className={cn(
-        "flex size-4 shrink-0 items-center justify-center rounded border border-border",
+        "cursor-pointer flex size-4 shrink-0 items-center justify-center rounded border border-border",
         checked && "border-primary bg-primary text-primary-foreground",
       )}
     >

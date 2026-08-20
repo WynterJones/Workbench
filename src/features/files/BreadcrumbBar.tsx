@@ -54,7 +54,7 @@ export function BreadcrumbBar() {
             onDragLeave={() => setDropTarget((t) => (t === crumb.path ? null : t))}
             onDrop={(e) => handleDrop(e, crumb.path)}
             className={cn(
-              "rounded px-1.5 py-0.5 hover:bg-secondary hover:text-foreground",
+              "cursor-pointer rounded px-1.5 py-0.5 hover:bg-secondary hover:text-foreground",
               crumb.path === dir && "text-foreground",
               dropTarget === crumb.path && "bg-accent text-foreground",
             )}

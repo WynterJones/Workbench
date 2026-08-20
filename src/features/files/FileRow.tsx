@@ -87,10 +87,9 @@ export function FileRow({
           onClick={onSelect}
           onDoubleClick={onActivate}
           className={cn(
-            "group flex h-8 shrink-0 items-center gap-2 border-l-2 border-transparent px-2 text-sm transition-colors duration-100",
+            "group relative flex h-8 shrink-0 cursor-pointer select-none items-center gap-2 border-l-2 border-transparent px-2 text-sm transition-colors duration-100",
             entry.gitStatus === "ignored" && "opacity-45",
-            selected ? "bg-secondary text-foreground" : "text-foreground/90 hover:bg-secondary/50",
-            active && "ring-1 ring-inset ring-ring",
+            selected || active ? "bg-secondary text-foreground" : "text-foreground/90 hover:bg-secondary/50",
             dragOver && "bg-accent/60",
           )}
           style={{ borderLeftColor: gitGutterColor(entry.gitStatus) }}
@@ -118,34 +117,35 @@ export function FileRow({
             </Badge>
           )}
           {!renaming && showMeta && (
-            <span className="hidden shrink-0 items-center gap-3 font-mono text-[11px] text-muted-foreground sm:flex">
-              {entry.kind === "dir" ? (
-                entry.childCount !== null ? `${entry.childCount}` : ""
-              ) : (
-                formatBytes(entry.size)
-              )}
+            <span className="hidden shrink-0 items-center gap-3 font-mono text-[11px] text-muted-foreground group-hover:invisible sm:flex">
+              {entry.kind === "dir" ? "" : formatBytes(entry.size)}
               <span className="w-16 text-right">{formatModified(entry.modified)}</span>
             </span>
           )}
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onAddToCart();
-            }}
-            className={cn(
-              "hidden size-5 shrink-0 items-center justify-center rounded text-muted-foreground hover:bg-accent hover:text-foreground group-hover:flex",
-              inCart && "flex text-ok",
-            )}
-          >
-            <PlusIcon className="size-3.5" />
-          </button>
+          {!renaming && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onAddToCart();
+              }}
+              className={cn(
+                "absolute right-2 hidden shrink-0 cursor-pointer items-center gap-1 rounded-md bg-secondary px-1.5 py-0.5 text-[10px] font-medium text-foreground transition-colors duration-150 ease-out hover:bg-accent group-hover:flex",
+                inCart && "flex bg-brand/15 text-brand hover:bg-brand/25",
+              )}
+            >
+              <PlusIcon className="size-3" />
+              {inCart ? "In context" : "Add to Context"}
+            </button>
+          )}
         </div>
       </ContextMenuTrigger>
       <ContextMenuContent className="w-48">
         <ContextMenuItem onSelect={onActivate}>Open</ContextMenuItem>
         <ContextMenuItem onSelect={onStartRename}>Rename</ContextMenuItem>
-        <ContextMenuItem onSelect={onAddToCart}>{inCart ? "Remove from cart" : "Add to cart"}</ContextMenuItem>
+        <ContextMenuItem onSelect={onAddToCart}>
+          {inCart ? "Remove from context" : "Add to context"}
+        </ContextMenuItem>
         {entry.projectFramework && onJumpToProject && (
           <ContextMenuItem onSelect={onJumpToProject}>
             <ArrowUpRightIcon />
