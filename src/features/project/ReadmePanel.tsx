@@ -29,7 +29,7 @@ export function ReadmePanel({ projectId, basePath }: ReadmePanelProps) {
         </div>
       }
     >
-      <div className="max-h-[520px] overflow-y-auto pr-1">
+      <div className="max-h-[560px] overflow-y-auto pr-2">
         <Markdown basePath={basePath}>{data ?? ""}</Markdown>
       </div>
     </QueryState>
