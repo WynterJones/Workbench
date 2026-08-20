@@ -4,6 +4,7 @@ mod commands;
 mod db;
 mod detail;
 mod files;
+mod heatmap;
 mod folders;
 mod misc;
 mod models;
@@ -68,6 +69,7 @@ pub fn run() {
             openers::open_in,
             misc::pick_folder,
             folders::search_folders,
+            heatmap::contribution_heatmap,
             skills::list_skills,
             skills::read_skill,
             skills::toggle_skill,
