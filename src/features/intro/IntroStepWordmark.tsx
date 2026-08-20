@@ -17,7 +17,7 @@ export function IntroStepWordmark({ reducedMotion, onNext }: IntroStepWordmarkPr
       {!reducedMotion && (
         <span
           aria-hidden
-          className="pointer-events-none fixed inset-x-0 top-0 z-0 h-px animate-[intro-scan-sweep_1.8s_ease-out_forwards] bg-ok shadow-[0_0_16px_var(--ok)]"
+          className="pointer-events-none fixed inset-x-0 top-0 z-0 h-px animate-[intro-scan-sweep_1.8s_ease-out_forwards] bg-brand shadow-[0_0_16px_var(--brand)]"
         />
       )}
       <img

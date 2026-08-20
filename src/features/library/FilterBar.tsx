@@ -15,6 +15,7 @@ import {
 import { ActiveFilterChips } from "@/features/library/ActiveFilterChips";
 
 import { FrameworkOption } from "@/features/library/FrameworkOption";
+import { CheckboxDot } from "@/components/CheckboxDot";
 import type { Framework, ProjectQuery, ProjectStatus } from "@/lib/types";
 
 const SORT_LABELS: Record<ProjectQuery["sort"], string> = {
@@ -88,8 +89,9 @@ export function FilterBar({
                 checked={frameworks.includes(framework)}
                 onCheckedChange={() => toggleFramework(framework)}
                 onSelect={(event) => event.preventDefault()}
+                className="cursor-pointer py-2 pl-2"
               >
-                <FrameworkOption framework={framework} />
+                <FrameworkOption framework={framework} checked={frameworks.includes(framework)} />
               </DropdownMenuCheckboxItem>
             ))}
           </DropdownMenuContent>
@@ -111,7 +113,9 @@ export function FilterBar({
                 checked={tags.includes(tag)}
                 onCheckedChange={() => toggleTag(tag)}
                 onSelect={(event) => event.preventDefault()}
+                className="cursor-pointer py-2 pl-2"
               >
+                <CheckboxDot checked={tags.includes(tag)} />
                 {tag}
               </DropdownMenuCheckboxItem>
             ))}

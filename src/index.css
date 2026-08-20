@@ -22,6 +22,7 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
   --color-ok: var(--ok);
+  --color-brand: var(--brand);
   --color-warn: var(--warn);
   --radius-sm: calc(var(--radius) - 2px);
   --radius-md: var(--radius);
@@ -52,6 +53,7 @@
   --input: #27272a;
   --ring: #52525b;
   --ok: #10b981;
+  --brand: #f0aa12;
   --warn: #f59e0b;
 }
 
@@ -122,5 +124,82 @@
 
   ::-webkit-scrollbar-corner {
     background: transparent;
+  }
+}
+
+@property --wb-sweep-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@keyframes wb-border-sweep {
+  0% {
+    --wb-sweep-angle: 0deg;
+    opacity: 0;
+  }
+  4% {
+    opacity: 1;
+  }
+  26% {
+    --wb-sweep-angle: 360deg;
+    opacity: 1;
+  }
+  32% {
+    --wb-sweep-angle: 360deg;
+    opacity: 0;
+  }
+  100% {
+    --wb-sweep-angle: 360deg;
+    opacity: 0;
+  }
+}
+
+@keyframes wb-intro-drift {
+  0% {
+    transform: translate3d(-2%, -1%, 0) scale(1.08);
+  }
+  50% {
+    transform: translate3d(2%, 1.5%, 0) scale(1.14);
+  }
+  100% {
+    transform: translate3d(-2%, -1%, 0) scale(1.08);
+  }
+}
+
+@keyframes wb-intro-glow {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: translate3d(-8%, 0, 0);
+  }
+  50% {
+    opacity: 0.85;
+    transform: translate3d(8%, 4%, 0);
+  }
+}
+
+.wb-border-sweep {
+  padding: 2px;
+  background: conic-gradient(
+    from var(--wb-sweep-angle),
+    transparent 0deg 250deg,
+    color-mix(in srgb, var(--brand) 55%, transparent) 300deg,
+    var(--brand) 340deg,
+    transparent 360deg
+  );
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+  animation: wb-border-sweep 5s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wb-border-sweep {
+    animation: none;
+    opacity: 0;
   }
 }

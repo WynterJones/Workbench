@@ -1,3 +1,4 @@
+import { IntroBackdrop } from "@/features/intro/IntroBackdrop";
 import { useState } from "react";
 import { IntroStepWordmark } from "@/features/intro/IntroStepWordmark";
 import { IntroStepDiagram } from "@/features/intro/IntroStepDiagram";
@@ -39,6 +40,7 @@ export function IntroScreen() {
 
   return (
     <div className="relative flex h-screen w-screen flex-col items-center justify-center overflow-hidden bg-background px-6">
+      <IntroBackdrop />
       <button
         type="button"
         onClick={markSeen}
@@ -46,9 +48,11 @@ export function IntroScreen() {
       >
         Skip
       </button>
+      <div className="relative z-10 flex w-full flex-col items-center">
       {step === 0 && <IntroStepWordmark reducedMotion={reducedMotion} onNext={() => setStep(1)} />}
       {step === 1 && <IntroStepDiagram reducedMotion={reducedMotion} onNext={() => setStep(2)} />}
       {step === 2 && <IntroStepFolders reducedMotion={reducedMotion} onFinish={finishAndScan} />}
+      </div>
       <div className="absolute bottom-8 flex gap-1.5">
         {Array.from({ length: STEP_COUNT }).map((_, index) => (
           <span

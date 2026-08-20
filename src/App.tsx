@@ -8,6 +8,7 @@ import { FilesPage } from "@/features/files/FilesPage";
 import { SkillsPage } from "@/features/skills/SkillsPage";
 import { ModelsPage } from "@/features/models/ModelsPage";
 import { useFilesStore } from "@/lib/filesStore";
+import { WindowSweep } from "@/components/WindowSweep";
 import { useAppStore } from "@/lib/store";
 import { useSettings } from "@/hooks/useSettings";
 
@@ -35,7 +36,12 @@ export default function App() {
   }
 
   if (route === "intro") {
-    return <IntroScreen />;
+    return (
+      <>
+        <IntroScreen />
+        <WindowSweep />
+      </>
+    );
   }
 
   return (

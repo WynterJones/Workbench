@@ -1,108 +1,76 @@
 import { useEffect, useState } from "react";
-import { ScanLine, Fingerprint, Play, Camera, LayoutGrid, type LucideIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Camera, LayoutGrid, ScanLine, type LucideIcon } from "lucide-react";
+import { IntroLoopStep } from "@/features/intro/IntroLoopStep";
 
 interface IntroStepDiagramProps {
   reducedMotion: boolean;
   onNext: () => void;
 }
 
-interface DiagramNode {
+interface LoopStep {
   key: string;
-  label: string;
+  title: string;
+  body: string;
   icon: LucideIcon;
 }
 
-const NODES: DiagramNode[] = [
-  { key: "scan", label: "Scan", icon: ScanLine },
-  { key: "identify", label: "Identify", icon: Fingerprint },
-  { key: "run", label: "Run", icon: Play },
-  { key: "screenshot", label: "Screenshot", icon: Camera },
-  { key: "browse", label: "Browse", icon: LayoutGrid },
+const STEPS: LoopStep[] = [
+  {
+    key: "scan",
+    title: "Scan",
+    body: "Point it at your drives. Every project gets found and identified by framework.",
+    icon: ScanLine,
+  },
+  {
+    key: "capture",
+    title: "Capture",
+    body: "Workbench runs the ones you trust and takes real screenshots of them.",
+    icon: Camera,
+  },
+  {
+    key: "browse",
+    title: "Browse",
+    body: "A visual catalog of everything you have ever built, searchable in seconds.",
+    icon: LayoutGrid,
+  },
 ];
 
-const NODE_X = [40, 190, 340, 490, 640];
-const NODE_Y = 60;
-const SEGMENT_MS = 480;
-const START_DELAY_MS = 300;
+const STEP_MS = 620;
 
 export function IntroStepDiagram({ reducedMotion, onNext }: IntroStepDiagramProps) {
-  const [active, setActive] = useState(reducedMotion ? NODES.length - 1 : -1);
+  const [active, setActive] = useState(reducedMotion ? STEPS.length - 1 : -1);
 
   useEffect(() => {
     if (reducedMotion) return;
-    const timers = NODES.map((_, index) =>
-      setTimeout(() => setActive(index), index * SEGMENT_MS + START_DELAY_MS),
+    const timers = STEPS.map((_, index) =>
+      setTimeout(() => setActive(index), index * STEP_MS + 250),
     );
     return () => timers.forEach(clearTimeout);
   }, [reducedMotion]);
 
   return (
-    <div className="flex max-w-2xl flex-col items-center gap-8 animate-in fade-in duration-500 fill-mode-both">
-      <p className="text-center text-base text-foreground">
-        Point it at your folders. Workbench turns a messy filesystem into a visual catalog you can
-        actually browse.
-      </p>
-      <svg viewBox="0 0 680 120" className="w-full max-w-xl">
-        {NODE_X.slice(0, -1).map((x, index) => {
-          const x2 = NODE_X[index + 1];
-          const length = x2 - x - 40;
-          const drawn = reducedMotion || active > index;
-          return (
-            <g key={index}>
-              <line x1={x + 20} y1={NODE_Y} x2={x2 - 20} y2={NODE_Y} className="stroke-border" strokeWidth={2} />
-              <line
-                x1={x + 20}
-                y1={NODE_Y}
-                x2={x2 - 20}
-                y2={NODE_Y}
-                className="stroke-ok"
-                strokeWidth={2}
-                strokeDasharray={length}
-                strokeDashoffset={drawn ? 0 : length}
-                style={
-                  reducedMotion
-                    ? undefined
-                    : {
-                        transition: `stroke-dashoffset ${SEGMENT_MS}ms ease-out`,
-                        transitionDelay: `${index * SEGMENT_MS + START_DELAY_MS}ms`,
-                      }
-                }
-              />
-            </g>
-          );
-        })}
-        {NODE_X.map((x, index) => (
-          <circle
-            key={index}
-            cx={x}
-            cy={NODE_Y}
-            r={18}
-            strokeWidth={2}
-            className={cn(
-              "transition-colors duration-300 ease-out",
-              reducedMotion || active >= index ? "fill-ok/15 stroke-ok" : "fill-card stroke-border",
-            )}
+    <div className="flex w-full max-w-4xl flex-col items-center gap-12 px-6">
+      <h2 className="max-w-2xl text-center text-3xl font-bold leading-tight tracking-tight text-foreground sm:text-4xl">
+        Turn a messy filesystem into a<span className="text-brand"> visual catalog</span>.
+      </h2>
+
+      <div className="grid w-full gap-4 sm:grid-cols-3">
+        {STEPS.map((step, index) => (
+          <IntroLoopStep
+            key={step.key}
+            index={index}
+            title={step.title}
+            body={step.body}
+            icon={step.icon}
+            active={active >= index}
           />
         ))}
-      </svg>
-      <div className="grid w-full max-w-xl grid-cols-5 gap-2 text-center">
-        {NODES.map(({ key, label, icon: Icon }, index) => {
-          const lit = reducedMotion || active >= index;
-          return (
-            <div key={key} className="flex flex-col items-center gap-1.5">
-              <Icon className={cn("size-4 transition-colors duration-300 ease-out", lit ? "text-ok" : "text-muted-foreground")} />
-              <span className={cn("text-xs transition-colors duration-300 ease-out", lit ? "text-foreground" : "text-muted-foreground")}>
-                {label}
-              </span>
-            </div>
-          );
-        })}
       </div>
+
       <button
         type="button"
         onClick={onNext}
-        className="text-sm font-medium text-foreground underline-offset-4 transition-colors duration-150 ease-out hover:underline"
+        className="cursor-pointer rounded-lg bg-brand px-6 py-2.5 text-base font-semibold text-background transition-opacity duration-150 ease-out hover:opacity-90"
       >
         Continue
       </button>
