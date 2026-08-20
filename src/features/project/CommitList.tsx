@@ -18,8 +18,8 @@ export function CommitList({ projectId }: CommitListProps) {
       error={error}
       onRetry={() => refetch()}
       isEmpty={!data || data.length === 0}
-      emptyTitle="No commits"
-      emptyMessage="This project isn't a git repository, so there is no history to show."
+      emptyTitle="No commits yet"
+      emptyMessage="This folder is a git repository, but nothing has been committed to it."
       compact
       skeleton={
         <div className="space-y-2">

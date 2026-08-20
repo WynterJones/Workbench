@@ -15,7 +15,9 @@ describe("explainError", () => {
   });
 
   it("explains a missing git repository", () => {
-    expect(explainError("not a git repository").title).toMatch(/no git history/i);
+    const result = explainError("not a git repository");
+    expect(result.title).toMatch(/not a git repository/i);
+    expect(result.hint).toMatch(/git init/i);
   });
 
   it("falls back to the raw message for unknown errors", () => {

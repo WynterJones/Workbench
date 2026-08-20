@@ -66,6 +66,11 @@ fn to_rfc3339(seconds: i64) -> String {
 
 pub fn read_commits(dir: &Path, limit: usize) -> Result<Vec<Commit>, String> {
     let repo = Repository::discover(dir).map_err(|_| "not a git repository".to_string())?;
+
+    if repo.head().is_err() {
+        return Ok(Vec::new());
+    }
+
     let mut walk = repo.revwalk().map_err(|e| e.to_string())?;
     walk.push_head().map_err(|e| e.to_string())?;
     walk.set_sorting(git2::Sort::TIME).map_err(|e| e.to_string())?;
@@ -132,6 +137,19 @@ mod tests {
         let found = find_readme(&dir).expect("readme should be found");
         assert!(found.is_file());
         assert_eq!(fs::read_to_string(&found).unwrap(), "# hi");
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn empty_repository_returns_no_commits_rather_than_an_error() {
+        let dir = std::env::temp_dir().join("wb_detail_unborn");
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(&dir).unwrap();
+        git2::Repository::init(&dir).unwrap();
+
+        let result = read_commits(&dir, 10);
+        assert!(result.is_ok(), "an unborn HEAD is still a git repository");
+        assert!(result.unwrap().is_empty());
         let _ = fs::remove_dir_all(&dir);
     }
 

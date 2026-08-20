@@ -16,8 +16,9 @@ const PATTERNS: { match: RegExp; explain: (raw: string) => Explained }[] = [
   {
     match: /not a git repository/i,
     explain: () => ({
-      title: "No git history here",
-      message: "This project isn't a git repository, so there are no commits to show.",
+      title: "Not a git repository",
+      message: "This folder isn't tracked by git, so there is no commit history to show.",
+      hint: "Run git init inside it to start tracking changes.",
     }),
   },
   {
