@@ -50,10 +50,17 @@ export function IntroStepDiagram({ reducedMotion, onNext }: IntroStepDiagramProp
   }, [reducedMotion]);
 
   return (
-    <div className="flex w-full max-w-4xl flex-col items-center gap-12 px-6">
-      <h2 className="max-w-2xl text-center text-3xl font-bold leading-tight tracking-tight text-foreground sm:text-4xl">
-        Turn a messy filesystem into a<span className="text-brand"> visual catalog</span>.
-      </h2>
+    <div className="flex w-full max-w-5xl flex-col items-center gap-10 px-6">
+      <div className="max-w-3xl space-y-4 text-center">
+        <h2 className="text-balance text-4xl font-bold leading-[1.05] tracking-tight text-foreground sm:text-5xl lg:text-6xl">
+          Your best work is rotting in a folder called
+          <span className="text-brand"> test-2-final</span>.
+        </h2>
+        <p className="text-balance text-base font-light leading-relaxed text-muted-foreground sm:text-lg">
+          A visual library of everything you have ever built — for people who ship faster than they
+          can name folders.
+        </p>
+      </div>
 
       <div className="grid w-full gap-4 sm:grid-cols-3">
         {STEPS.map((step, index) => (
