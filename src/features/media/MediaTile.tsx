@@ -4,24 +4,31 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useFavoriteMedia } from "@/lib/favoriteMedia";
 import type { MediaItem } from "@/hooks/useMedia";
+import type { GalleryView } from "@/lib/userPreferences";
+import { formatBytes } from "@/features/files/lib/format";
 
 interface MediaTileProps {
   item: MediaItem;
+  view?: GalleryView;
   onOpen: () => void;
+  onLoadError: () => void;
 }
 
-export function MediaTile({ item, onOpen }: MediaTileProps) {
+export function MediaTile({ item, view = "grid", onOpen, onLoadError }: MediaTileProps) {
   const paths = useFavoriteMedia((s) => s.paths);
   const toggle = useFavoriteMedia((s) => s.toggle);
   const favorite = paths.includes(item.path);
   const src = convertFileSrc(item.path);
 
   return (
-    <div className="group relative overflow-hidden rounded-lg border border-border bg-card">
+    <div className={cn("group relative overflow-hidden rounded-lg border border-border bg-card", view === "list" && "flex h-28")}>
       <button
         type="button"
         onClick={onOpen}
-        className="block aspect-square w-full cursor-pointer bg-secondary/40"
+        className={cn(
+          "block cursor-pointer bg-secondary/40",
+          view === "grid" ? "aspect-square w-full" : "h-full w-40 shrink-0",
+        )}
         aria-label={`Open ${item.name}`}
       >
         {item.kind === "image" ? (
@@ -29,11 +36,12 @@ export function MediaTile({ item, onOpen }: MediaTileProps) {
             src={src}
             alt={item.name}
             loading="lazy"
-            className="size-full object-cover transition-transform duration-200 ease-out group-hover:scale-[1.03]"
+            onError={onLoadError}
+            className="size-full object-contain p-2 transition-[filter] duration-150 ease-out group-hover:brightness-110"
           />
         ) : (
-          <span className="flex size-full items-center justify-center">
-            <video src={src} muted preload="metadata" className="size-full object-cover" />
+          <span className="relative flex size-full items-center justify-center">
+            <video src={src} muted preload="metadata" onError={onLoadError} className="size-full object-contain" />
             <PlayIcon className="absolute size-7 text-foreground/80" strokeWidth={2} />
           </span>
         )}
@@ -73,9 +81,19 @@ export function MediaTile({ item, onOpen }: MediaTileProps) {
         </button>
       </div>
 
-      <p className="truncate border-t border-border px-2 py-1.5 font-mono text-[10px] text-muted-foreground">
-        {item.relative}
-      </p>
+      {view === "grid" ? (
+        <p className="truncate border-t border-border px-2 py-1.5 font-mono text-[10px] text-muted-foreground">
+          {item.relative}
+        </p>
+      ) : (
+        <div className="flex min-w-0 flex-1 flex-col justify-center border-l border-border px-3 pr-16">
+          <p className="truncate text-sm font-medium text-foreground">{item.name}</p>
+          <p className="truncate font-mono text-[10px] text-muted-foreground">{item.relative}</p>
+          <p className="mt-2 font-mono text-[10px] uppercase tracking-wide text-muted-foreground/70">
+            {item.extension} · {formatBytes(item.sizeBytes)}
+          </p>
+        </div>
+      )}
     </div>
   );
 }

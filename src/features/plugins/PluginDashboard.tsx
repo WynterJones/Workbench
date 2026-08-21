@@ -6,6 +6,7 @@ import { QueryState } from "@/components/QueryState";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PluginItemRow } from "@/features/plugins/PluginItemRow";
 import { PluginIssueDialog } from "@/features/plugins/PluginIssueDialog";
+import { PluginServicesDialog } from "@/features/plugins/PluginServicesDialog";
 import { brandByName } from "@/lib/brandIcons";
 import { pluginMeta } from "@/lib/pluginCatalog";
 import { usePluginItems } from "@/hooks/usePluginData";
@@ -114,7 +115,11 @@ export function PluginDashboard() {
                   <PluginItemRow
                     key={item.id}
                     item={item}
-                    onInspect={activePluginId === "sentry" ? setInspecting : undefined}
+                    onInspect={
+                      activePluginId === "sentry" || activePluginId === "railway"
+                        ? setInspecting
+                        : undefined
+                    }
                   />
                 ))}
               </div>
@@ -123,11 +128,19 @@ export function PluginDashboard() {
         </QueryState>
       )}
 
-      <PluginIssueDialog
-        pluginId={activePluginId ?? ""}
-        item={inspecting}
-        onOpenChange={(open) => !open && setInspecting(null)}
-      />
+      {activePluginId === "railway" ? (
+        <PluginServicesDialog
+          item={inspecting}
+          deployments={(data ?? []).filter((item) => item.source === inspecting?.source)}
+          onOpenChange={(open) => !open && setInspecting(null)}
+        />
+      ) : (
+        <PluginIssueDialog
+          pluginId={activePluginId ?? ""}
+          item={inspecting}
+          onOpenChange={(open) => !open && setInspecting(null)}
+        />
+      )}
     </div>
   );
 }

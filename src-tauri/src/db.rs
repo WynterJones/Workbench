@@ -10,7 +10,37 @@ use crate::models::{
 
 pub struct DbState(pub Mutex<Connection>);
 
-const MIGRATIONS: &[&str] = &[r#"
+const PROJECT_ICON_CANDIDATES: &[&str] = &[
+    "favicon.ico",
+    "favicon.png",
+    "public/favicon.ico",
+    "public/favicon.png",
+    "app/favicon.ico",
+    "src/app/favicon.ico",
+    "public/icon.png",
+    "public/logo.svg",
+    "public/logo.png",
+    "src/assets/icon.svg",
+    "src/assets/icon.png",
+    "src/assets/logo.svg",
+    "src/assets/logo.png",
+    "src-tauri/icons/128x128.png",
+    "icons/icon128.png",
+    "icon.png",
+    "logo.png",
+];
+
+// ponytail: fixed candidates keep icon discovery cheap; persist paths if library loading becomes measurable.
+fn project_icon(path: &str) -> Option<String> {
+    PROJECT_ICON_CANDIDATES
+        .iter()
+        .map(|candidate| std::path::Path::new(path).join(candidate))
+        .find(|candidate| candidate.is_file())
+        .map(|candidate| candidate.to_string_lossy().to_string())
+}
+
+const MIGRATIONS: &[&str] = &[
+    r#"
 CREATE TABLE projects (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     path TEXT NOT NULL UNIQUE,
@@ -96,20 +126,27 @@ CREATE TABLE settings (
     intro_seen INTEGER NOT NULL DEFAULT 0
 );
 "#,
-r#"
+    r#"
 ALTER TABLE projects ADD COLUMN homepage TEXT;
 "#,
-r#"
+    r#"
 CREATE TABLE plugins (
     id TEXT PRIMARY KEY,
     enabled INTEGER NOT NULL DEFAULT 0,
     selected TEXT NOT NULL DEFAULT '[]'
 );
 "#,
-r#"
+    r#"
 ALTER TABLE plugins ADD COLUMN has_credential INTEGER NOT NULL DEFAULT 0;
 UPDATE plugins SET has_credential = 1 WHERE enabled = 1 OR selected != '[]';
-"#];
+"#,
+    r#"
+DELETE FROM projects WHERE path LIKE '%/gems/%' OR path LIKE '%/gems';
+"#,
+    r#"
+DELETE FROM projects WHERE path GLOB '*/.*';
+"#,
+];
 
 pub fn db_path() -> Result<std::path::PathBuf, String> {
     let home = dirs::home_dir().ok_or("could not resolve home directory")?;
@@ -170,6 +207,7 @@ fn screenshot_for_variant(
 }
 
 fn project_core_from_row(row: &Row) -> rusqlite::Result<Project> {
+    let path: String = row.get("path")?;
     let framework: String = row.get("framework")?;
     let package_manager: String = row.get("package_manager")?;
     let status: String = row.get("status")?;
@@ -177,7 +215,7 @@ fn project_core_from_row(row: &Row) -> rusqlite::Result<Project> {
 
     Ok(Project {
         id: row.get("id")?,
-        path: row.get("path")?,
+        path: path.clone(),
         name: row.get("name")?,
         framework: Framework::from_str(&framework),
         language: row.get("language")?,
@@ -192,6 +230,7 @@ fn project_core_from_row(row: &Row) -> rusqlite::Result<Project> {
         run_cmd: row.get("run_cmd")?,
         run_url: row.get("run_url")?,
         homepage: row.get("homepage")?,
+        icon_path: project_icon(&path),
         port: row.get("port")?,
         status: ProjectStatus::from_str(&status),
         broken_reason: broken_reason.and_then(|s| BrokenReason::from_str(&s)),
@@ -716,7 +755,9 @@ pub fn list_projects(conn: &Connection, query: &ProjectQuery) -> rusqlite::Resul
 
     let param_refs: Vec<&dyn rusqlite::ToSql> = bind_values.iter().map(|v| v.as_ref()).collect();
     let mut stmt = conn.prepare(&sql)?;
-    let rows = stmt.query_map(params_from_iter(param_refs), |row| project_core_from_row(row))?;
+    let rows = stmt.query_map(params_from_iter(param_refs), |row| {
+        project_core_from_row(row)
+    })?;
 
     let mut projects = Vec::new();
     for row in rows {
@@ -789,6 +830,67 @@ mod tests {
     }
 
     #[test]
+    fn finds_a_common_project_icon() {
+        let root = tempfile::tempdir().unwrap();
+        std::fs::create_dir(root.path().join("public")).unwrap();
+        std::fs::write(root.path().join("public/logo.svg"), "<svg />").unwrap();
+
+        assert_eq!(
+            project_icon(root.path().to_str().unwrap()),
+            Some(
+                root.path()
+                    .join("public/logo.svg")
+                    .to_string_lossy()
+                    .to_string()
+            )
+        );
+    }
+
+    #[test]
+    fn gem_packages_are_removed_from_existing_catalogs() {
+        let conn = setup();
+        upsert_project(
+            &conn,
+            &sample_input(
+                "/Users/me/.rubies/3.4.0/lib/ruby/gems/3.4.0/gems/bcrypt",
+                "bcrypt",
+            ),
+        )
+        .unwrap();
+        upsert_project(
+            &conn,
+            &sample_input("/Users/me/code/workbench", "Workbench"),
+        )
+        .unwrap();
+
+        conn.execute_batch(MIGRATIONS[4]).unwrap();
+
+        let name: String = conn
+            .query_row("SELECT name FROM projects", [], |row| row.get(0))
+            .unwrap();
+        assert_eq!(name, "Workbench");
+    }
+
+    #[test]
+    fn hidden_directories_are_removed_from_existing_catalogs() {
+        let conn = setup();
+        upsert_project(&conn, &sample_input("/Users/me/.ruby-lsp", ".ruby-lsp")).unwrap();
+        upsert_project(&conn, &sample_input("/Users/me/.npm/_npx/hash", "hash")).unwrap();
+        upsert_project(
+            &conn,
+            &sample_input("/Users/me/code/workbench", "Workbench"),
+        )
+        .unwrap();
+
+        conn.execute_batch(MIGRATIONS.last().unwrap()).unwrap();
+
+        let name: String = conn
+            .query_row("SELECT name FROM projects", [], |row| row.get(0))
+            .unwrap();
+        assert_eq!(name, "Workbench");
+    }
+
+    #[test]
     fn upsert_updates_in_place_and_preserves_fields() {
         let conn = setup();
         let input = sample_input("/code/demo", "Demo");
@@ -821,16 +923,14 @@ mod tests {
     fn shelf_query_returns_expected_rows() {
         let conn = setup();
 
-        let shipped = upsert_project(&conn, &sample_input("/code/shipped", "Shipped App"))
-            .unwrap();
+        let shipped = upsert_project(&conn, &sample_input("/code/shipped", "Shipped App")).unwrap();
         conn.execute(
             "UPDATE projects SET status = 'shipped' WHERE id = ?1",
             params![shipped.id],
         )
         .unwrap();
 
-        let dead =
-            upsert_project(&conn, &sample_input("/code/dead", "Dead App")).unwrap();
+        let dead = upsert_project(&conn, &sample_input("/code/dead", "Dead App")).unwrap();
         conn.execute(
             "UPDATE projects SET status = 'dead' WHERE id = ?1",
             params![dead.id],
@@ -845,8 +945,7 @@ mod tests {
         .unwrap();
         upsert_screenshot(&conn, gem.id, "desktop", "/shots/gem-desktop.png").unwrap();
 
-        let active =
-            upsert_project(&conn, &sample_input("/code/active", "Active App")).unwrap();
+        let active = upsert_project(&conn, &sample_input("/code/active", "Active App")).unwrap();
 
         let query_shipped = ProjectQuery {
             shelf: ShelfId::Shipped,
@@ -964,13 +1063,25 @@ mod tests {
 
         assert!(get_project(&conn, project.id).unwrap().is_none());
         let tags: i64 = conn
-            .query_row("SELECT COUNT(*) FROM tags WHERE project_id = ?1", params![project.id], |r| r.get(0))
+            .query_row(
+                "SELECT COUNT(*) FROM tags WHERE project_id = ?1",
+                params![project.id],
+                |r| r.get(0),
+            )
             .unwrap();
         let shots: i64 = conn
-            .query_row("SELECT COUNT(*) FROM screenshots WHERE project_id = ?1", params![project.id], |r| r.get(0))
+            .query_row(
+                "SELECT COUNT(*) FROM screenshots WHERE project_id = ?1",
+                params![project.id],
+                |r| r.get(0),
+            )
             .unwrap();
         let activity: i64 = conn
-            .query_row("SELECT COUNT(*) FROM activity WHERE project_id = ?1", params![project.id], |r| r.get(0))
+            .query_row(
+                "SELECT COUNT(*) FROM activity WHERE project_id = ?1",
+                params![project.id],
+                |r| r.get(0),
+            )
             .unwrap();
         assert_eq!((tags, shots, activity), (0, 0, 0));
     }
@@ -1007,7 +1118,9 @@ mod tests {
             homepage: Some(None),
             ..Default::default()
         };
-        let after = update_project(&conn, project.id, &cleared).unwrap().unwrap();
+        let after = update_project(&conn, project.id, &cleared)
+            .unwrap()
+            .unwrap();
         assert!(after.homepage.is_none());
     }
 }

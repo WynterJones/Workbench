@@ -94,7 +94,9 @@ fn normalize_github_url(remote: &str) -> Option<String> {
     if let Some(rest) = without_suffix.strip_prefix("ssh://git@github.com/") {
         return Some(format!("https://github.com/{rest}"));
     }
-    if without_suffix.starts_with("https://github.com/") || without_suffix.starts_with("http://github.com/") {
+    if without_suffix.starts_with("https://github.com/")
+        || without_suffix.starts_with("http://github.com/")
+    {
         return Some(without_suffix.to_string());
     }
     None

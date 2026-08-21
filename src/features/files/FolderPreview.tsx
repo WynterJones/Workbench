@@ -16,24 +16,26 @@ export function FolderPreview({ path }: FolderPreviewProps) {
   }
 
   return (
-    <div className="flex h-full flex-col gap-4 overflow-y-auto p-4">
+    <div className="flex h-full flex-col gap-3 overflow-y-auto p-4">
       <div className="flex items-center gap-2">
         <FolderIcon className="size-5 text-muted-foreground" strokeWidth={1.5} />
         <span className="truncate text-sm font-medium">{baseName(path)}</span>
       </div>
 
-      <div className="flex flex-wrap gap-1.5">
-        {info.framework && <Badge variant="outline">{info.framework}</Badge>}
-        {info.gitBranch && (
-          <Badge variant="outline" className="gap-1">
-            <GitBranchIcon className="size-3" />
-            {info.gitBranch}
-            {info.gitDirty ? " *" : ""}
-          </Badge>
-        )}
-      </div>
+      {(info.framework || info.gitBranch) && (
+        <div className="flex flex-wrap gap-1.5">
+          {info.framework && <Badge variant="outline">{info.framework}</Badge>}
+          {info.gitBranch && (
+            <Badge variant="outline" className="gap-1">
+              <GitBranchIcon className="size-3" />
+              {info.gitBranch}
+              {info.gitDirty ? " *" : ""}
+            </Badge>
+          )}
+        </div>
+      )}
 
-      <dl className="grid grid-cols-2 gap-y-1.5 font-mono text-[11px] text-muted-foreground">
+      <dl className="grid grid-cols-2 gap-y-1.5 border-t border-border/70 pt-3 font-mono text-[11px] text-muted-foreground">
         <dt>Items</dt>
         <dd className="text-right text-foreground">{info.entryCount ?? "—"}</dd>
         <dt>Size</dt>

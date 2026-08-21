@@ -35,8 +35,8 @@ const CANDIDATES: [&str; 22] = [
 ];
 
 const SOURCE_EXTENSIONS: [&str; 16] = [
-    "ts", "tsx", "js", "jsx", "rs", "go", "py", "rb", "vue", "svelte", "php", "swift", "kt", "java",
-    "c", "cpp",
+    "ts", "tsx", "js", "jsx", "rs", "go", "py", "rb", "vue", "svelte", "php", "swift", "kt",
+    "java", "c", "cpp",
 ];
 
 #[derive(Serialize)]
@@ -97,7 +97,11 @@ fn pick_file(root: &Path) -> Option<PathBuf> {
         if meta.len() > MAX_FILE_BYTES {
             continue;
         }
-        if best.as_ref().map(|(size, _)| meta.len() > *size).unwrap_or(true) {
+        if best
+            .as_ref()
+            .map(|(size, _)| meta.len() > *size)
+            .unwrap_or(true)
+        {
             best = Some((meta.len(), path.to_path_buf()));
         }
     }

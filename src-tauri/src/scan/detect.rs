@@ -85,7 +85,8 @@ pub fn detect(_dir: &Path, entries: &[String], ctx: &DetectContext) -> Option<De
 
     let package_manager = resolve_package_manager(framework, entries);
     let language = resolve_language(framework, entries);
-    let (run_cmd, run_url, port) = resolve_run(framework, package_manager, ctx.package_json.as_ref());
+    let (run_cmd, run_url, port) =
+        resolve_run(framework, package_manager, ctx.package_json.as_ref());
 
     Some(Detection {
         framework,
@@ -157,12 +158,20 @@ fn resolve_run(
         Framework::Nextjs => {
             let cmd = script_run_cmd(pm, package_json, &["dev", "start", "serve"])
                 .unwrap_or_else(|| default_pm_cmd(pm, "dev"));
-            (Some(cmd), Some("http://localhost:3000".to_string()), Some(3000))
+            (
+                Some(cmd),
+                Some("http://localhost:3000".to_string()),
+                Some(3000),
+            )
         }
         Framework::Vite => {
             let cmd = script_run_cmd(pm, package_json, &["dev", "start", "serve"])
                 .unwrap_or_else(|| default_pm_cmd(pm, "dev"));
-            (Some(cmd), Some("http://localhost:5173".to_string()), Some(5173))
+            (
+                Some(cmd),
+                Some("http://localhost:5173".to_string()),
+                Some(5173),
+            )
         }
         Framework::Node => {
             let cmd = script_run_cmd(pm, package_json, &["dev", "start", "serve"]);

@@ -8,8 +8,6 @@ interface McpRowProps {
 }
 
 export function McpRow({ server, selected, onSelect }: McpRowProps) {
-  const summary = server.url ?? server.command ?? "no command recorded";
-
   return (
     <div
       role="button"
@@ -34,7 +32,6 @@ export function McpRow({ server, selected, onSelect }: McpRowProps) {
           </span>
         )}
       </div>
-      <p className="truncate font-mono text-[11px] text-muted-foreground/70">{summary}</p>
     </div>
   );
 }

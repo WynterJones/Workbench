@@ -107,7 +107,13 @@ fn execute_run(id: i64, registry: &ProcessRegistry) -> Result<RunResult, String>
 
     match outcome {
         RunOutcome::Ready(url) => {
-            store::update_after_run(id, ProjectStatus::Running, Some(&url), Some(port as i64), None)?;
+            store::update_after_run(
+                id,
+                ProjectStatus::Running,
+                Some(&url),
+                Some(port as i64),
+                None,
+            )?;
             Ok(RunResult {
                 project_id: id,
                 url: Some(url),
@@ -183,7 +189,11 @@ fn capture_one(id: i64, app: &AppHandle) -> Result<(), String> {
                     if capture::capture_screenshot(&chrome, url, variant, &out_path).is_ok() {
                         let blank = capture::is_blank_png(&out_path).unwrap_or(false);
                         if !blank {
-                            let _ = store::insert_screenshot(id, variant.name, &out_path.to_string_lossy());
+                            let _ = store::insert_screenshot(
+                                id,
+                                variant.name,
+                                &out_path.to_string_lossy(),
+                            );
                         }
                     }
                 }
@@ -191,6 +201,9 @@ fn capture_one(id: i64, app: &AppHandle) -> Result<(), String> {
         }
     }
     kill_and_remove(&registry, id);
+    if result.ok {
+        store::update_after_run(id, ProjectStatus::Runnable, None, None, None)?;
+    }
     Ok(())
 }
 

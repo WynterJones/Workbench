@@ -28,3 +28,4 @@ outputs/
 .farmwork/
 *.icns
 docs/dist/
+.serena/

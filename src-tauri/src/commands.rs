@@ -114,7 +114,10 @@ pub fn trash_project_folder(state: State<DbState>, id: i64) -> Result<String, St
         return Err("refusing to trash your home directory or one of its parents".into());
     }
     if resolved.components().count() < 3 {
-        return Err(format!("refusing to trash {}, it is too close to the root", resolved.display()));
+        return Err(format!(
+            "refusing to trash {}, it is too close to the root",
+            resolved.display()
+        ));
     }
 
     trash::delete(&resolved).map_err(|e| e.to_string())?;

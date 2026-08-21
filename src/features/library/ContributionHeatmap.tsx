@@ -74,9 +74,11 @@ export function ContributionHeatmap() {
                       <TooltipTrigger asChild>
                         <span
                           className={cn(
-                            "aspect-square w-full rounded-[2px]",
+                            "heatmap-cell aspect-square w-full rounded-[2px]",
                             LEVEL_CLASS[levelFor(day.count, max)],
+                            (weekIndex * 7 + dayIndex) % 29 === 0 && "heatmap-cell-pulse",
                           )}
+                          style={{ animationDelay: `-${(weekIndex * 7 + dayIndex) % 64}s` }}
                         />
                       </TooltipTrigger>
                       <TooltipContent side="top">{dayLabel(day)}</TooltipContent>

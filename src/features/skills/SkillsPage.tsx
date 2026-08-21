@@ -121,11 +121,11 @@ export function SkillsPage() {
             {grouped.map(([agent, skills]) => (
               <div key={agent} className="mb-4">
                 {agentFilter === "all" && (
-                  <p className="flex items-center gap-1.5 px-2.5 pb-1.5 text-[11px] uppercase tracking-wide text-muted-foreground">
+                  <p className="flex items-center gap-2 px-2.5 pb-2 text-sm font-medium text-muted-foreground">
                     <AgentMarkIcon
                       agentId={agent}
                       vendor={agent === "codex" ? "OpenAI" : "Anthropic"}
-                      className="size-3 text-current"
+                      className="size-4 text-current"
                     />
                     {AGENT_LABEL[agent] ?? agent} · {skills.length}
                   </p>

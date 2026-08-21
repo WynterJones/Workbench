@@ -47,17 +47,27 @@ pub fn parse_claude_servers(raw: &str) -> Vec<McpServer> {
 
     let mut push = |name: &str, entry: &serde_json::Value, scope: &str, project: Option<String>| {
         servers.push(McpServer {
-            id: format!("claude-code:{}:{name}", project.clone().unwrap_or_else(|| "global".into())),
+            id: format!(
+                "claude-code:{}:{name}",
+                project.clone().unwrap_or_else(|| "global".into())
+            ),
             name: name.to_string(),
             agent: "claude-code".to_string(),
             scope: scope.to_string(),
             project,
             transport: transport_of(entry),
-            command: entry.get("command").and_then(|c| c.as_str()).map(String::from),
+            command: entry
+                .get("command")
+                .and_then(|c| c.as_str())
+                .map(String::from),
             args: entry
                 .get("args")
                 .and_then(|a| a.as_array())
-                .map(|a| a.iter().filter_map(|v| v.as_str().map(String::from)).collect())
+                .map(|a| {
+                    a.iter()
+                        .filter_map(|v| v.as_str().map(String::from))
+                        .collect()
+                })
                 .unwrap_or_default(),
             url: entry.get("url").and_then(|u| u.as_str()).map(String::from),
             env_keys: entry.get("env").map(redacted_env).unwrap_or_default(),
@@ -124,7 +134,9 @@ pub fn parse_codex_servers(raw: &str) -> Vec<McpServer> {
             continue;
         }
 
-        let Some(name) = current.clone() else { continue };
+        let Some(name) = current.clone() else {
+            continue;
+        };
         let Some((key, value)) = trimmed.split_once('=') else {
             continue;
         };
@@ -204,8 +216,11 @@ fn install_into_json(path: PathBuf, binary: &str) -> Result<(), String> {
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent).map_err(|e| e.to_string())?;
     }
-    fs::write(&path, serde_json::to_string_pretty(&root).map_err(|e| e.to_string())?)
-        .map_err(|e| e.to_string())
+    fs::write(
+        &path,
+        serde_json::to_string_pretty(&root).map_err(|e| e.to_string())?,
+    )
+    .map_err(|e| e.to_string())
 }
 
 fn install_into_codex(path: PathBuf, binary: &str) -> Result<(), String> {
@@ -338,7 +353,10 @@ command = "computer-use"
 
         let servers = parse_claude_servers(&root.to_string());
         let installed = servers.iter().find(|s| s.name == WORKBENCH_SERVER).unwrap();
-        assert_eq!(installed.command.as_deref(), Some("/Applications/Workbench.app/wb"));
+        assert_eq!(
+            installed.command.as_deref(),
+            Some("/Applications/Workbench.app/wb")
+        );
         assert_eq!(installed.args, vec!["mcp"]);
     }
 
@@ -347,7 +365,10 @@ command = "computer-use"
         let toml = format!("{}{}", CODEX, codex_block("/Applications/Workbench.app/wb"));
         let servers = parse_codex_servers(&toml);
         let installed = servers.iter().find(|s| s.name == WORKBENCH_SERVER).unwrap();
-        assert_eq!(installed.command.as_deref(), Some("/Applications/Workbench.app/wb"));
+        assert_eq!(
+            installed.command.as_deref(),
+            Some("/Applications/Workbench.app/wb")
+        );
         assert_eq!(installed.args, vec!["mcp"]);
         assert_eq!(servers.len(), 3);
     }
@@ -380,8 +401,22 @@ command = "computer-use"
     #[test]
     fn detects_transport_from_the_entry_shape() {
         let servers = parse_claude_servers(CLAUDE);
-        assert_eq!(servers.iter().find(|s| s.name == "imagegen").unwrap().transport, "stdio");
-        assert_eq!(servers.iter().find(|s| s.name == "remote").unwrap().transport, "sse");
+        assert_eq!(
+            servers
+                .iter()
+                .find(|s| s.name == "imagegen")
+                .unwrap()
+                .transport,
+            "stdio"
+        );
+        assert_eq!(
+            servers
+                .iter()
+                .find(|s| s.name == "remote")
+                .unwrap()
+                .transport,
+            "sse"
+        );
     }
 
     #[test]

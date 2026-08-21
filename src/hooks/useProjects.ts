@@ -78,6 +78,7 @@ export function useUpdateProject() {
     onSuccess: (project) => {
       queryClient.invalidateQueries({ queryKey: ["projects"] });
       queryClient.setQueryData(["project", project.id], project);
+      queryClient.invalidateQueries({ queryKey: ["project", project.id, "shipScore"] });
     },
   });
 }

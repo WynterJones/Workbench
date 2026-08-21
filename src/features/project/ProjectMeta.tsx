@@ -1,8 +1,8 @@
 import { ExternalLinkIcon } from "lucide-react";
 import { toast } from "sonner";
 import { HomepageField } from "@/features/project/HomepageField";
+import { ProjectIcon } from "@/features/project/ProjectIcon";
 import { FrameworkBadge } from "@/features/library/FrameworkBadge";
-import { StatusBadge } from "@/features/library/StatusBadge";
 import { api } from "@/lib/api";
 import { useAppStore } from "@/lib/store";
 import { daysSince, formatLoc, truncatePath } from "@/lib/format";
@@ -22,8 +22,8 @@ export function ProjectMeta({ project }: ProjectMetaProps) {
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-2">
-        <StatusBadge status={project.status} />
-        <h1 className="truncate text-2xl font-semibold">{project.name}</h1>
+        <ProjectIcon project={project} className="size-8" />
+        <h1 className="truncate text-2xl font-semibold">{project.name.replace(/^\.+/, "")}</h1>
         {project.archived && (
           <span className="shrink-0 rounded border border-border px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">
             Archived

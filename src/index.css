@@ -258,6 +258,42 @@
   contain-intrinsic-size: auto none auto 44px;
 }
 
+@keyframes heatmap-cell-glow {
+  0%,
+  95%,
+  100% {
+    box-shadow: inset 0 0 0 1px transparent, 0 0 0 transparent;
+    opacity: 1;
+    transform: scale(1);
+  }
+  97% {
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--brand) 40%, white), 0 0 5px color-mix(in srgb, var(--brand) 20%, transparent);
+    opacity: 0.96;
+    transform: scale(1.035);
+  }
+}
+
+.heatmap-cell {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--foreground) 3%, transparent);
+  transition: box-shadow 160ms ease, opacity 160ms ease, transform 160ms ease;
+}
+
+.heatmap-cell:hover {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--brand) 55%, white), 0 0 6px color-mix(in srgb, var(--brand) 25%, transparent);
+  opacity: 0.96;
+  transform: scale(1.06);
+}
+
+.heatmap-cell-pulse {
+  animation: heatmap-cell-glow 64s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .heatmap-cell-pulse {
+    animation: none;
+  }
+}
+
 .timeline-row-commit {
   contain-intrinsic-size: auto none auto 28px;
 }

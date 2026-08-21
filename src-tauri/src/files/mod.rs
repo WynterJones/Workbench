@@ -1,12 +1,13 @@
+mod cache;
 mod context;
 mod fs_ops;
 mod listing;
+mod read;
 mod scaffold;
 mod starters;
 mod watch;
-mod cache;
-mod read;
 
+pub use cache::ListingCache;
 pub use watch::WatcherState;
 
 use std::path::PathBuf;
@@ -26,11 +27,36 @@ fn roots_from_state(state: &State<DbState>) -> Result<Vec<PathBuf>, String> {
 #[tauri::command]
 pub fn fs_list_dir(
     state: State<DbState>,
+    cache: State<ListingCache>,
     path: String,
     opts: ListOptions,
 ) -> Result<Vec<FsEntry>, String> {
     let roots = roots_from_state(&state)?;
-    listing::list_dir(&path, &opts, &roots)
+    let resolved = fs_ops::guard_existing(&path, &roots)?;
+    if !resolved.is_dir() {
+        return Err(format!("{path} is not a directory"));
+    }
+    if let Some(entries) = cache.get(&resolved, &opts) {
+        return Ok(entries);
+    }
+    let entries = listing::list_dir(&path, &opts, &roots)?;
+    cache.put(&resolved, &opts, &entries);
+    Ok(entries)
+}
+
+#[tauri::command]
+pub async fn fs_find_documents(
+    state: State<'_, DbState>,
+    path: String,
+) -> Result<Vec<FsEntry>, String> {
+    let roots = roots_from_state(&state)?;
+    let resolved = fs_ops::guard_existing(&path, &roots)?;
+    if !resolved.is_dir() {
+        return Err(format!("{path} is not a directory"));
+    }
+    tauri::async_runtime::spawn_blocking(move || listing::find_documents(&resolved))
+        .await
+        .map_err(|error| error.to_string())?
 }
 
 #[tauri::command]
@@ -90,10 +116,16 @@ pub fn fs_get_info(state: State<DbState>, path: String) -> Result<fs_ops::FsInfo
 #[tauri::command]
 pub fn fs_watch_directory(
     app: AppHandle,
+    state: State<DbState>,
     watcher: State<WatcherState>,
     path: String,
 ) -> Result<(), String> {
-    watch::start(app, &watcher, &path)
+    let roots = roots_from_state(&state)?;
+    let resolved = fs_ops::guard_existing(&path, &roots)?;
+    if !resolved.is_dir() {
+        return Err(format!("{path} is not a directory"));
+    }
+    watch::start(app, &watcher, resolved.to_string_lossy().as_ref())
 }
 
 #[tauri::command]

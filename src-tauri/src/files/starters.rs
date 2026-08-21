@@ -163,8 +163,7 @@ pub fn merge_defaults(
     existing: Vec<StarterTemplate>,
     defaults: Vec<StarterTemplate>,
 ) -> (Vec<StarterTemplate>, usize) {
-    let known: std::collections::HashSet<String> =
-        existing.iter().map(|t| t.id.clone()).collect();
+    let known: std::collections::HashSet<String> = existing.iter().map(|t| t.id.clone()).collect();
     let mut merged = existing;
     let mut added = 0;
     for template in defaults {
@@ -184,8 +183,7 @@ fn load_registry() -> Result<Vec<StarterTemplate>, String> {
         return Ok(defaults);
     }
     let raw = fs::read_to_string(&path).map_err(|e| e.to_string())?;
-    let existing: Vec<StarterTemplate> =
-        serde_json::from_str(&raw).map_err(|e| e.to_string())?;
+    let existing: Vec<StarterTemplate> = serde_json::from_str(&raw).map_err(|e| e.to_string())?;
 
     let (merged, added) = merge_defaults(existing, default_registry());
     if added > 0 {
@@ -244,7 +242,10 @@ pub fn save_folder_as_starter(
         description: format!("Local template copied from {}", resolved.display()),
         stack: Vec::new(),
         tags: vec!["local".to_string()],
-        command: format!("cp -R {} ./{{{{name}}}}", shell_quote(&resolved.to_string_lossy())),
+        command: format!(
+            "cp -R {} ./{{{{name}}}}",
+            shell_quote(&resolved.to_string_lossy())
+        ),
         docs_url: String::new(),
         category: "local".to_string(),
     };
@@ -566,9 +567,21 @@ mod tests {
     fn every_entry_has_the_fields_the_ui_renders() {
         for entry in default_registry() {
             assert!(!entry.name.trim().is_empty(), "{} has no name", entry.id);
-            assert!(!entry.description.trim().is_empty(), "{} has no description", entry.id);
-            assert!(!entry.command.trim().is_empty(), "{} has no command", entry.id);
-            assert!(!entry.category.trim().is_empty(), "{} has no category", entry.id);
+            assert!(
+                !entry.description.trim().is_empty(),
+                "{} has no description",
+                entry.id
+            );
+            assert!(
+                !entry.command.trim().is_empty(),
+                "{} has no command",
+                entry.id
+            );
+            assert!(
+                !entry.category.trim().is_empty(),
+                "{} has no category",
+                entry.id
+            );
             assert!(!entry.stack.is_empty(), "{} has no stack", entry.id);
             assert!(
                 entry.docs_url.starts_with("https://"),
@@ -593,7 +606,15 @@ mod tests {
 
     #[test]
     fn commands_that_create_a_directory_use_the_name_placeholder() {
-        let exempt = ["shadcn-dashboard", "shadcn-login", "shadcn-sidebar", "shadcn-vite", "storybook", "vitepress", "commander-cli"];
+        let exempt = [
+            "shadcn-dashboard",
+            "shadcn-login",
+            "shadcn-sidebar",
+            "shadcn-vite",
+            "storybook",
+            "vitepress",
+            "commander-cli",
+        ];
         for entry in default_registry() {
             if exempt.contains(&entry.id.as_str()) {
                 continue;
@@ -609,9 +630,32 @@ mod tests {
     #[test]
     fn categories_stay_a_tight_known_set() {
         let allowed = [
-            "react", "nextjs", "ui", "vue", "svelte", "astro", "frontend", "node-backend",
-            "python", "rust", "go", "ruby", "php", "elixir", "desktop", "mobile", "extension",
-            "cli", "package", "docs", "ai", "data", "monorepo", "tooling", "bot", "game",
+            "react",
+            "nextjs",
+            "ui",
+            "vue",
+            "svelte",
+            "astro",
+            "frontend",
+            "node-backend",
+            "python",
+            "rust",
+            "go",
+            "ruby",
+            "php",
+            "elixir",
+            "desktop",
+            "mobile",
+            "extension",
+            "cli",
+            "package",
+            "docs",
+            "ai",
+            "data",
+            "monorepo",
+            "tooling",
+            "bot",
+            "game",
         ];
         for entry in default_registry() {
             assert!(

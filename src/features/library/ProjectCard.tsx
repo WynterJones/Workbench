@@ -4,8 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ScreenshotThumb } from "@/features/library/ScreenshotThumb";
 import { FrameworkBadge } from "@/features/library/FrameworkBadge";
-import { StatusBadge } from "@/features/library/StatusBadge";
 import { ProjectContextMenu } from "@/features/library/ProjectContextMenu";
+import { ProjectIcon } from "@/features/project/ProjectIcon";
 import { useRunProject } from "@/hooks/useRunProject";
 import { api } from "@/lib/api";
 import { formatShipScore, relativeTime } from "@/lib/format";
@@ -14,6 +14,7 @@ import type { Project } from "@/lib/types";
 
 interface ProjectCardProps {
   project: Project;
+  view?: "grid" | "list";
   onOpen: (id: number) => void;
 }
 
@@ -24,7 +25,7 @@ function shipScoreTone(score: number | null) {
   return "text-muted-foreground";
 }
 
-export function ProjectCard({ project, onOpen }: ProjectCardProps) {
+export function ProjectCard({ project, view = "grid", onOpen }: ProjectCardProps) {
   const runProject = useRunProject();
 
   async function openIn(target: "editor" | "finder", event: React.MouseEvent) {
@@ -48,14 +49,18 @@ export function ProjectCard({ project, onOpen }: ProjectCardProps) {
       <button
         type="button"
         onClick={() => onOpen(project.id)}
-        className="group flex flex-col overflow-hidden rounded-lg border border-border bg-card text-left transition-colors hover:border-muted-foreground/40"
+        className={cn(
+          "group flex overflow-hidden rounded-lg border border-border bg-card text-left transition-colors hover:border-muted-foreground/40",
+          view === "list" ? "h-36 min-w-0 flex-row" : "flex-col"
+        )}
       >
-        <div className="relative">
+        <div className={cn("relative", view === "list" && "w-[42%] shrink-0")}>
           <ScreenshotThumb
             screenshotPath={project.screenshotDesktop}
             framework={project.framework}
-            name={project.name}
+            name={project.name.replace(/^\.+/, "")}
             projectId={project.id}
+            className={view === "list" ? "h-full aspect-auto rounded-l-lg rounded-tr-none" : undefined}
           />
           <div className="absolute inset-x-0 bottom-0 flex items-center justify-center gap-1.5 bg-gradient-to-t from-background/90 to-transparent p-2 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
             <Tooltip>
@@ -100,10 +105,12 @@ export function ProjectCard({ project, onOpen }: ProjectCardProps) {
           </div>
         </div>
 
-        <div className="flex flex-col gap-1.5 p-3">
+        <div className={cn("flex flex-col gap-1.5 p-3", view === "list" && "min-w-0 flex-1 justify-center")}>
           <div className="flex items-center gap-1.5">
-            <StatusBadge status={project.status} />
-            <span className="truncate text-sm font-medium">{project.name}</span>
+            <ProjectIcon project={project} className={view === "list" ? "size-6" : "size-5"} />
+            <span className={cn("truncate font-medium", view === "list" ? "text-base" : "text-sm")}>
+              {project.name.replace(/^\.+/, "")}
+            </span>
             {project.gitDirty && (
               <Tooltip>
                 <TooltipTrigger asChild>

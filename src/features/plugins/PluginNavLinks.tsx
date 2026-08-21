@@ -18,8 +18,7 @@ export function PluginNavLinks() {
   if (enabled.length === 0) return null;
 
   return (
-    <>
-      <div className="my-1 h-px bg-border" />
+    <div className="-mx-2 my-1 space-y-0.5 border-t border-border bg-background/60 px-2 py-1.5 shadow-inner">
       {enabled.map((meta) => {
         const brand = brandByName(meta.brand);
         const active = route === "plugin" && activePluginId === meta.id;
@@ -45,6 +44,6 @@ export function PluginNavLinks() {
           </button>
         );
       })}
-    </>
+    </div>
   );
 }

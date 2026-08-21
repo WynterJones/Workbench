@@ -39,13 +39,18 @@ pub struct TimelinePage {
 pub struct TimelineCache(Mutex<Option<(Instant, Vec<TimelineEvent>, usize)>>);
 
 fn to_rfc3339(seconds: i64) -> Option<String> {
-    Utc.timestamp_opt(seconds, 0).single().map(|d| d.to_rfc3339())
+    Utc.timestamp_opt(seconds, 0)
+        .single()
+        .map(|d| d.to_rfc3339())
 }
 
 fn folder_created(path: &Path) -> Option<String> {
     let meta = std::fs::metadata(path).ok()?;
     let created = meta.created().ok()?;
-    let secs = created.duration_since(std::time::UNIX_EPOCH).ok()?.as_secs();
+    let secs = created
+        .duration_since(std::time::UNIX_EPOCH)
+        .ok()?
+        .as_secs();
     to_rfc3339(secs as i64)
 }
 
@@ -71,7 +76,9 @@ fn commits_for(
     let mut collected = Vec::new();
     for oid in walk.take(COMMITS_PER_REPO) {
         let Ok(oid) = oid else { continue };
-        let Ok(commit) = repo.find_commit(oid) else { continue };
+        let Ok(commit) = repo.find_commit(oid) else {
+            continue;
+        };
         let Some(when) = to_rfc3339(commit.time().seconds()) else {
             continue;
         };
@@ -89,7 +96,10 @@ fn commits_for(
 
     if let Some(first) = collected.last_mut() {
         first.kind = "first-commit".into();
-        first.detail = Some(format!("First commit · {}", first.detail.clone().unwrap_or_default()));
+        first.detail = Some(format!(
+            "First commit · {}",
+            first.detail.clone().unwrap_or_default()
+        ));
     }
 
     events.extend(collected);

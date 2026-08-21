@@ -123,7 +123,19 @@ fn find_todos(project_path: &str) -> Vec<String> {
 fn is_probably_binary(path: &Path) -> bool {
     matches!(
         path.extension().and_then(|e| e.to_str()),
-        Some("png" | "jpg" | "jpeg" | "gif" | "ico" | "woff" | "woff2" | "ttf" | "db" | "sqlite" | "lock")
+        Some(
+            "png"
+                | "jpg"
+                | "jpeg"
+                | "gif"
+                | "ico"
+                | "woff"
+                | "woff2"
+                | "ttf"
+                | "db"
+                | "sqlite"
+                | "lock"
+        )
     )
 }
 
@@ -205,7 +217,9 @@ fn compose_prompt(id: i64) -> Result<String, String> {
 }
 
 fn prompt_file_path(id: i64) -> PathBuf {
-    store::workbench_dir().join("prompts").join(format!("{id}.md"))
+    store::workbench_dir()
+        .join("prompts")
+        .join(format!("{id}.md"))
 }
 
 fn write_prompt_file(id: i64, prompt: &str) -> Result<PathBuf, String> {

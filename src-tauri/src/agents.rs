@@ -264,7 +264,11 @@ fn inspect(spec: &AgentSpec) -> AgentInfo {
         name: spec.name.to_string(),
         vendor: spec.vendor.to_string(),
         binary: spec.binary.to_string(),
-        version: if installed { read_version(spec.binary) } else { None },
+        version: if installed {
+            read_version(spec.binary)
+        } else {
+            None
+        },
         config_exists: config_path.is_dir(),
         config_dir: Some(config_path.to_string_lossy().to_string()),
         installed,
@@ -292,9 +296,21 @@ mod tests {
         let mut ids = std::collections::HashSet::new();
         for spec in AGENTS {
             assert!(!spec.name.is_empty(), "{} missing name", spec.id);
-            assert!(!spec.install_command.is_empty(), "{} missing command", spec.id);
-            assert!(spec.install_url.starts_with("https://"), "{} bad url", spec.id);
-            assert!(spec.docs_url.starts_with("https://"), "{} bad docs", spec.id);
+            assert!(
+                !spec.install_command.is_empty(),
+                "{} missing command",
+                spec.id
+            );
+            assert!(
+                spec.install_url.starts_with("https://"),
+                "{} bad url",
+                spec.id
+            );
+            assert!(
+                spec.docs_url.starts_with("https://"),
+                "{} bad docs",
+                spec.id
+            );
             assert!(ids.insert(spec.id), "duplicate id {}", spec.id);
         }
     }

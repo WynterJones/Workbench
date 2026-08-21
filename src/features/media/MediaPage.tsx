@@ -1,16 +1,48 @@
+import { useEffect, useMemo, useState } from "react";
 import { HeartIcon, Trash2Icon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { QueryState } from "@/components/QueryState";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyStateBlock } from "@/components/EmptyStateBlock";
 import { MediaGrid } from "@/features/media/MediaGrid";
+import { MediaPagination } from "@/features/media/MediaPagination";
+import { MediaToolbar } from "@/features/media/MediaToolbar";
 import { useMediaDetails } from "@/hooks/useMedia";
 import { useFavoriteMedia } from "@/lib/favoriteMedia";
+import { useUserPreferences } from "@/lib/userPreferences";
 
 export function MediaPage() {
   const paths = useFavoriteMedia((s) => s.paths);
   const clear = useFavoriteMedia((s) => s.clear);
   const { data, isLoading, isError, error, refetch } = useMediaDetails(paths);
+  const view = useUserPreferences((state) => state.mediaView);
+  const columns = useUserPreferences((state) => state.mediaGridColumns);
+  const pageSize = useUserPreferences((state) => state.mediaPageSize);
+  const kind = useUserPreferences((state) => state.mediaKind);
+  const sort = useUserPreferences((state) => state.mediaSort);
+  const setView = useUserPreferences((state) => state.setMediaView);
+  const setColumns = useUserPreferences((state) => state.setMediaGridColumns);
+  const setPageSize = useUserPreferences((state) => state.setMediaPageSize);
+  const setKind = useUserPreferences((state) => state.setMediaKind);
+  const setSort = useUserPreferences((state) => state.setMediaSort);
+  const [page, setPage] = useState(1);
+
+  const filtered = useMemo(
+    () =>
+      (data ?? [])
+        .filter((item) => kind === "all" || item.kind === kind)
+        .sort((a, b) => {
+          if (sort === "name") return a.name.localeCompare(b.name);
+          if (sort === "size") return b.sizeBytes - a.sizeBytes;
+          return (b.modified ?? "").localeCompare(a.modified ?? "");
+        }),
+    [data, kind, sort],
+  );
+  const pages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const pageItems = filtered.slice((page - 1) * pageSize, page * pageSize);
+
+  useEffect(() => setPage(1), [kind, sort, pageSize]);
+  useEffect(() => setPage((current) => Math.min(current, pages)), [pages]);
 
   if (paths.length === 0) {
     return (
@@ -41,14 +73,29 @@ export function MediaPage() {
         </Button>
       </div>
 
+      <MediaToolbar
+        shown={filtered.length}
+        total={data?.length ?? 0}
+        view={view}
+        columns={columns}
+        pageSize={pageSize}
+        kind={kind}
+        sort={sort}
+        onViewChange={setView}
+        onColumnsChange={setColumns}
+        onPageSizeChange={setPageSize}
+        onKindChange={setKind}
+        onSortChange={setSort}
+      />
+
       <QueryState
         isLoading={isLoading}
         isError={isError}
         error={error}
         onRetry={() => refetch()}
-        isEmpty={!data || data.length === 0}
-        emptyTitle="Nothing left to show"
-        emptyMessage="Every favorited file has been moved or deleted."
+        isEmpty={filtered.length === 0}
+        emptyTitle={data?.length ? "No media matches this filter" : "Nothing left to show"}
+        emptyMessage={data?.length ? "Choose another media type." : "Every favorited file has been moved or deleted."}
         compact
         skeleton={
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
@@ -58,7 +105,10 @@ export function MediaPage() {
           </div>
         }
       >
-        <MediaGrid items={data ?? []} />
+        <div className="space-y-4">
+          <MediaGrid items={pageItems} view={view} columns={columns} />
+          <MediaPagination page={page} pages={pages} onChange={setPage} />
+        </div>
       </QueryState>
     </div>
   );

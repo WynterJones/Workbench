@@ -142,7 +142,11 @@ fn parse_frontmatter(markdown: &str) -> (Option<String>, Option<String>, Vec<Str
         let Some((key, value)) = trimmed.split_once(':') else {
             continue;
         };
-        let value = value.trim().trim_matches('"').trim_matches('\'').to_string();
+        let value = value
+            .trim()
+            .trim_matches('"')
+            .trim_matches('\'')
+            .to_string();
         match key.trim() {
             "name" => name = Some(value),
             "description" => description = Some(value),
@@ -168,7 +172,11 @@ fn directory_stats(dir: &Path) -> (usize, u64, bool, bool) {
     let mut has_scripts = false;
     let mut has_references = false;
 
-    for entry in walkdir::WalkDir::new(dir).max_depth(4).into_iter().flatten() {
+    for entry in walkdir::WalkDir::new(dir)
+        .max_depth(4)
+        .into_iter()
+        .flatten()
+    {
         let name = entry.file_name().to_string_lossy().to_string();
         if entry.file_type().is_dir() {
             if name == "scripts" {
@@ -257,7 +265,11 @@ pub fn read_skill(path: String) -> Result<SkillDetail, String> {
     let markdown = fs::read_to_string(dir.join("SKILL.md")).unwrap_or_default();
 
     let mut files = Vec::new();
-    for item in walkdir::WalkDir::new(&dir).max_depth(4).into_iter().flatten() {
+    for item in walkdir::WalkDir::new(&dir)
+        .max_depth(4)
+        .into_iter()
+        .flatten()
+    {
         if item.file_type().is_file() {
             let rel = item
                 .path()
@@ -273,7 +285,11 @@ pub fn read_skill(path: String) -> Result<SkillDetail, String> {
     }
     files.sort_by(|a, b| a.path.cmp(&b.path));
 
-    Ok(SkillDetail { entry, markdown, files })
+    Ok(SkillDetail {
+        entry,
+        markdown,
+        files,
+    })
 }
 
 #[tauri::command]
@@ -310,7 +326,16 @@ pub fn install_skill(pkg: String, agents: Vec<String>) -> Result<String, String>
     };
 
     let output = std::process::Command::new("npx")
-        .args(["-y", "skills@latest", "add", &pkg, "-g", "-y", "-a", &agent_arg])
+        .args([
+            "-y",
+            "skills@latest",
+            "add",
+            &pkg,
+            "-g",
+            "-y",
+            "-a",
+            &agent_arg,
+        ])
         .output()
         .map_err(|e| format!("could not run npx: {e}"))?;
 
@@ -376,7 +401,9 @@ pub fn parse_search_output(raw: &str) -> Vec<RegistrySkill> {
     for line in raw.lines() {
         let clean = strip_ansi(line);
         let trimmed = clean.trim();
-        if trimmed.is_empty() || trimmed.starts_with("Install with") || trimmed.starts_with('\u{2514}')
+        if trimmed.is_empty()
+            || trimmed.starts_with("Install with")
+            || trimmed.starts_with('\u{2514}')
         {
             continue;
         }
@@ -527,7 +554,10 @@ mod tests {
         assert_eq!(first.id, "heygen-com/hyperframes@tailwind");
         assert_eq!(first.installs, 72_100);
         assert_eq!(first.installs_label, "72.1K");
-        assert_eq!(first.url, "https://skills.sh/heygen-com/hyperframes/tailwind");
+        assert_eq!(
+            first.url,
+            "https://skills.sh/heygen-com/hyperframes/tailwind"
+        );
 
         assert_eq!(results[1].skill, "tailwind-design-system");
     }

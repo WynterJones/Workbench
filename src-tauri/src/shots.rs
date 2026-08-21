@@ -5,10 +5,10 @@ use std::process::Command;
 use crate::db;
 use crate::run::capture::shots_dir;
 
-const ALLOWED_EXTENSIONS: [&str; 6] = ["png", "jpg", "jpeg", "gif", "webp", "avif"];
-const MAX_BYTES: usize = 25 * 1024 * 1024;
+pub const ALLOWED_EXTENSIONS: [&str; 6] = ["png", "jpg", "jpeg", "gif", "webp", "avif"];
+pub const MAX_IMAGE_BYTES: usize = 25 * 1024 * 1024;
 
-fn extension_of(path: &Path) -> Option<String> {
+pub fn extension_of(path: &Path) -> Option<String> {
     let ext = path.extension()?.to_string_lossy().to_lowercase();
     ALLOWED_EXTENSIONS.contains(&ext.as_str()).then_some(ext)
 }
@@ -53,7 +53,7 @@ pub fn import_screenshot_file(
         .ok_or_else(|| "Only png, jpg, gif, webp and avif images are supported".to_string())?;
 
     let meta = fs::metadata(source).map_err(|e| e.to_string())?;
-    if meta.len() as usize > MAX_BYTES {
+    if meta.len() as usize > MAX_IMAGE_BYTES {
         return Err("That image is larger than 25 MB".into());
     }
 
@@ -74,7 +74,7 @@ pub fn import_screenshot_bytes(
     if !ALLOWED_EXTENSIONS.contains(&ext.as_str()) {
         return Err("Only png, jpg, gif, webp and avif images are supported".into());
     }
-    if bytes.len() > MAX_BYTES {
+    if bytes.len() > MAX_IMAGE_BYTES {
         return Err("That image is larger than 25 MB".into());
     }
     if bytes.is_empty() {
@@ -89,7 +89,8 @@ pub fn import_screenshot_bytes(
 
 #[tauri::command]
 pub fn pick_image_file() -> Result<Option<String>, String> {
-    let script = r#"POSIX path of (choose file with prompt "Choose a screenshot" of type {"public.image"})"#;
+    let script =
+        r#"POSIX path of (choose file with prompt "Choose a screenshot" of type {"public.image"})"#;
     let output = Command::new("osascript")
         .arg("-e")
         .arg(script)

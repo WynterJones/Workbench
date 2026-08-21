@@ -42,10 +42,7 @@ fn ensure_within_roots(canonical: &Path, roots: &[PathBuf]) -> Result<(), String
     if roots.iter().any(|root| canonical.starts_with(root)) {
         Ok(())
     } else {
-        Err(format!(
-            "{} is outside allowed roots",
-            canonical.display()
-        ))
+        Err(format!("{} is outside allowed roots", canonical.display()))
     }
 }
 
@@ -89,8 +86,7 @@ pub fn guard_new(path: &str, roots: &[PathBuf]) -> Result<PathBuf, String> {
 }
 
 fn validate_entry_name(name: &str) -> Result<(), String> {
-    if name.is_empty() || name == "." || name == ".." || name.contains('/') || name.contains('\0')
-    {
+    if name.is_empty() || name == "." || name == ".." || name.contains('/') || name.contains('\0') {
         return Err(format!("invalid entry name: {name}"));
     }
     Ok(())
@@ -362,7 +358,10 @@ mod tests {
         let outside = tempdir();
         let outside_file = outside.join("secret.txt");
         stdfs::write(&outside_file, "nope").unwrap();
-        let traversal = root.join("..").join(outside.file_name().unwrap()).join("secret.txt");
+        let traversal = root
+            .join("..")
+            .join(outside.file_name().unwrap())
+            .join("secret.txt");
         let roots = vec![root];
         let result = guard_existing(traversal.to_str().unwrap(), &roots);
         assert!(result.is_err());
@@ -436,8 +435,12 @@ mod tests {
         stdfs::write(&src, "1").unwrap();
         stdfs::write(dest.join("foo"), "existing").unwrap();
         let roots = vec![root.clone(), dest.clone()];
-        let result = copy_entries(&[src.to_string_lossy().to_string()], dest.to_str().unwrap(), &roots)
-            .unwrap();
+        let result = copy_entries(
+            &[src.to_string_lossy().to_string()],
+            dest.to_str().unwrap(),
+            &roots,
+        )
+        .unwrap();
         assert_eq!(result.len(), 1);
         assert!(result[0].ends_with("foo copy"));
     }

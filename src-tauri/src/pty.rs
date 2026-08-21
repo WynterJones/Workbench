@@ -66,7 +66,10 @@ pub fn pty_open(
         command.cwd(home);
     }
 
-    let mut child = pair.slave.spawn_command(command).map_err(|e| e.to_string())?;
+    let mut child = pair
+        .slave
+        .spawn_command(command)
+        .map_err(|e| e.to_string())?;
     let mut reader = pair.master.try_clone_reader().map_err(|e| e.to_string())?;
     let writer = pair.master.take_writer().map_err(|e| e.to_string())?;
 
@@ -110,7 +113,11 @@ pub fn pty_open(
 }
 
 #[tauri::command]
-pub fn pty_write(registry: tauri::State<PtyRegistry>, id: String, data: String) -> Result<(), String> {
+pub fn pty_write(
+    registry: tauri::State<PtyRegistry>,
+    id: String,
+    data: String,
+) -> Result<(), String> {
     let mut sessions = registry.0.lock().map_err(|_| "pty registry poisoned")?;
     let session = sessions
         .get_mut(&id)
@@ -165,7 +172,10 @@ mod tests {
     #[test]
     fn login_shell_falls_back_to_a_real_shell() {
         let shell = login_shell();
-        assert!(shell.starts_with('/'), "expected an absolute path, got {shell}");
+        assert!(
+            shell.starts_with('/'),
+            "expected an absolute path, got {shell}"
+        );
     }
 
     #[test]

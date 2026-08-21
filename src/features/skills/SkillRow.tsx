@@ -29,9 +29,6 @@ export function SkillRow({ skill, selected, onSelect, onToggle }: SkillRowProps)
     >
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium text-foreground">{skill.name}</p>
-        <p className="truncate text-xs text-muted-foreground">
-          {skill.description || "No description"}
-        </p>
       </div>
       <Switch
         checked={skill.enabled}

@@ -60,6 +60,7 @@ pub fn parse_items(body: &Value, source: &str, authors: &[String]) -> Vec<Plugin
                     Some(PluginItem {
                         id: format!("github:{}:{}", source, number),
                         source: source.to_string(),
+                        source_id: Some(source.to_string()),
                         title: text(pull, "title").unwrap_or_else(|| format!("#{}", number)),
                         subtitle: branch.unwrap_or_else(|| format!("#{}", number)),
                         status: if draft { "draft".into() } else { "open".into() },

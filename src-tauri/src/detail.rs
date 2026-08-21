@@ -54,7 +54,9 @@ pub fn project_readme(project_id: i64) -> Result<Option<String>, String> {
         return Err("README is too large to display".into());
     }
 
-    fs::read_to_string(&path).map(Some).map_err(|e| e.to_string())
+    fs::read_to_string(&path)
+        .map(Some)
+        .map_err(|e| e.to_string())
 }
 
 fn to_rfc3339(seconds: i64) -> String {
@@ -73,12 +75,15 @@ pub fn read_commits(dir: &Path, limit: usize) -> Result<Vec<Commit>, String> {
 
     let mut walk = repo.revwalk().map_err(|e| e.to_string())?;
     walk.push_head().map_err(|e| e.to_string())?;
-    walk.set_sorting(git2::Sort::TIME).map_err(|e| e.to_string())?;
+    walk.set_sorting(git2::Sort::TIME)
+        .map_err(|e| e.to_string())?;
 
     let mut commits = Vec::new();
     for oid in walk.take(limit) {
         let Ok(oid) = oid else { continue };
-        let Ok(commit) = repo.find_commit(oid) else { continue };
+        let Ok(commit) = repo.find_commit(oid) else {
+            continue;
+        };
 
         let (files_changed, insertions, deletions) = commit
             .parent(0)

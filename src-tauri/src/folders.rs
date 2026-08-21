@@ -83,7 +83,10 @@ pub fn search(roots: &[PathBuf], query: &str) -> Vec<FolderMatch> {
         }
     }
 
-    matches.sort_by(|a, b| b.0.cmp(&a.0).then_with(|| a.1.path.len().cmp(&b.1.path.len())));
+    matches.sort_by(|a, b| {
+        b.0.cmp(&a.0)
+            .then_with(|| a.1.path.len().cmp(&b.1.path.len()))
+    });
     matches.truncate(MAX_RESULTS);
     matches.into_iter().map(|(_, m)| m).collect()
 }

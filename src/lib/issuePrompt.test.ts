@@ -5,6 +5,7 @@ import type { PluginItem, PluginItemDetail } from "@/hooks/usePluginData";
 const item: PluginItem = {
   id: "sentry:99",
   source: "acme/web",
+  sourceId: "acme/web",
   title: "TypeError: null is not an object",
   subtitle: "app/routes/checkout",
   status: "error",

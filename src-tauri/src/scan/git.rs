@@ -48,7 +48,10 @@ pub fn normalize_remote_url(url: &str) -> String {
         },
         None => trimmed.to_string(),
     };
-    https.strip_suffix(".git").map(|s| s.to_string()).unwrap_or(https)
+    https
+        .strip_suffix(".git")
+        .map(|s| s.to_string())
+        .unwrap_or(https)
 }
 
 fn is_dirty(repo: &Repository) -> bool {

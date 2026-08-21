@@ -158,7 +158,10 @@ fn parse_host_port(url: &str) -> Option<(String, u16)> {
     let host_port = without_scheme.split('/').next()?;
     let mut parts = host_port.split(':');
     let host = parts.next()?.to_string();
-    let port = parts.next().and_then(|p| p.parse::<u16>().ok()).unwrap_or(80);
+    let port = parts
+        .next()
+        .and_then(|p| p.parse::<u16>().ok())
+        .unwrap_or(80);
     Some((host, port))
 }
 
@@ -235,10 +238,7 @@ mod tests {
     #[test]
     fn extracts_rails_puma_url() {
         let line = "* Listening on http://127.0.0.1:3000";
-        assert_eq!(
-            extract_url(line),
-            Some("http://127.0.0.1:3000".to_string())
-        );
+        assert_eq!(extract_url(line), Some("http://127.0.0.1:3000".to_string()));
     }
 
     #[test]
@@ -281,12 +281,19 @@ mod tests {
 
     #[test]
     fn precheck_passes_when_healthy() {
-        assert_eq!(classify_precheck(Some("npm run dev"), true, false, false), None);
+        assert_eq!(
+            classify_precheck(Some("npm run dev"), true, false, false),
+            None
+        );
     }
 
     #[test]
     fn postrun_detects_port_in_use() {
-        let reason = classify_postrun(Some(1), false, "Error: listen EADDRINUSE: address already in use :::3000");
+        let reason = classify_postrun(
+            Some(1),
+            false,
+            "Error: listen EADDRINUSE: address already in use :::3000",
+        );
         assert_eq!(reason, BrokenReason::PortInUse);
     }
 
@@ -298,7 +305,11 @@ mod tests {
 
     #[test]
     fn postrun_detects_crash() {
-        let reason = classify_postrun(Some(1), false, "TypeError: cannot read property of undefined");
+        let reason = classify_postrun(
+            Some(1),
+            false,
+            "TypeError: cannot read property of undefined",
+        );
         assert_eq!(reason, BrokenReason::Crashed);
     }
 

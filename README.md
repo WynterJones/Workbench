@@ -43,9 +43,15 @@ an effort estimate.
 across every scanned repo, so private and unpushed work counts too. Token usage from your
 Claude Code and Codex logs. Timelines that merge commits with scan activity.
 
-**Browses files properly.** Miller columns, instant preview for code, markdown, images,
-video and PDFs, git status in the gutter, and build artefacts folded away so a repo is
-readable at a glance.
+**Browses files properly.** Cached Miller columns, folder favorites, instant previews
+for code, Markdown, images, video and PDFs, git status in the gutter, and build
+artifacts folded away so a repo is readable at a glance. 007 Mode recursively gathers
+Markdown and PDF files into a draggable, presentation-ready dossier wall.
+
+**Keeps the library flexible.** Switch between grid and visual list layouts, choose the
+column and page count, filter by status, and keep those choices between launches. Media
+has its own persistent filters, pagination, favorites and fit-to-frame previews. Paste a
+project URL to save it instantly, or open every saved link from one list.
 
 **Manages your agents.** Detects which AI coding CLIs you have installed — Claude Code,
 Codex, Gemini, Cursor, Copilot, OpenCode, Crush, OpenClaw, Hermes, Pi and more — and
@@ -54,6 +60,26 @@ skills.sh built in.
 
 **Starts the next one.** 127 verified project starters across React, Next.js, shadcn/ui,
 Vue, Svelte, Astro, Python, Rust, Go, Ruby, PHP, mobile, desktop, extensions and AI.
+
+**Runs your agents in-app.** Launch Claude Code, Codex or any installed CLI straight into
+a project from an embedded terminal that floats, moves, resizes and survives navigation.
+When a project won't start, hand it to an agent — it investigates, reports back a working
+run command and URL, and Workbench saves them. Frameworks that can't be served headlessly
+(Chrome extensions, Godot) get manual instructions instead of a dead spinner.
+
+**Watches your live services.** Optional plugins pull Railway deployments, unresolved
+Sentry issues and open GitHub pull requests into one dashboard. Pick the projects, repos
+and authors you care about; tokens stay in your local database. Any Sentry issue can be
+sent to a coding agent as a fully written prompt with the stack trace attached.
+
+**Speaks MCP, both ways.** Browse every MCP server configured across your agents in one
+place, and expose your own catalog as a server — `list_projects`, `get_project` and
+`library_stats` — installable into Claude Code, Codex, Gemini CLI or Cursor with one
+click from Settings. Servers you do not need can be hidden from Workbench without
+changing another tool's configuration.
+
+**Stays current.** Workbench checks its public GitHub releases automatically and keeps
+an Update available button visible when a newer build is ready.
 
 ## Install
 
@@ -67,8 +93,8 @@ these on first run and tells you what each one unlocks.
 ## Your data stays yours
 
 Everything lives in `~/.workbench/` — a SQLite database, screenshots, and generated
-prompts. Nothing is uploaded. There is no account, no telemetry, and no network call
-except the ones you explicitly trigger.
+prompts. Nothing is uploaded. There is no account or telemetry. Network access is
+limited to update checks plus the services and actions you choose to enable.
 
 **Workbench never executes your project code without permission.** Scanning is strictly
 read-only. Running a project requires you to approve the exact command first, and the
@@ -96,7 +122,8 @@ npm run tauri build
 ```
 src/                    React 19 + TypeScript + Tailwind v4 + shadcn/ui
   components/           app shell, shared primitives
-  features/             intro, library, project, files, skills, models, settings
+  features/             intro, library, project, files, media, portfolio,
+                        skills, models, plugins, mcp, terminal, timeline, settings
   hooks/                data access
   lib/                  types, api, store, formatting
 src-tauri/src/
@@ -104,7 +131,10 @@ src-tauri/src/
   scan/                 walker, framework detection, git, metadata
   run/                  process manager, screenshot capture
   files/                listing, path guard, starters, context
+  plugins/              Railway, Sentry, GitHub pull requests
   skills.rs agents.rs   skill and agent management
+  pty.rs handoff.rs     embedded terminal, agent run-fix sessions
+  mcp.rs mcp_server.rs  MCP config browser, Workbench's own MCP server
   score.rs heatmap.rs   ship score, contribution graph
 ```
 

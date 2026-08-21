@@ -28,7 +28,9 @@ export function ProjectMediaPanel({ projectId }: ProjectMediaPanelProps) {
         </div>
       }
     >
-      <MediaGrid items={data ?? []} />
+      <div className="max-h-[60vh] overflow-y-auto pr-2">
+        <MediaGrid items={data ?? []} />
+      </div>
     </QueryState>
   );
 }

@@ -7,6 +7,7 @@ import {
   FolderOpenIcon,
   GlobeIcon,
   PlayIcon,
+  SquareIcon,
   CameraIcon,
   Trash2Icon,
   SparklesIcon,
@@ -28,7 +29,7 @@ import { ManualRunDialog } from "@/features/project/ManualRunDialog";
 import { DeleteProjectDialog } from "@/features/project/DeleteProjectDialog";
 import { useQueryClient } from "@tanstack/react-query";
 import { useArchiveProject } from "@/hooks/useProjects";
-import { useRunProject } from "@/hooks/useRunProject";
+import { useRunProject, useStopProject } from "@/hooks/useRunProject";
 import { api } from "@/lib/api";
 import { manualRun } from "@/lib/manualRun";
 import type { Project, RunResult } from "@/lib/types";
@@ -44,6 +45,8 @@ export function ProjectActions({ project, onRunResult }: ProjectActionsProps) {
   const guide = manualRun(project.framework);
   const manualOnly = Boolean(guide && !project.runCmd);
   const runProject = useRunProject(setFailure);
+  const stopProject = useStopProject();
+  const running = project.status === "running";
   const archiveProject = useArchiveProject();
   const [aiOpen, setAiOpen] = useState(false);
   const [trustOpen, setTrustOpen] = useState(false);
@@ -107,10 +110,31 @@ export function ProjectActions({ project, onRunResult }: ProjectActionsProps) {
 
   return (
     <div className="flex flex-wrap gap-2">
-      <Button size="sm" onClick={run} disabled={runProject.isPending}>
-        <PlayIcon />
-        {manualOnly ? "How to run" : runProject.isPending ? "Running…" : "Run"}
-      </Button>
+      {running ? (
+        <>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => stopProject.mutate(project.id)}
+            disabled={stopProject.isPending}
+            className="cursor-pointer border-emerald-500/40 text-emerald-400 hover:text-emerald-300"
+          >
+            <SquareIcon />
+            {stopProject.isPending ? "Stopping…" : "Stop server"}
+          </Button>
+          {project.runUrl && (
+            <Button size="sm" onClick={() => openIn("browser")} className="cursor-pointer">
+              <GlobeIcon />
+              {project.runUrl.replace(/^https?:\/\//, "")}
+            </Button>
+          )}
+        </>
+      ) : (
+        <Button size="sm" onClick={run} disabled={runProject.isPending}>
+          <PlayIcon />
+          {manualOnly ? "How to run" : runProject.isPending ? "Starting…" : "Run"}
+        </Button>
+      )}
       <Button size="sm" variant="outline" onClick={screenshot} disabled={capturing} className="cursor-pointer">
         <CameraIcon />
         {capturing ? "Capturing…" : "Screenshot"}

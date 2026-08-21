@@ -13,15 +13,18 @@ import { PreviewPane } from "@/features/files/PreviewPane";
 import { StarterLibrary } from "@/features/files/StarterLibrary";
 import { DiskReclaim } from "@/features/files/DiskReclaim";
 import { useFilesCommandItems } from "@/features/files/FilesCommandItems";
+import { currentDirectory } from "@/features/files/lib/paths";
 
 export function FilesPage() {
   const rootPath = useFilesStore((s) => s.rootPath);
   const setRoot = useFilesStore((s) => s.setRoot);
   const view = useFilesStore((s) => s.view);
   const mode = useFilesStore((s) => s.mode);
+  const selectedPath = useFilesStore((s) => s.selectedPath);
+  const selectedKind = useFilesStore((s) => s.selectedKind);
   const { roots, isLoading } = useScanRoots();
 
-  useFsWatch();
+  useFsWatch(rootPath ? currentDirectory(rootPath, selectedPath, selectedKind) : null);
   useFilesCommandItems();
 
   useEffect(() => {

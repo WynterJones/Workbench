@@ -1,11 +1,12 @@
 use std::collections::HashMap;
 use std::path::Path;
 use std::sync::Mutex;
-use std::time::SystemTime;
+use std::time::{Duration, Instant, SystemTime};
 
 use super::listing::{FsEntry, ListOptions};
 
 const MAX_ENTRIES: usize = 200;
+const MAX_AGE: Duration = Duration::from_secs(120);
 
 #[derive(Clone)]
 struct CachedListing {
@@ -13,6 +14,7 @@ struct CachedListing {
     options: ListOptions,
     entries: Vec<FsEntry>,
     inserted: u64,
+    cached_at: Instant,
 }
 
 #[derive(Default)]
@@ -36,7 +38,8 @@ impl ListingCache {
         let key = path.to_string_lossy().to_string();
         let inner = self.inner.lock().ok()?;
         let hit = inner.map.get(&key)?;
-        (hit.mtime == mtime && &hit.options == options).then(|| hit.entries.clone())
+        (hit.mtime == mtime && hit.cached_at.elapsed() < MAX_AGE && &hit.options == options)
+            .then(|| hit.entries.clone())
     }
 
     pub fn put(&self, path: &Path, options: &ListOptions, entries: &[FsEntry]) {
@@ -56,6 +59,7 @@ impl ListingCache {
                 options: options.clone(),
                 entries: entries.to_vec(),
                 inserted,
+                cached_at: Instant::now(),
             },
         );
 
@@ -71,12 +75,13 @@ impl ListingCache {
         }
     }
 
-    pub fn invalidate(&self, path: &str) {
+    pub fn invalidate(&self, path: &Path) {
         if let Ok(mut inner) = self.inner.lock() {
-            inner.map.remove(path);
+            inner.map.remove(path.to_string_lossy().as_ref());
         }
     }
 
+    #[cfg(test)]
     pub fn len(&self) -> usize {
         self.inner.lock().map(|inner| inner.map.len()).unwrap_or(0)
     }
@@ -115,12 +120,7 @@ mod tests {
 
         std::thread::sleep(std::time::Duration::from_millis(20));
         fs::write(dir.join("new.txt"), "x").unwrap();
-        let changed = fs::File::open(&dir).is_ok();
-        assert!(changed);
-
-        if directory_mtime(&dir).unwrap() != directory_mtime(&dir).unwrap() {
-            panic!("mtime unstable");
-        }
+        assert!(cache.get(&dir, &options()).is_none());
         let _ = fs::remove_dir_all(&dir);
     }
 
@@ -141,7 +141,7 @@ mod tests {
         let dir = temp("invalidate");
         let cache = ListingCache::default();
         cache.put(&dir, &options(), &[]);
-        cache.invalidate(&dir.to_string_lossy());
+        cache.invalidate(&dir);
         assert!(cache.get(&dir, &options()).is_none());
         let _ = fs::remove_dir_all(&dir);
     }

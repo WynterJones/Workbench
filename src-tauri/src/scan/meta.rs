@@ -5,8 +5,8 @@ use std::time::SystemTime;
 use crate::scan::walker::IGNORED_DIRS;
 
 const SOURCE_EXTENSIONS: &[&str] = &[
-    "rs", "ts", "tsx", "js", "jsx", "mjs", "cjs", "py", "go", "rb", "php", "c", "cpp", "h",
-    "hpp", "java", "kt", "swift", "css", "scss", "html", "vue", "svelte", "gd",
+    "rs", "ts", "tsx", "js", "jsx", "mjs", "cjs", "py", "go", "rb", "php", "c", "cpp", "h", "hpp",
+    "java", "kt", "swift", "css", "scss", "html", "vue", "svelte", "gd",
 ];
 
 const MAX_FILES: usize = 20_000;
@@ -85,7 +85,13 @@ fn walk(dir: &Path, loc: &mut i64, last_modified: &mut Option<SystemTime>, visit
 }
 
 pub fn readme_summary(dir: &Path) -> Option<String> {
-    let candidates = ["README.md", "Readme.md", "readme.md", "README", "README.txt"];
+    let candidates = [
+        "README.md",
+        "Readme.md",
+        "readme.md",
+        "README",
+        "README.txt",
+    ];
     let path = candidates
         .iter()
         .map(|c| dir.join(c))

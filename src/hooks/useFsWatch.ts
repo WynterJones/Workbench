@@ -1,8 +1,9 @@
 import { useEffect } from "react";
 import { listen } from "@tauri-apps/api/event";
 import { useQueryClient } from "@tanstack/react-query";
+import { filesApi } from "@/lib/filesApi";
 
-export function useFsWatch() {
+export function useFsWatch(path: string | null) {
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -21,4 +22,12 @@ export function useFsWatch() {
       unlisten.then((fn) => fn());
     };
   }, [queryClient]);
+
+  useEffect(() => {
+    if (!path) return;
+    filesApi.watchDirectory(path).catch(() => {});
+    return () => {
+      filesApi.unwatchDirectory().catch(() => {});
+    };
+  }, [path]);
 }

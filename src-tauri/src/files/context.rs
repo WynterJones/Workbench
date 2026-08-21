@@ -72,7 +72,11 @@ fn common_ancestor(paths: &[PathBuf]) -> PathBuf {
     }
     let component_lists: Vec<Vec<std::ffi::OsString>> = paths
         .iter()
-        .map(|p| p.components().map(|c| c.as_os_str().to_os_string()).collect())
+        .map(|p| {
+            p.components()
+                .map(|c| c.as_os_str().to_os_string())
+                .collect()
+        })
         .collect();
     let min_len = component_lists.iter().map(|c| c.len()).min().unwrap_or(0);
     let mut common = Vec::new();
@@ -181,10 +185,7 @@ pub fn build_context(
         if ancestor.is_dir() && resolved.len() > 1 {
             ancestor
         } else {
-            ancestor
-                .parent()
-                .map(PathBuf::from)
-                .unwrap_or(ancestor)
+            ancestor.parent().map(PathBuf::from).unwrap_or(ancestor)
         }
     };
 
@@ -252,9 +253,7 @@ pub fn build_context(
             continue;
         }
         let content = String::from_utf8_lossy(&bytes);
-        let extension = file
-            .extension()
-            .map(|e| e.to_string_lossy().to_string());
+        let extension = file.extension().map(|e| e.to_string_lossy().to_string());
         let lang = lang_tag(&extension);
         let block = format!("\n### {rel_display}\n```{lang}\n{content}\n```\n");
 
@@ -305,8 +304,7 @@ mod tests {
         stdfs::write(root.join("main.rs"), "fn main() {}").unwrap();
         let roots = vec![root.clone()];
         let opts = ContextOptions::default();
-        let output =
-            build_context(&[root.to_string_lossy().to_string()], &opts, &roots).unwrap();
+        let output = build_context(&[root.to_string_lossy().to_string()], &opts, &roots).unwrap();
         assert!(output.contains("main.rs"));
         assert!(!output.contains("```\nfn main"));
         assert!(output.contains("data.bin"));
@@ -320,8 +318,7 @@ mod tests {
         stdfs::write(root.join("b.txt"), "b".repeat(100)).unwrap();
         let roots = vec![root.clone()];
         let opts = ContextOptions { max_chars: 150 };
-        let output =
-            build_context(&[root.to_string_lossy().to_string()], &opts, &roots).unwrap();
+        let output = build_context(&[root.to_string_lossy().to_string()], &opts, &roots).unwrap();
         assert!(output.contains("Truncated"));
     }
 
@@ -331,8 +328,7 @@ mod tests {
         stdfs::write(root.join("a.txt"), "hello world").unwrap();
         let roots = vec![root.clone()];
         let opts = ContextOptions::default();
-        let output =
-            build_context(&[root.to_string_lossy().to_string()], &opts, &roots).unwrap();
+        let output = build_context(&[root.to_string_lossy().to_string()], &opts, &roots).unwrap();
         assert!(output.contains("hello world"));
         assert!(!output.contains("Truncated"));
     }

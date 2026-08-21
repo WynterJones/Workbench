@@ -48,6 +48,7 @@ export interface Project {
   runCmd: string | null;
   runUrl: string | null;
   homepage: string | null;
+  iconPath: string | null;
   port: number | null;
   status: ProjectStatus;
   brokenReason: BrokenReason | null;

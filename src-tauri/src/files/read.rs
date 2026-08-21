@@ -22,7 +22,11 @@ fn looks_binary(bytes: &[u8]) -> bool {
     bytes.iter().take(SNIFF_BYTES).any(|b| *b == 0)
 }
 
-pub fn read_file(path: &str, roots: &[PathBuf], max_bytes: Option<u64>) -> Result<FileContents, String> {
+pub fn read_file(
+    path: &str,
+    roots: &[PathBuf],
+    max_bytes: Option<u64>,
+) -> Result<FileContents, String> {
     let resolved = guard_existing(path, roots)?;
     let meta = fs::metadata(&resolved).map_err(|e| e.to_string())?;
     if meta.is_dir() {

@@ -1,5 +1,6 @@
 import { Blocks, Boxes, Cpu, Folder, GitBranch, Images, Plug, Plus, Settings, Sparkles } from "lucide-react";
 import { NavItem } from "@/components/NavItem";
+import { UpdateAvailableButton } from "@/components/UpdateAvailableButton";
 import { PluginNavLinks } from "@/features/plugins/PluginNavLinks";
 import { cn } from "@/lib/utils";
 import { useAppStore } from "@/lib/store";
@@ -45,18 +46,22 @@ export function Sidebar() {
           active={route === "media"}
           onClick={() => setRoute("media")}
         />
+        <div className="-mx-2 my-1.5 h-0 border-t border-background border-b border-foreground/10" />
         <NavItem icon={Sparkles} label="Skills" active={route === "skills"} onClick={() => setRoute("skills")} />
         <NavItem icon={Plug} label="MCPs" active={route === "mcp"} onClick={() => setRoute("mcp")} />
         <NavItem icon={Cpu} label="Models" active={route === "models"} onClick={() => setRoute("models")} />
         <PluginNavLinks />
-        <div className="my-1 h-px bg-border" />
         <NavItem
           icon={Plus}
           label="New Project"
           active={route === "starters"}
+          secondary
           onClick={openStarters}
         />
       </nav>
+      <div className="px-2 pb-1">
+        <UpdateAvailableButton />
+      </div>
       <div className="border-t border-border p-2">
         <NavItem
           icon={GitBranch}

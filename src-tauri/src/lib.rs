@@ -2,12 +2,12 @@ mod agents;
 mod ai;
 mod commands;
 mod db;
-mod doctor;
 mod detail;
+mod doctor;
 mod files;
+mod folders;
 mod handoff;
 mod heatmap;
-mod folders;
 mod mcp;
 pub mod mcp_server;
 mod media;
@@ -15,21 +15,22 @@ mod misc;
 mod models;
 mod openers;
 mod plugins;
+mod portfolio;
 mod pty;
 mod run;
 mod scan;
 mod score;
 mod settings;
-mod timeline;
-mod snippet;
-mod usage;
 mod shots;
 mod skills;
+mod snippet;
+mod timeline;
+mod usage;
 
 use std::sync::Mutex;
 
 use db::DbState;
-use files::WatcherState;
+use files::{ListingCache, WatcherState};
 use tauri::Manager;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -42,7 +43,12 @@ pub fn run() {
         .manage(pty::PtyRegistry::default())
         .setup(|app| {
             let conn = db::open().expect("failed to open workbench database");
+            let _ = conn.execute(
+                "UPDATE projects SET status = 'runnable', run_url = NULL, port = NULL WHERE status = 'running'",
+                [],
+            );
             app.manage(DbState(Mutex::new(conn)));
+            app.manage(ListingCache::default());
             app.manage(WatcherState::default());
             Ok(())
         })
@@ -112,11 +118,21 @@ pub fn run() {
             plugins::plugin_source_members,
             mcp::workbench_mcp,
             mcp::install_workbench_mcp,
+            portfolio::portfolio_state,
+            portfolio::portfolio_add_image,
+            portfolio::portfolio_add_image_file,
+            portfolio::portfolio_remove_image,
+            portfolio::portfolio_save_voice,
+            portfolio::portfolio_save_doc,
+            portfolio::portfolio_clear_chat,
+            portfolio::portfolio_chat,
+            portfolio::portfolio_generate,
             handoff::start_run_fix,
             handoff::poll_handoff,
             doctor::system_checks,
             misc::disk_reclaim_scan,
             files::fs_list_dir,
+            files::fs_find_documents,
             files::fs_create_dir,
             files::fs_create_file,
             files::fs_rename,

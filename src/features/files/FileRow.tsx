@@ -11,6 +11,7 @@ import {
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { FsEntry } from "@/lib/filesApi";
 import { formatBytes, formatModified, gitGutterColor } from "@/features/files/lib/format";
 import { cn } from "@/lib/utils";
@@ -132,17 +133,23 @@ export function FileRow({
               autoFocus
             />
           ) : (
-            <span className="min-w-0 flex-1 truncate">{entry.name}</span>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="min-w-0 flex-1 truncate">{entry.name}</span>
+              </TooltipTrigger>
+              <TooltipContent side="top" sideOffset={6}>
+                Modified {formatModified(entry.modified)}
+              </TooltipContent>
+            </Tooltip>
           )}
           {entry.projectFramework && (
             <Badge variant="outline" className="shrink-0 text-[10px]">
               {entry.projectFramework}
             </Badge>
           )}
-          {!renaming && showMeta && (
-            <span className="hidden shrink-0 items-center gap-3 font-mono text-[11px] text-muted-foreground group-hover:invisible sm:flex">
-              {entry.kind === "dir" ? "" : formatBytes(entry.size)}
-              <span className="w-16 text-right">{formatModified(entry.modified)}</span>
+          {!renaming && showMeta && entry.kind !== "dir" && (
+            <span className="hidden shrink-0 font-mono text-[11px] text-muted-foreground group-hover:invisible sm:block">
+              {formatBytes(entry.size)}
             </span>
           )}
           {!renaming && (

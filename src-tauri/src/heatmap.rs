@@ -30,8 +30,13 @@ pub struct Heatmap {
 fn git_identities() -> Vec<String> {
     let mut identities = Vec::new();
     for key in ["user.email", "github.user"] {
-        if let Ok(output) = Command::new("git").args(["config", "--global", key]).output() {
-            let value = String::from_utf8_lossy(&output.stdout).trim().to_lowercase();
+        if let Ok(output) = Command::new("git")
+            .args(["config", "--global", key])
+            .output()
+        {
+            let value = String::from_utf8_lossy(&output.stdout)
+                .trim()
+                .to_lowercase();
             if !value.is_empty() {
                 identities.push(value);
             }
@@ -40,8 +45,15 @@ fn git_identities() -> Vec<String> {
     identities
 }
 
-fn collect_repo(path: &Path, since: i64, identities: &[String], counts: &mut HashMap<NaiveDate, u32>) {
-    let Ok(repo) = Repository::open(path) else { return };
+fn collect_repo(
+    path: &Path,
+    since: i64,
+    identities: &[String],
+    counts: &mut HashMap<NaiveDate, u32>,
+) {
+    let Ok(repo) = Repository::open(path) else {
+        return;
+    };
     if repo.head().is_err() {
         return;
     }
@@ -53,17 +65,15 @@ fn collect_repo(path: &Path, since: i64, identities: &[String], counts: &mut Has
 
     for oid in walk.take(5000) {
         let Ok(oid) = oid else { continue };
-        let Ok(commit) = repo.find_commit(oid) else { continue };
+        let Ok(commit) = repo.find_commit(oid) else {
+            continue;
+        };
         let seconds = commit.time().seconds();
         if seconds < since {
             break;
         }
         if !identities.is_empty() {
-            let email = commit
-                .author()
-                .email()
-                .unwrap_or_default()
-                .to_lowercase();
+            let email = commit.author().email().unwrap_or_default().to_lowercase();
             if !identities.iter().any(|id| id == &email) {
                 continue;
             }

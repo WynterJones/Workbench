@@ -85,7 +85,11 @@ fn entry(id: &str) -> Result<keyring::Entry, String> {
 }
 
 pub fn read_credential(id: &str) -> Option<String> {
-    entry(id).ok()?.get_password().ok().filter(|t| !t.is_empty())
+    entry(id)
+        .ok()?
+        .get_password()
+        .ok()
+        .filter(|t| !t.is_empty())
 }
 
 pub fn write_credential(id: &str, token: &str) -> Result<(), String> {
@@ -149,7 +153,10 @@ mod tests {
 
         let (enabled, selected) = read_row(&conn, "sentry").unwrap();
         assert!(enabled);
-        assert_eq!(selected, vec!["acme/web".to_string(), "acme/api".to_string()]);
+        assert_eq!(
+            selected,
+            vec!["acme/web".to_string(), "acme/api".to_string()]
+        );
 
         write_enabled(&conn, "sentry", false).unwrap();
         let (enabled, selected) = read_row(&conn, "sentry").unwrap();

@@ -1,4 +1,4 @@
-import { CopyIcon, KeyRoundIcon } from "lucide-react";
+import { CopyIcon, EyeIcon, EyeOffIcon, KeyRoundIcon } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -41,9 +41,11 @@ function Row({ label, value }: { label: string; value: string }) {
 
 interface McpDetailProps {
   server: McpServer | null;
+  hidden: boolean;
+  onHiddenChange: (hidden: boolean) => void;
 }
 
-export function McpDetail({ server }: McpDetailProps) {
+export function McpDetail({ server, hidden, onHiddenChange }: McpDetailProps) {
   if (!server) {
     return (
       <div className="flex h-full items-center justify-center">
@@ -70,6 +72,10 @@ export function McpDetail({ server }: McpDetailProps) {
           <h2 className="min-w-0 flex-1 truncate text-lg font-semibold text-foreground">
             {server.name}
           </h2>
+          <Button variant="outline" size="sm" onClick={() => onHiddenChange(!hidden)}>
+            {hidden ? <EyeIcon /> : <EyeOffIcon />}
+            {hidden ? "Show in Workbench" : "Hide from Workbench"}
+          </Button>
         </div>
 
         <div className="flex flex-wrap gap-1.5">

@@ -5,6 +5,7 @@ use serde_json::{json, Value};
 
 use crate::db;
 use crate::models::{Framework, ProjectQuery, ShelfId, SortMode};
+use crate::portfolio;
 
 const PROTOCOL_VERSION: &str = "2025-06-18";
 const DEFAULT_LIMIT: usize = 40;
@@ -40,6 +41,23 @@ fn tools() -> Value {
             "name": "library_stats",
             "description": "Totals across the whole Workbench catalog: project counts by status and by framework, and how many have screenshots.",
             "inputSchema": { "type": "object", "properties": {} }
+        },
+        {
+            "name": "get_portfolio",
+            "description": "The AI Portfolio for one project: the written markdown piece, the absolute paths of its screenshots, the voice settings, and the notes the owner gave. Use this to publish the project on a site. Identify it by id, path, or name.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "id": { "type": "integer" },
+                    "path": { "type": "string" },
+                    "name": { "type": "string" }
+                }
+            }
+        },
+        {
+            "name": "list_portfolios",
+            "description": "Every project that has a written AI Portfolio piece, with its title, screenshot count and word count. Start here when building a portfolio site.",
+            "inputSchema": { "type": "object", "properties": {} }
         }
     ])
 }
@@ -74,6 +92,44 @@ fn string_arg<'a>(args: &'a Value, key: &str) -> Option<&'a str> {
         .filter(|s| !s.is_empty())
 }
 
+fn resolve_project(
+    conn: &Connection,
+    args: &Value,
+    tool: &str,
+) -> Result<crate::models::Project, String> {
+    let found = if let Some(id) = args.get("id").and_then(Value::as_i64) {
+        db::get_project(conn, id).map_err(|e| e.to_string())?
+    } else if let Some(path) = string_arg(args, "path") {
+        db::list_all_projects(conn)
+            .map_err(|e| e.to_string())?
+            .into_iter()
+            .find(|p| p.path == path)
+    } else if let Some(name) = string_arg(args, "name") {
+        let lower = name.to_lowercase();
+        db::list_all_projects(conn)
+            .map_err(|e| e.to_string())?
+            .into_iter()
+            .find(|p| p.name.to_lowercase() == lower)
+    } else {
+        return Err(format!("{tool} needs one of id, path or name"));
+    };
+    found.ok_or_else(|| "no project in the Workbench catalog matches that".to_string())
+}
+
+fn image_paths(state: &portfolio::PortfolioState) -> Vec<String> {
+    state
+        .images
+        .iter()
+        .map(|name| format!("{}/{name}", state.images_dir))
+        .collect()
+}
+
+fn doc_title(doc: &str) -> Option<String> {
+    doc.lines()
+        .find(|line| line.starts_with("# "))
+        .map(|line| line.trim_start_matches('#').trim().to_string())
+}
+
 pub fn call_tool(conn: &Connection, name: &str, args: &Value) -> Result<Value, String> {
     match name {
         "list_projects" => {
@@ -104,32 +160,56 @@ pub fn call_tool(conn: &Connection, name: &str, args: &Value) -> Result<Value, S
                 .map(summary)
                 .collect();
 
-            Ok(text_result(&json!({ "count": matched.len(), "projects": matched })))
+            Ok(text_result(
+                &json!({ "count": matched.len(), "projects": matched }),
+            ))
         }
         "get_project" => {
-            let project = if let Some(id) = args.get("id").and_then(Value::as_i64) {
-                db::get_project(conn, id).map_err(|e| e.to_string())?
-            } else if let Some(path) = string_arg(args, "path") {
-                db::list_all_projects(conn)
-                    .map_err(|e| e.to_string())?
-                    .into_iter()
-                    .find(|p| p.path == path)
-            } else if let Some(name) = string_arg(args, "name") {
-                let lower = name.to_lowercase();
-                db::list_all_projects(conn)
-                    .map_err(|e| e.to_string())?
-                    .into_iter()
-                    .find(|p| p.name.to_lowercase() == lower)
-            } else {
-                return Err("get_project needs one of id, path or name".into());
-            };
-
-            match project {
-                Some(project) => Ok(text_result(
-                    &serde_json::to_value(&project).map_err(|e| e.to_string())?,
-                )),
-                None => Err("no project in the Workbench catalog matches that".into()),
+            let project = resolve_project(conn, args, "get_project")?;
+            Ok(text_result(
+                &serde_json::to_value(&project).map_err(|e| e.to_string())?,
+            ))
+        }
+        "get_portfolio" => {
+            let project = resolve_project(conn, args, "get_portfolio")?;
+            let state = portfolio::portfolio_state(project.id)?;
+            if state.doc.trim().is_empty() && state.images.is_empty() {
+                return Err(format!(
+                    "{} has no AI Portfolio yet — open it in Workbench and write one",
+                    project.name
+                ));
             }
+            Ok(text_result(&json!({
+                "project": summary(&project),
+                "homepage": project.homepage,
+                "doc": state.doc,
+                "images": image_paths(&state),
+                "voice": state.voice,
+                "notes": state.messages,
+            })))
+        }
+        "list_portfolios" => {
+            let written: Vec<Value> = db::list_all_projects(conn)
+                .map_err(|e| e.to_string())?
+                .into_iter()
+                .filter_map(|project| {
+                    let state = portfolio::portfolio_state(project.id).ok()?;
+                    if state.doc.trim().is_empty() {
+                        return None;
+                    }
+                    Some(json!({
+                        "id": project.id,
+                        "name": project.name,
+                        "path": project.path,
+                        "title": doc_title(&state.doc).unwrap_or(project.name.clone()),
+                        "words": state.doc.split_whitespace().count(),
+                        "images": state.images.len(),
+                    }))
+                })
+                .collect();
+            Ok(text_result(
+                &json!({ "count": written.len(), "portfolios": written }),
+            ))
         }
         "library_stats" => {
             let stats = db::library_stats(conn).map_err(|e| e.to_string())?;
@@ -176,7 +256,10 @@ pub fn handle_message(conn: &Connection, message: &Value) -> Option<Value> {
         "tools/call" => {
             let params = message.get("params").cloned().unwrap_or_else(|| json!({}));
             let name = params.get("name").and_then(Value::as_str).unwrap_or("");
-            let args = params.get("arguments").cloned().unwrap_or_else(|| json!({}));
+            let args = params
+                .get("arguments")
+                .cloned()
+                .unwrap_or_else(|| json!({}));
             match call_tool(conn, name, &args) {
                 Ok(result) => Some(ok(id, result)),
                 Err(message) => Some(ok(
@@ -255,15 +338,20 @@ mod tests {
     }
 
     fn tool_text(response: &Value) -> String {
-        response["result"]["content"][0]["text"].as_str().unwrap().to_string()
+        response["result"]["content"][0]["text"]
+            .as_str()
+            .unwrap()
+            .to_string()
     }
 
     #[test]
     fn initialize_echoes_the_clients_protocol_version() {
         let conn = db_with_project();
-        let response =
-            handle_message(&conn, &request("initialize", json!({ "protocolVersion": "2024-11-05" })))
-                .unwrap();
+        let response = handle_message(
+            &conn,
+            &request("initialize", json!({ "protocolVersion": "2024-11-05" })),
+        )
+        .unwrap();
         assert_eq!(response["result"]["protocolVersion"], "2024-11-05");
         assert_eq!(response["result"]["serverInfo"]["name"], "workbench");
     }
@@ -280,7 +368,7 @@ mod tests {
         let conn = db_with_project();
         let response = handle_message(&conn, &request("tools/list", json!({}))).unwrap();
         let tools = response["result"]["tools"].as_array().unwrap();
-        assert_eq!(tools.len(), 3);
+        assert_eq!(tools.len(), 5);
         for tool in tools {
             assert!(tool["name"].is_string());
             assert_eq!(tool["inputSchema"]["type"], "object");
@@ -291,24 +379,42 @@ mod tests {
     #[test]
     fn list_projects_filters_by_framework_and_honours_limit() {
         let conn = db_with_project();
-        let hit = call_tool(&conn, "list_projects", &json!({ "framework": "chrome-extension" })).unwrap();
+        let hit = call_tool(
+            &conn,
+            "list_projects",
+            &json!({ "framework": "chrome-extension" }),
+        )
+        .unwrap();
         assert!(serde_json::to_string(&hit).unwrap().contains("OLGArcade"));
 
         let miss = call_tool(&conn, "list_projects", &json!({ "framework": "rails" })).unwrap();
-        assert!(miss["content"][0]["text"].as_str().unwrap().contains("\"count\": 0"));
+        assert!(miss["content"][0]["text"]
+            .as_str()
+            .unwrap()
+            .contains("\"count\": 0"));
 
         let capped = call_tool(&conn, "list_projects", &json!({ "limit": 0 })).unwrap();
-        assert!(capped["content"][0]["text"].as_str().unwrap().contains("\"count\": 0"));
+        assert!(capped["content"][0]["text"]
+            .as_str()
+            .unwrap()
+            .contains("\"count\": 0"));
     }
 
     #[test]
     fn get_project_resolves_by_name_or_path_and_reports_misses() {
         let conn = db_with_project();
         let by_name = call_tool(&conn, "get_project", &json!({ "name": "olgarcade" })).unwrap();
-        assert!(by_name["content"][0]["text"].as_str().unwrap().contains("/tmp/olgarcade"));
+        assert!(by_name["content"][0]["text"]
+            .as_str()
+            .unwrap()
+            .contains("/tmp/olgarcade"));
 
-        let by_path = call_tool(&conn, "get_project", &json!({ "path": "/tmp/olgarcade" })).unwrap();
-        assert!(by_path["content"][0]["text"].as_str().unwrap().contains("OLGArcade"));
+        let by_path =
+            call_tool(&conn, "get_project", &json!({ "path": "/tmp/olgarcade" })).unwrap();
+        assert!(by_path["content"][0]["text"]
+            .as_str()
+            .unwrap()
+            .contains("OLGArcade"));
 
         assert!(call_tool(&conn, "get_project", &json!({ "name": "nope" })).is_err());
         assert!(call_tool(&conn, "get_project", &json!({})).is_err());
@@ -319,7 +425,10 @@ mod tests {
         let conn = db_with_project();
         let response = handle_message(
             &conn,
-            &request("tools/call", json!({ "name": "get_project", "arguments": { "id": 999 } })),
+            &request(
+                "tools/call",
+                json!({ "name": "get_project", "arguments": { "id": 999 } }),
+            ),
         )
         .unwrap();
         assert_eq!(response["result"]["isError"], true);

@@ -1,6 +1,8 @@
 use serde_json::Value;
 
-use super::{client, nested, nested_array, read_json, text, PluginItem, PluginItemDetail, PluginSource, Tone};
+use super::{
+    client, nested, nested_array, read_json, text, PluginItem, PluginItemDetail, PluginSource, Tone,
+};
 
 const BASE: &str = "https://sentry.io/api/0";
 const MAX_FRAMES: usize = 12;
@@ -55,6 +57,7 @@ pub fn parse_items(body: &Value, source: &str) -> Vec<PluginItem> {
                     Some(PluginItem {
                         id: format!("sentry:{}", text(issue, "id")?),
                         source: source.to_string(),
+                        source_id: Some(source.to_string()),
                         title: text(issue, "title").unwrap_or_else(|| "Unknown error".into()),
                         subtitle: text(issue, "culprit").unwrap_or_default(),
                         status: level.clone(),
@@ -94,7 +97,6 @@ pub async fn items(token: &str, source: &str) -> Result<Vec<PluginItem>, String>
     );
     Ok(parse_items(&get(token, &path).await?, source))
 }
-
 
 fn entry<'a>(body: &'a Value, kind: &str) -> Option<&'a Value> {
     body.get("entries")?
@@ -141,7 +143,11 @@ pub fn parse_event_detail(body: &Value) -> PluginItemDetail {
         .filter(|f| f.get("inApp").and_then(Value::as_bool) == Some(true))
         .copied()
         .collect();
-    let chosen = if in_app.is_empty() { all_frames } else { in_app };
+    let chosen = if in_app.is_empty() {
+        all_frames
+    } else {
+        in_app
+    };
     let frames: Vec<String> = chosen
         .iter()
         .rev()
@@ -186,7 +192,6 @@ pub async fn issue_detail(token: &str, issue_id: &str) -> Result<PluginItemDetai
 mod tests {
     use super::*;
 
-
     fn event() -> Value {
         serde_json::json!({
             "dateCreated": "2026-08-20T10:00:00Z",
@@ -211,7 +216,10 @@ mod tests {
     fn detail_summarises_the_exception() {
         let detail = parse_event_detail(&event());
         assert_eq!(detail.summary, "TypeError: null is not an object");
-        assert_eq!(detail.request.as_deref(), Some("POST https://acme.dev/checkout"));
+        assert_eq!(
+            detail.request.as_deref(),
+            Some("POST https://acme.dev/checkout")
+        );
         assert_eq!(detail.tags, vec!["browser=Chrome 138"]);
         assert_eq!(detail.occurred.as_deref(), Some("2026-08-20T10:00:00Z"));
     }
@@ -230,7 +238,10 @@ mod tests {
             "type": "Error", "value": "boom",
             "stacktrace": { "frames": [{ "filename": "vendor.js", "function": "boot", "lineNo": 1 }] }
         }]}}]});
-        assert_eq!(parse_event_detail(&body).frames, vec!["vendor.js in boot at line 1"]);
+        assert_eq!(
+            parse_event_detail(&body).frames,
+            vec!["vendor.js in boot at line 1"]
+        );
     }
 
     #[test]

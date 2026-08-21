@@ -16,6 +16,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useFilesStore } from "@/lib/filesStore";
 import { NewFileMenu } from "@/features/files/NewFileMenu";
+import { DossierMode } from "@/features/files/DossierMode";
+import { FolderFavoritesMenu } from "@/features/files/FolderFavoritesMenu";
 import { currentDirectory } from "@/features/files/lib/paths";
 import type { FsSortBy } from "@/lib/filesApi";
 import { cn } from "@/lib/utils";
@@ -88,6 +90,8 @@ export function FilesToolbar() {
         </DropdownMenuContent>
       </DropdownMenu>
 
+      <FolderFavoritesMenu />
+
       <Button variant="ghost" size="icon-sm" onClick={toggleShowHidden} title="Show hidden files">
         {showHidden ? <EyeIcon /> : <EyeOffIcon />}
       </Button>
@@ -95,6 +99,8 @@ export function FilesToolbar() {
       <NewFileMenu dir={dir} />
 
       <div className="flex-1" />
+
+      <DossierMode />
 
       <Button variant="ghost" size="sm" onClick={() => setMode("reclaim")} className="cursor-pointer">
         <HardDriveIcon />

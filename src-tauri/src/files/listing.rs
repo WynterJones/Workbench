@@ -6,7 +6,6 @@ use serde::{Deserialize, Serialize};
 
 use crate::files::fs_ops::{guard_existing, system_time_to_rfc3339};
 
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum FsKind {
@@ -168,18 +167,17 @@ fn git_status_map(dir: &Path) -> HashMap<String, GitStatus> {
                     *existing = status;
                 }
             })
-            .or_insert(if is_direct { status } else { GitStatus::Modified });
+            .or_insert(if is_direct {
+                status
+            } else {
+                GitStatus::Modified
+            });
     }
 
     map
 }
 
-
-pub fn list_dir(
-    path: &str,
-    opts: &ListOptions,
-    roots: &[PathBuf],
-) -> Result<Vec<FsEntry>, String> {
+pub fn list_dir(path: &str, opts: &ListOptions, roots: &[PathBuf]) -> Result<Vec<FsEntry>, String> {
     let resolved = guard_existing(path, roots)?;
     if !resolved.is_dir() {
         return Err(format!("{path} is not a directory"));
@@ -249,6 +247,59 @@ pub fn list_dir(
     }
 
     sort_entries(&mut entries, opts.sort_by, opts.sort_desc);
+    Ok(entries)
+}
+
+pub fn find_documents(root: &Path) -> Result<Vec<FsEntry>, String> {
+    let mut entries = Vec::new();
+    let walker = ignore::WalkBuilder::new(root)
+        .hidden(true)
+        .git_ignore(true)
+        .git_exclude(true)
+        .filter_entry(|entry| entry.file_name() != "node_modules")
+        .build();
+
+    for item in walker.flatten() {
+        if !item.file_type().map(|kind| kind.is_file()).unwrap_or(false) {
+            continue;
+        }
+        let extension = item
+            .path()
+            .extension()
+            .map(|value| value.to_string_lossy().to_lowercase());
+        if !matches!(
+            extension.as_deref(),
+            Some("md") | Some("markdown") | Some("pdf")
+        ) {
+            continue;
+        }
+        let metadata = match item.metadata() {
+            Ok(metadata) => metadata,
+            Err(_) => continue,
+        };
+        let path = item.into_path();
+        entries.push(FsEntry {
+            name: path
+                .file_name()
+                .map(|name| name.to_string_lossy().to_string())
+                .unwrap_or_default(),
+            path: path.to_string_lossy().to_string(),
+            kind: FsKind::File,
+            size: metadata.len(),
+            modified: metadata
+                .modified()
+                .map(system_time_to_rfc3339)
+                .unwrap_or_default(),
+            extension,
+            is_hidden: false,
+            is_package: false,
+            child_count: None,
+            git_status: None,
+            project_framework: None,
+        });
+    }
+
+    entries.sort_by(|a, b| a.path.to_lowercase().cmp(&b.path.to_lowercase()));
     Ok(entries)
 }
 
@@ -369,5 +420,21 @@ mod tests {
         let entries = list_dir(root.to_str().unwrap(), &opts, &roots).unwrap();
         assert_eq!(entries[0].name, "z.txt");
         assert_eq!(entries[1].name, "a.txt");
+    }
+
+    #[test]
+    fn finds_documents_recursively_and_skips_other_files() {
+        let root = tempdir();
+        stdfs::create_dir(root.join("docs")).unwrap();
+        stdfs::write(root.join("README.md"), "# Root").unwrap();
+        stdfs::write(root.join("docs/guide.pdf"), "%PDF").unwrap();
+        stdfs::write(root.join("docs/notes.txt"), "skip").unwrap();
+        stdfs::create_dir(root.join("node_modules")).unwrap();
+        stdfs::write(root.join("node_modules/package.md"), "skip").unwrap();
+
+        let entries = find_documents(&root).unwrap();
+        assert_eq!(entries.len(), 2);
+        assert!(entries.iter().any(|entry| entry.name == "README.md"));
+        assert!(entries.iter().any(|entry| entry.name == "guide.pdf"));
     }
 }

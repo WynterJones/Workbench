@@ -6,7 +6,9 @@ use std::thread;
 use std::time::Duration;
 
 use notify::{Event, RecommendedWatcher, RecursiveMode, Watcher};
-use tauri::{AppHandle, Emitter};
+use tauri::{AppHandle, Emitter, Manager};
+
+use super::ListingCache;
 
 const DEBOUNCE: Duration = Duration::from_millis(150);
 
@@ -53,6 +55,8 @@ pub fn start(app: AppHandle, state: &WatcherState, dir_path: &str) -> Result<(),
                 Err(RecvTimeoutError::Timeout) => {
                     if pending {
                         pending = false;
+                        app.state::<ListingCache>()
+                            .invalidate(Path::new(&watched_path));
                         let _ = app.emit("fs:changed", watched_path.clone());
                     }
                 }

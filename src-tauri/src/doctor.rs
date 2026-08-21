@@ -125,15 +125,25 @@ mod tests {
     fn every_check_explains_what_it_enables_and_how_to_fix_it() {
         for check in build_checks(None, None, None, None) {
             assert!(!check.label.is_empty(), "{} has no label", check.id);
-            assert!(!check.enables.is_empty(), "{} has no enables text", check.id);
+            assert!(
+                !check.enables.is_empty(),
+                "{} has no enables text",
+                check.id
+            );
             assert!(!check.fix_command.is_empty(), "{} has no fix", check.id);
-            assert!(check.fix_url.starts_with("https://"), "{} bad url", check.id);
+            assert!(
+                check.fix_url.starts_with("https://"),
+                "{} bad url",
+                check.id
+            );
         }
     }
 
     #[test]
     fn nothing_is_required_so_the_intro_can_always_be_completed() {
-        assert!(build_checks(None, None, None, None).iter().all(|c| !c.required));
+        assert!(build_checks(None, None, None, None)
+            .iter()
+            .all(|c| !c.required));
     }
 
     #[test]

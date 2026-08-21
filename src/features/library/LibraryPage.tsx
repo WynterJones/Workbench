@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { toast } from "sonner";
 import { InsightsBar } from "@/features/library/InsightsBar";
 import { ContributionHeatmap } from "@/features/library/ContributionHeatmap";
@@ -8,7 +8,8 @@ import { ProjectGrid } from "@/features/library/ProjectGrid";
 import { useLibraryProjects, useLibraryStats } from "@/hooks/useProjects";
 import { api } from "@/lib/api";
 import { useAppStore } from "@/lib/store";
-import type { Framework, ProjectQuery, ProjectStatus } from "@/lib/types";
+import { useUserPreferences } from "@/lib/userPreferences";
+import type { Framework, ProjectQuery } from "@/lib/types";
 
 export function LibraryPage() {
   const shelf = useAppStore((state) => state.shelf);
@@ -21,7 +22,16 @@ export function LibraryPage() {
   const setSort = useAppStore((state) => state.setSort);
   const openProject = useAppStore((state) => state.openProject);
 
-  const [status, setStatus] = useState<ProjectStatus | "all">("all");
+  const status = useUserPreferences((state) => state.libraryStatus);
+  const setStatus = useUserPreferences((state) => state.setLibraryStatus);
+  const view = useUserPreferences((state) => state.libraryView);
+  const pageSize = useUserPreferences((state) => state.libraryPageSize);
+  const gridColumns = useUserPreferences((state) => state.libraryGridColumns);
+  const listColumns = useUserPreferences((state) => state.libraryListColumns);
+  const setView = useUserPreferences((state) => state.setLibraryView);
+  const setPageSize = useUserPreferences((state) => state.setLibraryPageSize);
+  const setColumns = useUserPreferences((state) => state.setLibraryColumns);
+  const columns = view === "grid" ? gridColumns : listColumns;
 
   const query: ProjectQuery = useMemo(
     () => ({ shelf, search, frameworks, tags, sort }),
@@ -67,13 +77,22 @@ export function LibraryPage() {
         tags={tags}
         status={status}
         sort={sort}
+        view={view}
+        pageSize={pageSize}
+        columns={columns}
         onFrameworksChange={setFrameworks}
         onTagsChange={setTags}
         onStatusChange={setStatus}
         onSortChange={setSort}
+        onViewChange={setView}
+        onPageSizeChange={setPageSize}
+        onColumnsChange={(value) => setColumns(view, value)}
       />
       <ProjectGrid
         projects={projects}
+        view={view}
+        pageSize={pageSize}
+        columns={columns}
         isLoading={isLoading}
         hasEverScanned={hasEverScanned}
         hasActiveFilters={hasActiveFilters}

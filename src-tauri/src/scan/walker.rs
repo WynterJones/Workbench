@@ -13,6 +13,7 @@ pub const IGNORED_DIRS: &[&str] = &[
     "dist",
     "build",
     "vendor",
+    "gems",
     ".next",
     ".nuxt",
     "Pods",
@@ -27,6 +28,14 @@ pub const IGNORED_DIRS: &[&str] = &[
 const MAX_DEPTH: usize = 6;
 
 pub fn find_project_dirs(root: &Path) -> Vec<PathBuf> {
+    if root
+        .file_name()
+        .and_then(|name| name.to_str())
+        .is_some_and(|name| name.starts_with('.'))
+    {
+        return Vec::new();
+    }
+
     let root_entries = read_child_names(root).unwrap_or_default();
     if detect::has_any_marker(&root_entries) {
         return vec![root.to_path_buf()];
@@ -50,14 +59,17 @@ pub fn find_project_dirs(root: &Path) -> Vec<PathBuf> {
             }
 
             if let Some(name) = entry.file_name().to_str() {
-                if IGNORED_DIRS.contains(&name) {
+                if name.starts_with('.') || IGNORED_DIRS.contains(&name) {
                     return false;
                 }
             }
 
             let names = read_child_names(entry.path()).unwrap_or_default();
             if detect::has_any_marker(&names) {
-                found_in_filter.lock().unwrap().push(entry.path().to_path_buf());
+                found_in_filter
+                    .lock()
+                    .unwrap()
+                    .push(entry.path().to_path_buf());
                 return false;
             }
 
@@ -87,6 +99,7 @@ pub fn list_entries(dir: &Path) -> Vec<String> {
         "src-tauri/tauri.conf.json",
         "config/application.rb",
         "src-tauri/Cargo.toml",
+        ".github/workflows",
     ] {
         if dir.join(nested).exists() {
             entries.push(nested.to_string());
@@ -104,34 +117,54 @@ mod tests {
         fs::write(path, "").unwrap();
     }
 
+    fn temp_root() -> (tempfile::TempDir, PathBuf) {
+        let tmp = tempfile::tempdir().unwrap();
+        let root = tmp.path().join("root");
+        fs::create_dir(&root).unwrap();
+        (tmp, root)
+    }
+
     #[test]
     fn finds_a_single_project_at_root() {
-        let tmp = tempfile::tempdir().unwrap();
-        touch(&tmp.path().join("package.json"));
+        let (_tmp, root) = temp_root();
+        touch(&root.join("package.json"));
 
-        let found = find_project_dirs(tmp.path());
-        assert_eq!(found, vec![tmp.path().to_path_buf()]);
+        let found = find_project_dirs(&root);
+        assert_eq!(found, vec![root]);
     }
 
     #[test]
     fn skips_ignored_directories() {
-        let tmp = tempfile::tempdir().unwrap();
-        let ignored = tmp.path().join("node_modules").join("some-pkg");
+        let (_tmp, root) = temp_root();
+        let ignored = root.join("node_modules").join("some-pkg");
         fs::create_dir_all(&ignored).unwrap();
         touch(&ignored.join("package.json"));
 
-        let real = tmp.path().join("real-project");
+        let gem = root.join("gems").join("bcrypt_pbkdf-1.1.2");
+        fs::create_dir_all(&gem).unwrap();
+        touch(&gem.join("Cargo.toml"));
+
+        let hidden = root.join(".ruby-lsp");
+        fs::create_dir_all(&hidden).unwrap();
+        touch(&hidden.join("Cargo.toml"));
+
+        let npx = root.join(".npm").join("_npx").join("1a089ac50f181916");
+        fs::create_dir_all(&npx).unwrap();
+        touch(&npx.join("package.json"));
+
+        let real = root.join("real-project");
         fs::create_dir_all(&real).unwrap();
         touch(&real.join("package.json"));
 
-        let found = find_project_dirs(tmp.path());
+        let found = find_project_dirs(&root);
         assert_eq!(found, vec![real]);
+        assert!(find_project_dirs(&hidden).is_empty());
     }
 
     #[test]
     fn stops_descending_once_project_is_identified() {
-        let tmp = tempfile::tempdir().unwrap();
-        let app = tmp.path().join("app");
+        let (_tmp, root) = temp_root();
+        let app = root.join("app");
         fs::create_dir_all(&app).unwrap();
         touch(&app.join("package.json"));
 
@@ -139,14 +172,14 @@ mod tests {
         fs::create_dir_all(&nested_fake).unwrap();
         touch(&nested_fake.join("package.json"));
 
-        let found = find_project_dirs(tmp.path());
+        let found = find_project_dirs(&root);
         assert_eq!(found, vec![app]);
     }
 
     #[test]
     fn tauri_nested_src_tauri_is_one_project_not_two() {
-        let tmp = tempfile::tempdir().unwrap();
-        let app = tmp.path().join("app");
+        let (_tmp, root) = temp_root();
+        let app = root.join("app");
         fs::create_dir_all(&app).unwrap();
         touch(&app.join("package.json"));
         touch(&app.join("vite.config.ts"));
@@ -156,7 +189,7 @@ mod tests {
         touch(&src_tauri.join("tauri.conf.json"));
         touch(&src_tauri.join("Cargo.toml"));
 
-        let found = find_project_dirs(tmp.path());
+        let found = find_project_dirs(&root);
         assert_eq!(found, vec![app.clone()]);
 
         let entries = list_entries(&app);
@@ -165,15 +198,15 @@ mod tests {
 
     #[test]
     fn finds_multiple_sibling_projects() {
-        let tmp = tempfile::tempdir().unwrap();
-        let one = tmp.path().join("one");
-        let two = tmp.path().join("two");
+        let (_tmp, root) = temp_root();
+        let one = root.join("one");
+        let two = root.join("two");
         fs::create_dir_all(&one).unwrap();
         fs::create_dir_all(&two).unwrap();
         touch(&one.join("package.json"));
         touch(&two.join("Cargo.toml"));
 
-        let mut found = find_project_dirs(tmp.path());
+        let mut found = find_project_dirs(&root);
         found.sort();
         let mut expected = vec![one, two];
         expected.sort();
@@ -182,15 +215,15 @@ mod tests {
 
     #[test]
     fn respects_max_depth() {
-        let tmp = tempfile::tempdir().unwrap();
-        let mut deep = tmp.path().to_path_buf();
+        let (_tmp, root) = temp_root();
+        let mut deep = root.clone();
         for i in 0..10 {
             deep = deep.join(format!("d{i}"));
         }
         fs::create_dir_all(&deep).unwrap();
         touch(&deep.join("package.json"));
 
-        let found = find_project_dirs(tmp.path());
+        let found = find_project_dirs(&root);
         assert!(found.is_empty());
     }
 }

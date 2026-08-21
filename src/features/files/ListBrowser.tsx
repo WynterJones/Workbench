@@ -17,7 +17,6 @@ const ROW_HEIGHT = 32;
 const COLUMNS: { key: FsSortBy; label: string; className: string }[] = [
   { key: "name", label: "Name", className: "flex-1" },
   { key: "size", label: "Size", className: "w-20 text-right" },
-  { key: "modified", label: "Modified", className: "w-24 text-right" },
   { key: "kind", label: "Kind", className: "w-16 text-right" },
 ];
 

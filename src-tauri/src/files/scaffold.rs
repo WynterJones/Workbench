@@ -70,8 +70,14 @@ pub fn scaffold_starter(
         .spawn()
         .map_err(|e| e.to_string())?;
 
-    let stdout = child.stdout.take().ok_or_else(|| "no stdout pipe".to_string())?;
-    let stderr = child.stderr.take().ok_or_else(|| "no stderr pipe".to_string())?;
+    let stdout = child
+        .stdout
+        .take()
+        .ok_or_else(|| "no stdout pipe".to_string())?;
+    let stderr = child
+        .stderr
+        .take()
+        .ok_or_else(|| "no stderr pipe".to_string())?;
 
     let (tx, rx) = std::sync::mpsc::channel::<String>();
     let tx_stdout = tx.clone();

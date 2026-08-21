@@ -12,8 +12,7 @@ use tauri::{AppHandle, Emitter};
 
 use crate::db;
 use crate::models::{
-    NewProjectInput, PackageManager, Project, ProjectPatch, ProjectStatus, ScanProgress,
-    ShipScore,
+    NewProjectInput, PackageManager, Project, ProjectPatch, ProjectStatus, ScanProgress, ShipScore,
 };
 use crate::score;
 
@@ -73,7 +72,8 @@ pub async fn start_scan(app: AppHandle, roots: Option<Vec<String>>) -> Result<()
         Some(r) if !r.is_empty() => r,
         _ => {
             let conn = crate::db::open()?;
-            crate::db::list_roots(&conn).map_err(|e| e.to_string())?
+            crate::db::list_roots(&conn)
+                .map_err(|e| e.to_string())?
                 .into_iter()
                 .filter(|r| r.enabled)
                 .map(|r| r.path)
@@ -102,7 +102,8 @@ fn scan_one(dir: &Path) -> Option<NewProjectInput> {
 
     let git_info = git::inspect(dir);
     let source_scan = meta::scan_source(dir);
-    let last_modified = meta::to_rfc3339(meta::last_modified_or_dir(dir, source_scan.last_modified));
+    let last_modified =
+        meta::to_rfc3339(meta::last_modified_or_dir(dir, source_scan.last_modified));
 
     let name = dir
         .file_name()
@@ -218,13 +219,76 @@ fn has_tests(dir: &Path, root_files: &[String]) -> bool {
         "test",
         "__tests__",
         "spec",
+        "cypress",
+        "e2e",
         "vitest.config.ts",
         "vitest.config.js",
         "jest.config.js",
         "jest.config.ts",
+        "playwright.config.ts",
         "pytest.ini",
+        "phpunit.xml",
     ];
-    root_files.iter().any(|f| TEST_MARKERS.contains(&f.as_str())) || dir.join("src-tauri/tests").exists()
+    root_files
+        .iter()
+        .any(|f| TEST_MARKERS.contains(&f.as_str()))
+        || dir.join("src-tauri/tests").exists()
+        || contains_test_files(dir)
+}
+
+fn is_test_file(name: &str) -> bool {
+    name.contains(".test.")
+        || name.contains(".spec.")
+        || name.starts_with("test_")
+        || name.ends_with("_test.go")
+        || name.ends_with("_test.rs")
+        || name.ends_with("_test.py")
+        || name == "conftest.py"
+}
+
+fn contains_test_files(dir: &Path) -> bool {
+    let mut rust_files_read = 0;
+    for entry in ignore::WalkBuilder::new(dir)
+        .max_depth(Some(5))
+        .build()
+        .flatten()
+        .take(3000)
+    {
+        let name = entry.file_name().to_string_lossy().to_lowercase();
+        if is_test_file(&name) {
+            return true;
+        }
+        if name.ends_with(".rs") && rust_files_read < 60 {
+            rust_files_read += 1;
+            if fs::read_to_string(entry.path())
+                .map(|body| body.contains("#[cfg(test)]"))
+                .unwrap_or(false)
+            {
+                return true;
+            }
+        }
+    }
+    false
+}
+
+fn manifest_text(dir: &Path) -> String {
+    const MANIFESTS: &[&str] = &[
+        "package.json",
+        "Cargo.toml",
+        "requirements.txt",
+        "pyproject.toml",
+        "Pipfile",
+        "go.mod",
+        "Gemfile",
+        "composer.json",
+        "pubspec.yaml",
+        "mix.exs",
+    ];
+    MANIFESTS
+        .iter()
+        .filter_map(|name| fs::read_to_string(dir.join(name)).ok())
+        .collect::<Vec<_>>()
+        .join("\n")
 }
 
 fn is_recent(last_modified: &str) -> bool {
@@ -239,8 +303,10 @@ fn is_recent(last_modified: &str) -> bool {
 
 fn compute_and_persist_ship_score(conn: &Connection, project: &Project) -> ShipScore {
     let dir = Path::new(&project.path);
-    let dependencies = read_package_json(dir).map(|(_, deps)| deps).unwrap_or_default();
+    let manifests = manifest_text(dir);
     let root_files = walker::list_entries(dir);
+    let has_screenshot =
+        project.screenshot_desktop.is_some() || project.screenshot_mobile.is_some();
 
     let signals = score::ShipSignals {
         runs: matches!(
@@ -248,11 +314,11 @@ fn compute_and_persist_ship_score(conn: &Connection, project: &Project) -> ShipS
             ProjectStatus::Runnable | ProjectStatus::Running | ProjectStatus::Shipped
         ),
         has_readme: project.readme_summary.is_some(),
-        has_ui: project.screenshot_desktop.is_some() || project.screenshot_mobile.is_some(),
-        has_auth: score::detect_auth(&dependencies),
-        has_payments: score::detect_payments(&dependencies),
+        has_ui: score::detect_ui(project.framework, &root_files, has_screenshot),
+        has_auth: score::detect_auth(&manifests),
+        has_payments: score::detect_payments(&manifests),
         has_deployment: score::detect_deployment(&root_files),
-        has_domain: score::detect_domain(&root_files),
+        has_domain: score::detect_domain(&root_files, project.homepage.as_deref()),
         recently_maintained: is_recent(&project.last_modified),
         has_tests: has_tests(dir, &root_files),
     };
@@ -338,7 +404,11 @@ fn walk_for_todos(
         for (idx, line) in content.lines().enumerate() {
             if let Some(caps) = pattern.captures(line) {
                 let relative = path.strip_prefix(root).unwrap_or(&path).display();
-                let text = caps.get(0).map(|m| m.as_str().trim()).unwrap_or("").to_string();
+                let text = caps
+                    .get(0)
+                    .map(|m| m.as_str().trim())
+                    .unwrap_or("")
+                    .to_string();
                 results.push(format!("{relative}:{} — {text}", idx + 1));
                 if results.len() >= MAX_TODOS {
                     return;
@@ -402,10 +472,16 @@ mod dead_tests {
         assert_eq!(mark_missing_projects_dead(&conn), 1);
 
         let dead: String = conn
-            .query_row("SELECT status FROM projects WHERE name = 'Gone'", [], |r| r.get(0))
+            .query_row("SELECT status FROM projects WHERE name = 'Gone'", [], |r| {
+                r.get(0)
+            })
             .unwrap();
         let live: String = conn
-            .query_row("SELECT status FROM projects WHERE name = 'Alive'", [], |r| r.get(0))
+            .query_row(
+                "SELECT status FROM projects WHERE name = 'Alive'",
+                [],
+                |r| r.get(0),
+            )
             .unwrap();
         assert_eq!(dead, "dead");
         assert_ne!(live, "dead");

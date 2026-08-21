@@ -190,6 +190,7 @@ pub struct Project {
     pub run_cmd: Option<String>,
     pub run_url: Option<String>,
     pub homepage: Option<String>,
+    pub icon_path: Option<String>,
     pub port: Option<i64>,
     pub status: ProjectStatus,
     pub broken_reason: Option<BrokenReason>,

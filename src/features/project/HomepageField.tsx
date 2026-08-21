@@ -5,14 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useUpdateProject } from "@/hooks/useProjects";
 import { openUrl } from "@/lib/openUrl";
+import { normalizeHttpUrl } from "@/lib/url";
 import type { Project } from "@/lib/types";
-
-function normalise(value: string): string | null {
-  const trimmed = value.trim();
-  if (!trimmed) return null;
-  if (/^https?:\/\//i.test(trimmed)) return trimmed;
-  return `https://${trimmed}`;
-}
 
 interface HomepageFieldProps {
   project: Project;
@@ -27,8 +21,12 @@ export function HomepageField({ project }: HomepageFieldProps) {
     setValue(project.homepage ?? "");
   }, [project.homepage]);
 
-  function save() {
-    const homepage = normalise(value);
+  function save(nextValue = value) {
+    const homepage = normalizeHttpUrl(nextValue);
+    if (nextValue.trim() && !homepage) {
+      toast.error("Enter a valid web link");
+      return;
+    }
     update.mutate(
       { id: project.id, patch: { homepage } },
       {
@@ -83,8 +81,17 @@ export function HomepageField({ project }: HomepageFieldProps) {
     <span className="flex items-center gap-1.5">
       <Input
         autoFocus
+        type="url"
+        aria-label="Project link"
         value={value}
         onChange={(event) => setValue(event.target.value)}
+        onPaste={(event) => {
+          const homepage = normalizeHttpUrl(event.clipboardData.getData("text"));
+          if (!homepage) return;
+          event.preventDefault();
+          setValue(homepage);
+          save(homepage);
+        }}
         onKeyDown={(event) => {
           if (event.key === "Enter") save();
           if (event.key === "Escape") {
@@ -95,12 +102,13 @@ export function HomepageField({ project }: HomepageFieldProps) {
         placeholder="example.com"
         className="h-7 w-56 text-xs"
       />
-      <Button size="sm" className="h-7 cursor-pointer" onClick={save} disabled={update.isPending}>
+      <Button size="sm" className="h-7 cursor-pointer" onClick={() => save()} disabled={update.isPending}>
         Save
       </Button>
       <Button
         size="icon-sm"
         variant="ghost"
+        aria-label="Cancel editing link"
         className="cursor-pointer"
         onClick={() => {
           setValue(project.homepage ?? "");

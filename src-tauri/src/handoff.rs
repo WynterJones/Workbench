@@ -41,7 +41,9 @@ pub fn handoff_path(id: i64) -> PathBuf {
 }
 
 fn prompt_path(id: i64) -> PathBuf {
-    store::workbench_dir().join("prompts").join(format!("{id}-run.md"))
+    store::workbench_dir()
+        .join("prompts")
+        .join(format!("{id}-run.md"))
 }
 
 pub fn parse_report(raw: &str) -> Result<HandoffReport, String> {
@@ -205,7 +207,11 @@ mod tests {
 
     #[test]
     fn prompt_carries_the_failing_output_when_there_is_some() {
-        let prompt = build_prompt(&info(), Some(BrokenReason::Crashed), "  Error: EADDRINUSE  ");
+        let prompt = build_prompt(
+            &info(),
+            Some(BrokenReason::Crashed),
+            "  Error: EADDRINUSE  ",
+        );
         assert!(prompt.contains("Error: EADDRINUSE"));
         assert!(!build_prompt(&info(), None, "   ").contains("Last run output"));
     }
@@ -224,8 +230,10 @@ mod tests {
 
     #[test]
     fn report_survives_a_fenced_block_and_blank_fields() {
-        let report = parse_report("```json\n{\"ok\": false, \"note\": \"needs a Postgres\", \"url\": \"\"}\n```")
-            .unwrap();
+        let report = parse_report(
+            "```json\n{\"ok\": false, \"note\": \"needs a Postgres\", \"url\": \"\"}\n```",
+        )
+        .unwrap();
         assert!(!report.ok);
         assert_eq!(report.note.as_deref(), Some("needs a Postgres"));
         assert!(report.url.is_none());

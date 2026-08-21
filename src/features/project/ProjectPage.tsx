@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeftIcon } from "lucide-react";
+import { ArrowLeftIcon, SparklesIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -14,6 +14,7 @@ import { StatusPicker } from "@/features/project/StatusPicker";
 import { ProjectMediaPanel } from "@/features/media/ProjectMediaPanel";
 import { TodoList } from "@/features/project/TodoList";
 import { RunLogPanel } from "@/features/project/RunLogPanel";
+import { PortfolioPanel } from "@/features/portfolio/PortfolioPanel";
 import { useProject } from "@/hooks/useProject";
 import { useAppStore } from "@/lib/store";
 import type { RunResult } from "@/lib/types";
@@ -54,6 +55,13 @@ export function ProjectPage() {
               <TabsTrigger value="commits">Commits</TabsTrigger>
               <TabsTrigger value="todos">TODOs</TabsTrigger>
               <TabsTrigger value="runlog">Run Log</TabsTrigger>
+              <TabsTrigger
+                value="portfolio"
+                className="text-brand/80 hover:text-brand data-[state=active]:bg-brand/10 data-[state=active]:text-brand dark:data-[state=active]:border-brand/40 dark:data-[state=active]:bg-brand/10 dark:data-[state=active]:text-brand"
+              >
+                <SparklesIcon />
+                AI Portfolio
+              </TabsTrigger>
             </TabsList>
             <StatusPicker projectId={project.id} status={project.status} />
             </div>
@@ -71,6 +79,9 @@ export function ProjectPage() {
             </TabsContent>
             <TabsContent value="runlog" className="mt-3 rounded-lg border border-border bg-card p-5">
               <RunLogPanel project={project} lastResult={lastResult} />
+            </TabsContent>
+            <TabsContent value="portfolio" className="mt-3">
+              <PortfolioPanel projectId={project.id} />
             </TabsContent>
           </Tabs>
         </div>

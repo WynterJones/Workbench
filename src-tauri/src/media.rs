@@ -53,7 +53,7 @@ pub fn scan_media(root: &Path) -> Vec<MediaItem> {
         .into_iter()
         .filter_entry(|entry| {
             let name = entry.file_name().to_string_lossy();
-            !SKIP_DIRS.contains(&name.as_ref())
+            entry.depth() == 0 || (!name.starts_with('.') && !SKIP_DIRS.contains(&name.as_ref()))
         });
 
     for entry in walker.flatten() {
@@ -196,6 +196,8 @@ mod tests {
         let root = temp("skip");
         fs::create_dir_all(root.join("node_modules/pkg")).unwrap();
         fs::write(root.join("node_modules/pkg/icon.png"), [0u8; 4]).unwrap();
+        fs::create_dir_all(root.join(".claude/worktrees/copy")).unwrap();
+        fs::write(root.join(".claude/worktrees/copy/icon.png"), [0u8; 4]).unwrap();
         fs::write(root.join("real.png"), [0u8; 4]).unwrap();
 
         let items = scan_media(&root);

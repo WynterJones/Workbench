@@ -127,7 +127,10 @@ fn parse_codex(path: &Path) -> HashMap<String, DayTokens> {
         .filter_map(|c| c.as_os_str().to_str())
         .collect::<Vec<_>>();
     let fallback_day = if day_from_path.len() >= 4 {
-        format!("{}-{}-{}", day_from_path[3], day_from_path[2], day_from_path[1])
+        format!(
+            "{}-{}-{}",
+            day_from_path[3], day_from_path[2], day_from_path[1]
+        )
     } else {
         "unknown".to_string()
     };
@@ -193,7 +196,9 @@ fn collect(
         files += 1;
 
         let key = path.to_string_lossy().to_string();
-        let cached = cache.get(&key).filter(|c| c.mtime == mtime && c.size == size);
+        let cached = cache
+            .get(&key)
+            .filter(|c| c.mtime == mtime && c.size == size);
         let days = match cached {
             Some(hit) => hit.days.clone(),
             None => {
@@ -220,7 +225,12 @@ fn collect(
     (totals, files)
 }
 
-fn summarise(agent: &str, label: &str, days: HashMap<String, DayTokens>, sessions: usize) -> AgentUsage {
+fn summarise(
+    agent: &str,
+    label: &str,
+    days: HashMap<String, DayTokens>,
+    sessions: usize,
+) -> AgentUsage {
     let week_start = (Utc::now().date_naive() - Duration::days(6))
         .format("%Y-%m-%d")
         .to_string();
@@ -237,7 +247,8 @@ fn summarise(agent: &str, label: &str, days: HashMap<String, DayTokens>, session
         usage.output_tokens += tokens.output;
         let total = tokens.input + tokens.output;
         usage.total_tokens += total;
-        if day.as_str() >= week_start.as_str() && NaiveDate::parse_from_str(day, "%Y-%m-%d").is_ok() {
+        if day.as_str() >= week_start.as_str() && NaiveDate::parse_from_str(day, "%Y-%m-%d").is_ok()
+        {
             usage.week_tokens += total;
         }
     }
@@ -280,7 +291,9 @@ pub async fn token_usage() -> Result<UsageReport, String> {
         }
 
         save_cache(&cache);
-        report.agents.sort_by(|a, b| b.total_tokens.cmp(&a.total_tokens));
+        report
+            .agents
+            .sort_by(|a, b| b.total_tokens.cmp(&a.total_tokens));
         Ok(report)
     })
     .await
@@ -301,7 +314,11 @@ mod tests {
             r#"{{"type":"assistant","timestamp":"2026-08-19T10:00:00Z","message":{{"usage":{{"input_tokens":2,"cache_creation_input_tokens":500,"cache_read_input_tokens":1000,"output_tokens":250}}}}}}"#
         )
         .unwrap();
-        writeln!(file, r#"{{"type":"user","timestamp":"2026-08-19T10:01:00Z"}}"#).unwrap();
+        writeln!(
+            file,
+            r#"{{"type":"user","timestamp":"2026-08-19T10:01:00Z"}}"#
+        )
+        .unwrap();
 
         let days = parse_claude(&path);
         let day = days.get("2026-08-19").unwrap();
@@ -340,8 +357,20 @@ mod tests {
             .to_string();
 
         let mut days = HashMap::new();
-        days.insert(today, DayTokens { input: 10, output: 5 });
-        days.insert(old, DayTokens { input: 100, output: 50 });
+        days.insert(
+            today,
+            DayTokens {
+                input: 10,
+                output: 5,
+            },
+        );
+        days.insert(
+            old,
+            DayTokens {
+                input: 100,
+                output: 50,
+            },
+        );
 
         let usage = summarise("claude-code", "Claude Code", days, 2);
         assert_eq!(usage.total_tokens, 165);

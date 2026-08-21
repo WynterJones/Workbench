@@ -12,6 +12,7 @@ export type PluginTone = "good" | "bad" | "warn" | "neutral";
 export interface PluginItem {
   id: string;
   source: string;
+  sourceId: string | null;
   title: string;
   subtitle: string;
   status: string;

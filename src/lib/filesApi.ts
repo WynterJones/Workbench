@@ -87,6 +87,9 @@ export interface DiskReclaimEntry {
 
 export const filesApi = {
   listDir: (path: string, opts: ListDirOpts) => invoke<FsEntry[]>("fs_list_dir", { path, opts }),
+  findDocuments: (path: string) => invoke<FsEntry[]>("fs_find_documents", { path }),
+  watchDirectory: (path: string) => invoke<void>("fs_watch_directory", { path }),
+  unwatchDirectory: () => invoke<void>("fs_unwatch_directory"),
 
   readFile: (path: string, maxBytes?: number) =>
     invoke<FileContents>("fs_read_file", { path, maxBytes }),

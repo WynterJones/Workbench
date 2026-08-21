@@ -13,6 +13,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ActiveFilterChips } from "@/features/library/ActiveFilterChips";
+import { LibraryViewControls } from "@/features/library/LibraryViewControls";
+import { ProjectLinksDialog } from "@/features/library/ProjectLinksDialog";
 
 import { FrameworkOption } from "@/features/library/FrameworkOption";
 import { CheckboxDot } from "@/components/CheckboxDot";
@@ -41,10 +43,16 @@ interface FilterBarProps {
   tags: string[];
   status: ProjectStatus | "all";
   sort: ProjectQuery["sort"];
+  view: "grid" | "list";
+  pageSize: number;
+  columns: number;
   onFrameworksChange: (frameworks: Framework[]) => void;
   onTagsChange: (tags: string[]) => void;
   onStatusChange: (status: ProjectStatus | "all") => void;
   onSortChange: (sort: ProjectQuery["sort"]) => void;
+  onViewChange: (view: "grid" | "list") => void;
+  onPageSizeChange: (pageSize: number) => void;
+  onColumnsChange: (columns: number) => void;
 }
 
 export function FilterBar({
@@ -54,10 +62,16 @@ export function FilterBar({
   tags,
   status,
   sort,
+  view,
+  pageSize,
+  columns,
   onFrameworksChange,
   onTagsChange,
   onStatusChange,
   onSortChange,
+  onViewChange,
+  onPageSizeChange,
+  onColumnsChange,
 }: FilterBarProps) {
   function toggleFramework(framework: Framework) {
     onFrameworksChange(
@@ -148,6 +162,17 @@ export function FilterBar({
             ))}
           </SelectContent>
         </Select>
+
+        <ProjectLinksDialog />
+
+        <LibraryViewControls
+          view={view}
+          pageSize={pageSize}
+          columns={columns}
+          onViewChange={onViewChange}
+          onPageSizeChange={onPageSizeChange}
+          onColumnsChange={onColumnsChange}
+        />
       </div>
 
       {hasActiveFilters && (
