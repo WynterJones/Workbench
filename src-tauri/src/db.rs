@@ -286,9 +286,9 @@ pub fn upsert_project(conn: &Connection, input: &NewProjectInput) -> rusqlite::R
                     name = ?1, framework = ?2, language = ?3, package_manager = ?4,
                     last_modified = ?5, git_branch = ?6, git_remote = ?7, git_dirty = ?8,
                     last_commit_at = ?9, loc = ?10, readme_summary = ?11, run_cmd = ?12,
-                    run_url = ?13, port = ?14, status = ?15, deps_installed = ?16,
-                    has_env_example = ?17, last_scanned = ?18
-                 WHERE id = ?19",
+                    run_url = ?13, port = ?14, deps_installed = ?15,
+                    has_env_example = ?16, last_scanned = ?17
+                 WHERE id = ?18",
                 params![
                     input.name,
                     input.framework.as_str(),
@@ -304,7 +304,6 @@ pub fn upsert_project(conn: &Connection, input: &NewProjectInput) -> rusqlite::R
                     input.run_cmd,
                     input.run_url,
                     input.port,
-                    input.status.as_str(),
                     input.deps_installed as i64,
                     input.has_env_example as i64,
                     timestamp,
@@ -897,7 +896,7 @@ mod tests {
         let created = upsert_project(&conn, &input).unwrap();
         set_tags(&conn, created.id, &["prototype".to_string()]).unwrap();
         conn.execute(
-            "UPDATE projects SET trusted = 1 WHERE id = ?1",
+            "UPDATE projects SET trusted = 1, status = 'shipped' WHERE id = ?1",
             params![created.id],
         )
         .unwrap();
@@ -911,6 +910,7 @@ mod tests {
         assert_eq!(updated.loc, 2000);
         assert_eq!(updated.first_seen, created.first_seen);
         assert!(updated.trusted);
+        assert_eq!(updated.status, ProjectStatus::Shipped);
         assert_eq!(updated.tags, vec!["prototype".to_string()]);
 
         let total: i64 = conn

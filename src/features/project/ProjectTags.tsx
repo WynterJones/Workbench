@@ -4,13 +4,15 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useSetProjectTags } from "@/hooks/useProjects";
+import { useAllProjectTags, useSetProjectTags } from "@/hooks/useProjects";
 import type { Project } from "@/lib/types";
 
 export function ProjectTags({ project }: { project: Project }) {
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState("");
+  const availableTags = useAllProjectTags();
   const update = useSetProjectTags();
+  const suggestionsId = `project-tag-suggestions-${project.id}`;
 
   function save(tags: string[], message: string) {
     update.mutate(
@@ -62,11 +64,12 @@ export function ProjectTags({ project }: { project: Project }) {
       {editing ? (
         <form onSubmit={add} className="flex items-center gap-1">
           <label htmlFor={`project-tag-${project.id}`} className="sr-only">
-            New project tag
+            Project tag
           </label>
           <Input
             id={`project-tag-${project.id}`}
             name="tag"
+            list={suggestionsId}
             autoFocus
             required
             maxLength={32}
@@ -79,9 +82,14 @@ export function ProjectTags({ project }: { project: Project }) {
                 setEditing(false);
               }
             }}
-            placeholder="design"
-            className="h-7 w-36 text-xs"
+            placeholder="Choose or create"
+            className="h-7 w-44 text-xs"
           />
+          <datalist id={suggestionsId}>
+            {availableTags
+              .filter((tag) => !project.tags.includes(tag))
+              .map((tag) => <option key={tag} value={tag} />)}
+          </datalist>
           <Button type="submit" size="xs" disabled={update.isPending}>
             Add
           </Button>

@@ -35,8 +35,10 @@ export default function App() {
   }, [settings, initialized, setRoute]);
 
   useEffect(() => {
-    if (filesPath) useFilesStore.getState().setRoot(filesPath);
-  }, [filesPath]);
+    if (route !== "files" || !filesPath) return;
+    useFilesStore.getState().setMode("browse");
+    useFilesStore.getState().setRoot(filesPath);
+  }, [route, filesPath]);
 
   if (isLoading) {
     return <div className="h-screen w-screen bg-background" />;

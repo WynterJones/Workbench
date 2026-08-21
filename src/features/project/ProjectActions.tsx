@@ -32,6 +32,7 @@ import { useArchiveProject } from "@/hooks/useProjects";
 import { useRunProject, useStopProject } from "@/hooks/useRunProject";
 import { api } from "@/lib/api";
 import { manualRun } from "@/lib/manualRun";
+import { useAppStore } from "@/lib/store";
 import type { Project, RunResult } from "@/lib/types";
 
 interface ProjectActionsProps {
@@ -53,6 +54,7 @@ export function ProjectActions({ project, onRunResult }: ProjectActionsProps) {
   const [capturing, setCapturing] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const queryClient = useQueryClient();
+  const openFiles = useAppStore((state) => state.openFiles);
 
   async function openIn(target: "editor" | "browser" | "finder" | "terminal") {
     try {
@@ -142,6 +144,10 @@ export function ProjectActions({ project, onRunResult }: ProjectActionsProps) {
       <Button size="sm" variant="outline" onClick={() => setAiOpen(true)} className="cursor-pointer">
         <SparklesIcon />
         Continue with AI
+      </Button>
+      <Button size="sm" variant="outline" onClick={() => openFiles(project.path)} className="cursor-pointer">
+        <FolderOpenIcon />
+        Browse
       </Button>
 
       <DropdownMenu>
