@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { Command, Search, TerminalIcon } from "lucide-react";
+import { Command, PanelLeftClose, PanelLeftOpen, Search, TerminalIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { ScanButton } from "@/components/ScanButton";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,8 @@ export function TopBar() {
   const search = useAppStore((s) => s.search);
   const setSearch = useAppStore((s) => s.setSearch);
   const setCommandPaletteOpen = useAppStore((s) => s.setCommandPaletteOpen);
+  const sidebarCollapsed = useAppStore((s) => s.sidebarCollapsed);
+  const toggleSidebar = useAppStore((s) => s.toggleSidebar);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -29,6 +31,18 @@ export function TopBar() {
   return (
     <div className="sticky top-0 z-10 flex flex-col border-b border-border bg-background/95 backdrop-blur">
       <div data-tauri-drag-region className="flex h-16 shrink-0 items-center gap-3 px-4">
+        <Button
+          type="button"
+          size="icon"
+          variant="ghost"
+          aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          aria-expanded={!sidebarCollapsed}
+          onClick={toggleSidebar}
+          className="shrink-0 cursor-pointer"
+          title={`${sidebarCollapsed ? "Expand" : "Collapse"} sidebar (⌘\\)`}
+        >
+          {sidebarCollapsed ? <PanelLeftOpen className="size-5" /> : <PanelLeftClose className="size-5" />}
+        </Button>
         <div className="relative max-w-md flex-1">
           <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input

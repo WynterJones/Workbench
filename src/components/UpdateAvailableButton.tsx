@@ -4,7 +4,7 @@ import { useUpdateAvailable } from "@/hooks/useUpdateAvailable";
 import { LATEST_RELEASE_URL } from "@/lib/update";
 import { openUrl } from "@/lib/openUrl";
 
-export function UpdateAvailableButton() {
+export function UpdateAvailableButton({ collapsed = false }: { collapsed?: boolean }) {
   const { data: version } = useUpdateAvailable();
   if (!version) return null;
 
@@ -12,11 +12,12 @@ export function UpdateAvailableButton() {
     <Button
       type="button"
       onClick={() => openUrl(LATEST_RELEASE_URL)}
-      className="w-full justify-start bg-brand text-background hover:bg-brand/90"
+      title={collapsed ? `Update to v${version}` : undefined}
+      className={collapsed ? "w-full bg-brand px-0 text-background hover:bg-brand/90" : "w-full justify-start bg-brand text-background hover:bg-brand/90"}
     >
       <ArrowUpCircle />
-      <span className="flex-1 text-left">Update available</span>
-      <span className="font-mono text-[11px]">v{version}</span>
+      <span className={collapsed ? "sr-only" : "flex-1 text-left"}>Update available</span>
+      {!collapsed && <span className="font-mono text-[11px]">v{version}</span>}
     </Button>
   );
 }

@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::path::Path;
 
 use serde::Serialize;
@@ -21,6 +22,9 @@ const SKIP_DIRS: [&str; 11] = [
 ];
 const MAX_ITEMS: usize = 600;
 const MAX_DEPTH: usize = 6;
+const MAX_VIDEO_LINKS: usize = 200;
+const MAX_VIDEO_SCAN_FILES: usize = 5_000;
+const MAX_VIDEO_FILE_BYTES: u64 = 2 * 1024 * 1024;
 
 #[derive(Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -32,6 +36,16 @@ pub struct MediaItem {
     pub extension: String,
     pub size_bytes: u64,
     pub modified: Option<String>,
+}
+
+#[derive(Serialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct VideoLink {
+    pub provider: String,
+    pub id: String,
+    pub url: String,
+    pub embed_url: String,
+    pub source: String,
 }
 
 fn classify(extension: &str) -> Option<&'static str> {
@@ -157,6 +171,194 @@ pub async fn media_details(paths: Vec<String>) -> Result<Vec<MediaItem>, String>
     .map_err(|e| e.to_string())?
 }
 
+fn host(url: &str) -> Option<&str> {
+    url.split_once("://")?
+        .1
+        .split('/')
+        .next()
+        .and_then(|authority| authority.rsplit('@').next())
+        .and_then(|authority| authority.split(':').next())
+}
+
+fn clean_id(value: &str) -> String {
+    value
+        .chars()
+        .take_while(|c| c.is_ascii_alphanumeric() || matches!(c, '-' | '_'))
+        .collect()
+}
+
+fn query_value(url: &str, key: &str) -> Option<String> {
+    url.split_once('?')?
+        .1
+        .split(['&', '#'])
+        .find_map(|part| part.split_once('=').filter(|(name, _)| *name == key))
+        .map(|(_, value)| clean_id(value))
+        .filter(|value| !value.is_empty())
+}
+
+fn path_value(url: &str, marker: &str) -> Option<String> {
+    url.split(marker)
+        .nth(1)
+        .map(clean_id)
+        .filter(|value| !value.is_empty())
+}
+
+fn parse_video_url(raw: &str, source: &str) -> Option<VideoLink> {
+    let url = raw
+        .trim_end_matches(|c: char| matches!(c, '.' | ',' | ';' | ':' | ')' | ']' | '}'))
+        .replace("&amp;", "&");
+    let hostname = host(&url)?.to_ascii_lowercase();
+
+    let (provider, id, embed_url) = if hostname == "youtu.be" {
+        let id = path_value(&url, "://youtu.be/")?;
+        (
+            "YouTube",
+            id.clone(),
+            format!("https://www.youtube.com/embed/{id}"),
+        )
+    } else if hostname == "youtube.com"
+        || hostname.ends_with(".youtube.com")
+        || hostname == "youtube-nocookie.com"
+        || hostname.ends_with(".youtube-nocookie.com")
+    {
+        let id = query_value(&url, "v")
+            .or_else(|| path_value(&url, "/embed/"))
+            .or_else(|| path_value(&url, "/shorts/"))
+            .or_else(|| path_value(&url, "/live/"))?;
+        (
+            "YouTube",
+            id.clone(),
+            format!("https://www.youtube.com/embed/{id}"),
+        )
+    } else if hostname == "vimeo.com" || hostname.ends_with(".vimeo.com") {
+        let id = url
+            .split(['/', '?', '#'])
+            .find(|part| !part.is_empty() && part.chars().all(|c| c.is_ascii_digit()))?
+            .to_string();
+        (
+            "Vimeo",
+            id.clone(),
+            format!("https://player.vimeo.com/video/{id}"),
+        )
+    } else if hostname == "wistia.net"
+        || hostname.ends_with(".wistia.net")
+        || hostname == "wistia.com"
+        || hostname.ends_with(".wistia.com")
+    {
+        let id = path_value(&url, "/embed/iframe/")
+            .or_else(|| path_value(&url, "/medias/"))
+            .or_else(|| path_value(&url, "/s/"))?;
+        (
+            "Wistia",
+            id.clone(),
+            format!("https://fast.wistia.net/embed/iframe/{id}"),
+        )
+    } else if hostname == "voomly.com" || hostname.ends_with(".voomly.com") {
+        let id = query_value(&url, "videoId").or_else(|| path_value(&url, "/v/"))?;
+        (
+            "Voomly",
+            id.clone(),
+            format!("https://embed.voomly.com/embed/assets/embed.html?videoId={id}&videoRatio=1.777778&type=v"),
+        )
+    } else if hostname == "loom.com" || hostname.ends_with(".loom.com") {
+        let id = path_value(&url, "/share/").or_else(|| path_value(&url, "/embed/"))?;
+        (
+            "Loom",
+            id.clone(),
+            format!("https://www.loom.com/embed/{id}"),
+        )
+    } else {
+        return None;
+    };
+
+    Some(VideoLink {
+        provider: provider.to_string(),
+        id,
+        url,
+        embed_url,
+        source: source.to_string(),
+    })
+}
+
+pub fn scan_video_links(root: &Path) -> Vec<VideoLink> {
+    let url_pattern = regex::Regex::new(r#"https?://[^\s<>"'`]+"#).unwrap();
+    let voomly_id_pattern = regex::Regex::new(r#"data-id\s*=\s*["']([^"']+)["']"#).unwrap();
+    let mut links = Vec::new();
+    let mut seen = HashSet::new();
+    let walker = walkdir::WalkDir::new(root)
+        .max_depth(MAX_DEPTH)
+        .into_iter()
+        .filter_entry(|entry| {
+            let name = entry.file_name().to_string_lossy();
+            entry.depth() == 0 || (!name.starts_with('.') && !SKIP_DIRS.contains(&name.as_ref()))
+        });
+
+    for entry in walker.flatten().take(MAX_VIDEO_SCAN_FILES) {
+        if links.len() >= MAX_VIDEO_LINKS {
+            break;
+        }
+        if !entry.file_type().is_file() {
+            continue;
+        }
+        let Ok(metadata) = entry.metadata() else {
+            continue;
+        };
+        if metadata.len() > MAX_VIDEO_FILE_BYTES {
+            continue;
+        }
+        let Ok(content) = std::fs::read_to_string(entry.path()) else {
+            continue;
+        };
+        let source = entry
+            .path()
+            .strip_prefix(root)
+            .unwrap_or(entry.path())
+            .to_string_lossy()
+            .to_string();
+        let content = content.replace("\\/", "/");
+
+        for found in url_pattern.find_iter(&content) {
+            let Some(link) = parse_video_url(found.as_str(), &source) else {
+                continue;
+            };
+            if seen.insert(link.embed_url.clone()) {
+                links.push(link);
+            }
+        }
+
+        if content.contains("voomly") {
+            for capture in voomly_id_pattern.captures_iter(&content) {
+                let Some(id) = capture.get(1).map(|value| clean_id(value.as_str())) else {
+                    continue;
+                };
+                let url = format!("https://share.voomly.com/v/{id}");
+                let Some(link) = parse_video_url(&url, &source) else {
+                    continue;
+                };
+                if seen.insert(link.embed_url.clone()) {
+                    links.push(link);
+                }
+            }
+        }
+    }
+
+    links.sort_by(|a, b| (&a.provider, &a.source, &a.id).cmp(&(&b.provider, &b.source, &b.id)));
+    links
+}
+
+#[tauri::command]
+pub async fn project_videos(project_id: i64) -> Result<Vec<VideoLink>, String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let conn = db::open()?;
+        let project = db::get_project(&conn, project_id)
+            .map_err(|e| e.to_string())?
+            .ok_or_else(|| format!("project {project_id} not found"))?;
+        Ok(scan_video_links(Path::new(&project.path)))
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -221,5 +423,63 @@ mod tests {
     #[test]
     fn returns_nothing_for_a_missing_directory() {
         assert!(scan_media(Path::new("/definitely/not/here")).is_empty());
+    }
+
+    #[test]
+    fn finds_hosted_videos_and_skips_dependencies() {
+        let root = temp("video-links");
+        fs::create_dir_all(root.join("pages")).unwrap();
+        fs::write(
+            root.join("pages/index.html"),
+            r#"https://youtu.be/abc_123
+               https://www.youtube.com/watch?v=abc_123
+               https://vimeo.com/76979871
+               <script src="https://embed.voomly.com/embed/embed-build.js"></script>
+               <div class="voomly-embed" data-id="voomly_123"></div>"#,
+        )
+        .unwrap();
+        fs::create_dir_all(root.join("node_modules/pkg")).unwrap();
+        fs::write(
+            root.join("node_modules/pkg/readme.md"),
+            "https://fast.wistia.net/embed/iframe/ignored123",
+        )
+        .unwrap();
+
+        let links = scan_video_links(&root);
+        assert_eq!(links.len(), 3);
+        assert!(links.iter().any(|link| link.provider == "YouTube"));
+        assert!(links.iter().any(|link| link.provider == "Vimeo"));
+        assert!(links.iter().any(|link| link.provider == "Voomly"));
+        let _ = fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn builds_embed_urls_for_supported_hosts() {
+        let cases = [
+            (
+                "https://www.youtube.com/shorts/abc-123",
+                "youtube.com/embed/abc-123",
+            ),
+            (
+                "https://player.vimeo.com/video/76979871",
+                "player.vimeo.com/video/76979871",
+            ),
+            (
+                "https://demo.wistia.com/medias/zzm8qym2my",
+                "fast.wistia.net/embed/iframe/zzm8qym2my",
+            ),
+            ("https://share.voomly.com/v/demo_123", "videoId=demo_123"),
+            (
+                "https://www.loom.com/share/demo-123",
+                "loom.com/embed/demo-123",
+            ),
+        ];
+
+        for (url, expected) in cases {
+            assert!(parse_video_url(url, "README.md")
+                .unwrap()
+                .embed_url
+                .contains(expected));
+        }
     }
 }

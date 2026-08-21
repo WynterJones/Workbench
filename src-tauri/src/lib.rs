@@ -100,6 +100,7 @@ pub fn run() {
             timeline::timeline_page,
             media::project_media,
             media::media_details,
+            media::project_videos,
             snippet::project_snippet,
             skills::list_skills,
             skills::read_skill,

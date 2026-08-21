@@ -23,14 +23,14 @@ pub fn run_scan(app: &AppHandle, roots: &[String]) -> Result<(), String> {
     let conn = db::open()?;
     let mut scanned = 0i64;
     let mut found = 0i64;
+    let scanned_roots: Vec<PathBuf> = roots
+        .iter()
+        .map(PathBuf::from)
+        .filter(|root| root.is_dir())
+        .collect();
 
-    for root in roots {
-        let root_path = PathBuf::from(root);
-        if !root_path.is_dir() {
-            continue;
-        }
-
-        for project_dir in walker::find_project_dirs(&root_path) {
+    for root_path in &scanned_roots {
+        for project_dir in walker::find_project_dirs(root_path) {
             scanned += 1;
             let _ = app.emit(
                 "scan:progress",
@@ -51,7 +51,7 @@ pub fn run_scan(app: &AppHandle, roots: &[String]) -> Result<(), String> {
         }
     }
 
-    mark_missing_projects_dead(&conn);
+    remove_missing_projects(&conn, &scanned_roots);
 
     let _ = app.emit(
         "scan:progress",
@@ -418,44 +418,44 @@ fn walk_for_todos(
     }
 }
 
-fn mark_missing_projects_dead(conn: &rusqlite::Connection) -> usize {
-    let paths: Vec<(i64, String)> = match conn
-        .prepare("SELECT id, path FROM projects WHERE status != 'dead'")
-        .and_then(|mut stmt| {
-            stmt.query_map([], |row| Ok((row.get(0)?, row.get(1)?)))
-                .and_then(|rows| rows.collect::<rusqlite::Result<Vec<_>>>())
-        }) {
-        Ok(rows) => rows,
-        Err(_) => return 0,
-    };
+fn remove_missing_projects(conn: &rusqlite::Connection, roots: &[PathBuf]) -> usize {
+    let paths: Vec<(i64, String)> =
+        match conn
+            .prepare("SELECT id, path FROM projects")
+            .and_then(|mut stmt| {
+                stmt.query_map([], |row| Ok((row.get(0)?, row.get(1)?)))
+                    .and_then(|rows| rows.collect::<rusqlite::Result<Vec<_>>>())
+            }) {
+            Ok(rows) => rows,
+            Err(_) => return 0,
+        };
 
-    let mut marked = 0;
+    let mut removed = 0;
     for (id, path) in paths {
-        if !std::path::Path::new(&path).is_dir() {
-            if conn
-                .execute(
-                    "UPDATE projects SET status = 'dead' WHERE id = ?1",
-                    rusqlite::params![id],
-                )
-                .is_ok()
-            {
-                marked += 1;
-            }
+        let path = Path::new(&path);
+        if roots.iter().any(|root| path.starts_with(root))
+            && !path.is_dir()
+            && db::delete_project(conn, id).is_ok()
+        {
+            removed += 1;
         }
     }
-    marked
+    removed
 }
 
 #[cfg(test)]
-mod dead_tests {
+mod missing_tests {
     use super::*;
 
     #[test]
-    fn marks_only_projects_whose_directory_is_gone() {
+    fn removes_only_missing_projects_under_scanned_roots() {
         let conn = rusqlite::Connection::open_in_memory().unwrap();
         crate::db::run_migrations(&conn).unwrap();
 
-        let alive = std::env::temp_dir();
+        let root = tempfile::tempdir().unwrap();
+        let alive = root.path().join("alive");
+        std::fs::create_dir(&alive).unwrap();
+        let gone = root.path().join("gone");
         conn.execute(
             "INSERT INTO projects (path, name, framework, package_manager, status, first_seen, last_scanned, last_modified) \
              VALUES (?1, 'Alive', 'node', 'npm', 'runnable', '2026-01-01', '2026-01-01', '2026-01-01')",
@@ -464,26 +464,37 @@ mod dead_tests {
         .unwrap();
         conn.execute(
             "INSERT INTO projects (path, name, framework, package_manager, status, first_seen, last_scanned, last_modified) \
-             VALUES ('/nope/gone-forever', 'Gone', 'node', 'npm', 'runnable', '2026-01-01', '2026-01-01', '2026-01-01')",
+             VALUES (?1, 'Gone', 'node', 'npm', 'runnable', '2026-01-01', '2026-01-01', '2026-01-01')",
+            rusqlite::params![gone.to_string_lossy()],
+        )
+        .unwrap();
+        conn.execute(
+            "INSERT INTO projects (path, name, framework, package_manager, status, first_seen, last_scanned, last_modified) \
+             VALUES ('/outside/gone', 'Outside', 'node', 'npm', 'runnable', '2026-01-01', '2026-01-01', '2026-01-01')",
             [],
         )
         .unwrap();
 
-        assert_eq!(mark_missing_projects_dead(&conn), 1);
+        assert_eq!(
+            remove_missing_projects(&conn, &[root.path().to_path_buf()]),
+            1
+        );
 
-        let dead: String = conn
-            .query_row("SELECT status FROM projects WHERE name = 'Gone'", [], |r| {
-                r.get(0)
-            })
-            .unwrap();
-        let live: String = conn
+        let remaining: i64 = conn
             .query_row(
-                "SELECT status FROM projects WHERE name = 'Alive'",
+                "SELECT COUNT(*) FROM projects WHERE name IN ('Alive', 'Outside')",
                 [],
                 |r| r.get(0),
             )
             .unwrap();
-        assert_eq!(dead, "dead");
-        assert_ne!(live, "dead");
+        let gone: i64 = conn
+            .query_row(
+                "SELECT COUNT(*) FROM projects WHERE name = 'Gone'",
+                [],
+                |r| r.get(0),
+            )
+            .unwrap();
+        assert_eq!(remaining, 2);
+        assert_eq!(gone, 0);
     }
 }

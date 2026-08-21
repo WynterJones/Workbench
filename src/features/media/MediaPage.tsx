@@ -50,7 +50,7 @@ export function MediaPage() {
         <EmptyStateBlock
           icon={HeartIcon}
           title="No favorites yet"
-          message="Open a project's Media tab and tap the heart on anything you want to keep close."
+          message="Heart an image in File Finder or a project's Media tab to keep it here."
         />
       </div>
     );

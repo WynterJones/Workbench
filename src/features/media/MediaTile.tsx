@@ -2,7 +2,7 @@ import { convertFileSrc } from "@tauri-apps/api/core";
 import { CopyIcon, HeartIcon, PlayIcon } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { useFavoriteMedia } from "@/lib/favoriteMedia";
+import { useConfirmUnfavorite } from "@/lib/favoriteMedia";
 import type { MediaItem } from "@/hooks/useMedia";
 import type { GalleryView } from "@/lib/userPreferences";
 import { formatBytes } from "@/features/files/lib/format";
@@ -15,9 +15,7 @@ interface MediaTileProps {
 }
 
 export function MediaTile({ item, view = "grid", onOpen, onLoadError }: MediaTileProps) {
-  const paths = useFavoriteMedia((s) => s.paths);
-  const toggle = useFavoriteMedia((s) => s.toggle);
-  const favorite = paths.includes(item.path);
+  const { favorite, confirming, act } = useConfirmUnfavorite(item.path);
   const src = convertFileSrc(item.path);
 
   return (
@@ -63,12 +61,14 @@ export function MediaTile({ item, view = "grid", onOpen, onLoadError }: MediaTil
 
         <button
           type="button"
-          onClick={() => toggle(item.path)}
-          aria-label={favorite ? `Unfavorite ${item.name}` : `Favorite ${item.name}`}
-          title={favorite ? "Remove from favorites" : "Add to favorites"}
+          onClick={act}
+          aria-label={confirming ? `Confirm removing ${item.name} from favorites` : favorite ? `Unfavorite ${item.name}` : `Favorite ${item.name}`}
+          title={confirming ? "Click again to remove" : favorite ? "Remove from favorites" : "Add to favorites"}
           className={cn(
             "cursor-pointer rounded-md p-1.5 backdrop-blur-sm transition-colors duration-150 ease-out",
-            favorite
+            confirming
+              ? "animate-pulse bg-destructive/15 text-destructive motion-reduce:animate-none"
+              : favorite
               ? "bg-background/80 text-brand"
               : "bg-background/70 text-muted-foreground opacity-0 hover:text-foreground group-hover:opacity-100",
           )}

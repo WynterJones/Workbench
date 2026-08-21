@@ -3,7 +3,7 @@ import { convertFileSrc } from "@tauri-apps/api/core";
 import { ChevronLeftIcon, ChevronRightIcon, CopyIcon, HeartIcon, XIcon } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { useFavoriteMedia } from "@/lib/favoriteMedia";
+import { useConfirmUnfavorite } from "@/lib/favoriteMedia";
 import { formatBytes } from "@/features/files/lib/format";
 import { cn } from "@/lib/utils";
 import type { MediaItem } from "@/hooks/useMedia";
@@ -16,8 +16,8 @@ interface MediaLightboxProps {
 }
 
 export function MediaLightbox({ items, index, onIndexChange, onClose }: MediaLightboxProps) {
-  const paths = useFavoriteMedia((s) => s.paths);
-  const toggle = useFavoriteMedia((s) => s.toggle);
+  const item = index === null ? undefined : items[index];
+  const favoriteAction = useConfirmUnfavorite(item?.path ?? "");
 
   useEffect(() => {
     if (index === null) return;
@@ -30,11 +30,10 @@ export function MediaLightbox({ items, index, onIndexChange, onClose }: MediaLig
     return () => window.removeEventListener("keydown", onKey);
   }, [index, items.length, onClose, onIndexChange]);
 
-  if (index === null || !items[index]) return null;
+  if (index === null || !item) return null;
 
-  const item = items[index];
   const src = convertFileSrc(item.path);
-  const favorite = paths.includes(item.path);
+  const { favorite, confirming, act } = favoriteAction;
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-background/96 backdrop-blur-sm">
@@ -61,11 +60,15 @@ export function MediaLightbox({ items, index, onIndexChange, onClose }: MediaLig
         <Button
           size="sm"
           variant="outline"
-          className={cn("cursor-pointer", favorite && "text-brand")}
-          onClick={() => toggle(item.path)}
+          className={cn(
+            "cursor-pointer",
+            confirming && "animate-pulse border-destructive/50 text-destructive motion-reduce:animate-none",
+            favorite && !confirming && "text-brand",
+          )}
+          onClick={act}
         >
           <HeartIcon fill={favorite ? "currentColor" : "none"} />
-          {favorite ? "Favorited" : "Favorite"}
+          {confirming ? "Click again to remove" : favorite ? "Favorited" : "Favorite"}
         </Button>
         <Button size="sm" variant="ghost" className="cursor-pointer" onClick={onClose}>
           <XIcon />

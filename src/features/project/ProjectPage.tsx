@@ -12,6 +12,7 @@ import { ReadmePanel } from "@/features/project/ReadmePanel";
 import { CommitList } from "@/features/project/CommitList";
 import { StatusPicker } from "@/features/project/StatusPicker";
 import { ProjectMediaPanel } from "@/features/media/ProjectMediaPanel";
+import { ProjectVideos } from "@/features/project/ProjectVideos";
 import { TodoList } from "@/features/project/TodoList";
 import { RunLogPanel } from "@/features/project/RunLogPanel";
 import { PortfolioPanel } from "@/features/portfolio/PortfolioPanel";
@@ -52,6 +53,7 @@ export function ProjectPage() {
             <TabsList>
               <TabsTrigger value="readme">README</TabsTrigger>
               <TabsTrigger value="media">Media</TabsTrigger>
+              <TabsTrigger value="videos">Videos</TabsTrigger>
               <TabsTrigger value="commits">Commits</TabsTrigger>
               <TabsTrigger value="todos">TODOs</TabsTrigger>
               <TabsTrigger value="runlog">Run Log</TabsTrigger>
@@ -70,6 +72,9 @@ export function ProjectPage() {
             </TabsContent>
             <TabsContent value="media" className="mt-3 rounded-lg border border-border bg-card p-5">
               <ProjectMediaPanel projectId={project.id} />
+            </TabsContent>
+            <TabsContent value="videos" className="mt-3 rounded-lg border border-border bg-card p-5">
+              <ProjectVideos projectId={project.id} />
             </TabsContent>
             <TabsContent value="commits" className="mt-3 rounded-lg border border-border bg-card p-5">
               <CommitList projectId={project.id} projectPath={project.path} />

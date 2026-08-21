@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowUpRightIcon, CopyIcon, Trash2Icon } from "lucide-react";
+import { ArrowUpRightIcon, CopyIcon, HeartIcon, Trash2Icon } from "lucide-react";
 import { toast } from "sonner";
 import { EntryIcon } from "@/features/files/EntryIcon";
 import { filesApi } from "@/lib/filesApi";
@@ -15,6 +15,9 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import type { FsEntry } from "@/lib/filesApi";
 import { formatBytes, formatModified, gitGutterColor } from "@/features/files/lib/format";
 import { cn } from "@/lib/utils";
+import { useFavoriteMedia } from "@/lib/favoriteMedia";
+
+const IMAGE_EXTENSIONS = new Set(["png", "jpg", "jpeg", "gif", "webp", "svg", "avif", "bmp"]);
 
 interface FileRowProps {
   entry: FsEntry;
@@ -53,6 +56,10 @@ export function FileRow({
 }: FileRowProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
+  const favoritePaths = useFavoriteMedia((state) => state.paths);
+  const toggleFavorite = useFavoriteMedia((state) => state.toggle);
+  const isImage = entry.kind === "file" && IMAGE_EXTENSIONS.has(entry.extension?.toLowerCase() ?? "");
+  const favorite = favoritePaths.includes(entry.path);
 
   useEffect(() => {
     if (renaming) inputRef.current?.select();
@@ -153,17 +160,37 @@ export function FileRow({
             </span>
           )}
           {!renaming && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                copyEntry();
-              }}
-              className="absolute right-2 hidden shrink-0 cursor-pointer items-center gap-1 rounded-md bg-secondary px-1.5 py-0.5 text-[10px] font-medium text-foreground transition-colors duration-150 ease-out hover:bg-accent group-hover:flex"
-            >
-              <CopyIcon className="size-3" />
-              Copy
-            </button>
+            <div className="absolute right-2 flex items-center gap-1">
+              {isImage && (
+                <button
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    toggleFavorite(entry.path);
+                    toast.success(favorite ? "Removed from Media library" : "Added to Media library");
+                  }}
+                  aria-label={favorite ? `Remove ${entry.name} from Media library` : `Add ${entry.name} to Media library`}
+                  title={favorite ? "Remove from Media library" : "Add to Media library"}
+                  className={cn(
+                    "shrink-0 cursor-pointer items-center rounded-md bg-secondary p-1 text-muted-foreground transition-colors duration-150 ease-out hover:bg-accent hover:text-foreground group-hover:flex",
+                    favorite ? "flex text-brand" : "hidden",
+                  )}
+                >
+                  <HeartIcon className="size-3.5" fill={favorite ? "currentColor" : "none"} />
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  copyEntry();
+                }}
+                className="hidden shrink-0 cursor-pointer items-center gap-1 rounded-md bg-secondary px-1.5 py-0.5 text-[10px] font-medium text-foreground transition-colors duration-150 ease-out hover:bg-accent group-hover:flex"
+              >
+                <CopyIcon className="size-3" />
+                Copy
+              </button>
+            </div>
           )}
         </div>
       </ContextMenuTrigger>

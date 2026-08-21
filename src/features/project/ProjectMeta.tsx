@@ -2,6 +2,7 @@ import { ExternalLinkIcon } from "lucide-react";
 import { toast } from "sonner";
 import { HomepageField } from "@/features/project/HomepageField";
 import { ProjectIcon } from "@/features/project/ProjectIcon";
+import { ProjectTags } from "@/features/project/ProjectTags";
 import { FrameworkBadge } from "@/features/library/FrameworkBadge";
 import { api } from "@/lib/api";
 import { useAppStore } from "@/lib/store";
@@ -57,6 +58,7 @@ export function ProjectMeta({ project }: ProjectMetaProps) {
         )}
         <HomepageField project={project} />
       </div>
+      <ProjectTags project={project} />
     </div>
   );
 }

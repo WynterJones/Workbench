@@ -11,6 +11,14 @@ export interface MediaItem {
   modified: string | null;
 }
 
+export interface VideoLink {
+  provider: "YouTube" | "Vimeo" | "Wistia" | "Voomly" | "Loom";
+  id: string;
+  url: string;
+  embedUrl: string;
+  source: string;
+}
+
 export function useProjectMedia(projectId: number) {
   return useQuery({
     queryKey: ["media", projectId],
@@ -24,6 +32,14 @@ export function useMediaDetails(paths: string[]) {
     queryKey: ["media-details", [...paths].sort().join("|")],
     queryFn: () => invoke<MediaItem[]>("media_details", { paths }),
     enabled: paths.length > 0,
+    staleTime: 60_000,
+  });
+}
+
+export function useProjectVideos(projectId: number) {
+  return useQuery({
+    queryKey: ["videos", projectId],
+    queryFn: () => invoke<VideoLink[]>("project_videos", { projectId }),
     staleTime: 60_000,
   });
 }

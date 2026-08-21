@@ -27,5 +27,6 @@ dist-ssr
 outputs/
 .farmwork/
 *.icns
+!src-tauri/icons/icon.icns
 docs/dist/
 .serena/

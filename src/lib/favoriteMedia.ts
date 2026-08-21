@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
@@ -26,3 +27,32 @@ export const useFavoriteMedia = create<FavoriteMediaState>()(
     { name: "workbench-favorite-media" },
   ),
 );
+
+export function favoriteClickAction(favorite: boolean, confirming: boolean) {
+  return !favorite || confirming ? "toggle" : "confirm";
+}
+
+export function useConfirmUnfavorite(path: string) {
+  const paths = useFavoriteMedia((state) => state.paths);
+  const toggle = useFavoriteMedia((state) => state.toggle);
+  const favorite = paths.includes(path);
+  const [confirmingPath, setConfirmingPath] = useState<string | null>(null);
+  const confirming = confirmingPath === path;
+
+  useEffect(() => {
+    if (!confirmingPath) return;
+    const timeout = window.setTimeout(() => setConfirmingPath(null), 3_000);
+    return () => window.clearTimeout(timeout);
+  }, [confirmingPath]);
+
+  function act() {
+    if (favoriteClickAction(favorite, confirming) === "toggle") {
+      toggle(path);
+      setConfirmingPath(null);
+    } else {
+      setConfirmingPath(path);
+    }
+  }
+
+  return { favorite, confirming, act };
+}

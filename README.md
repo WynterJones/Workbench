@@ -49,9 +49,14 @@ artifacts folded away so a repo is readable at a glance. 007 Mode recursively ga
 Markdown and PDF files into a draggable, presentation-ready dossier wall.
 
 **Keeps the library flexible.** Switch between grid and visual list layouts, choose the
-column and page count, filter by status, and keep those choices between launches. Media
-has its own persistent filters, pagination, favorites and fit-to-frame previews. Paste a
-project URL to save it instantly, or open every saved link from one list.
+column and page count, filter by status or your own project tags, and keep those choices
+between launches. Media has persistent filters, pagination, fit-to-frame previews and a
+three-second safety check before removing favorites. Heart images directly from File
+Finder, paste a project URL to save it instantly, or open every saved link from one list.
+
+**Finds the videos buried in a project.** The Videos tab recursively gathers YouTube,
+Vimeo, Wistia, Voomly and Loom links from project files, skips dependencies and build
+output, and lays them out as playable cards with an open-in-browser fallback.
 
 **Manages your agents.** Detects which AI coding CLIs you have installed — Claude Code,
 Codex, Gemini, Cursor, Copilot, OpenCode, Crush, OpenClaw, Hermes, Pi and more — and
@@ -79,7 +84,9 @@ click from Settings. Servers you do not need can be hidden from Workbench withou
 changing another tool's configuration.
 
 **Stays current.** Workbench checks its public GitHub releases automatically and keeps
-an Update available button visible when a newer build is ready.
+an Update available button visible when a newer build is ready. The sidebar collapses
+to an icon rail when you want more room, while keeping the current version visible in
+the expanded view.
 
 ## Install
 

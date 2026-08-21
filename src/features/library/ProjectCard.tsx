@@ -131,6 +131,18 @@ export function ProjectCard({ project, view = "grid", onOpen }: ProjectCardProps
               {formatShipScore(project.shipScore)}
             </Badge>
           </div>
+          {project.tags.length > 0 && (
+            <div className="flex min-w-0 items-center gap-1 overflow-hidden">
+              {project.tags.slice(0, 2).map((tag) => (
+                <Badge key={tag} variant="secondary" className="max-w-28 truncate px-1.5 py-0 text-[10px]">
+                  {tag}
+                </Badge>
+              ))}
+              {project.tags.length > 2 && (
+                <span className="shrink-0 text-[10px] text-muted-foreground">+{project.tags.length - 2}</span>
+              )}
+            </div>
+          )}
         </div>
       </button>
     </ProjectContextMenu>

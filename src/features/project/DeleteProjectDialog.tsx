@@ -57,9 +57,9 @@ export function DeleteProjectDialog({ project, open, onOpenChange }: DeleteProje
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Delete {project.name}?</DialogTitle>
+      <DialogContent className="overflow-hidden">
+        <DialogHeader className="min-w-0">
+          <DialogTitle className="break-words pr-6">Delete {project.name}?</DialogTitle>
           <DialogDescription>Two options, and one of them touches your disk.</DialogDescription>
         </DialogHeader>
 
@@ -68,14 +68,14 @@ export function DeleteProjectDialog({ project, open, onOpenChange }: DeleteProje
             type="button"
             disabled={pending !== null}
             onClick={() => act("forget")}
-            className="flex w-full cursor-pointer items-start gap-3 rounded-lg border border-border bg-card p-3 text-left transition-colors duration-150 ease-out hover:border-muted-foreground/40 disabled:opacity-50"
+            className="flex w-full min-w-0 cursor-pointer items-start gap-3 rounded-lg border border-border bg-card p-3 text-left transition-colors duration-150 ease-out hover:border-muted-foreground/40 disabled:opacity-50"
           >
             <EyeOffIcon className="mt-0.5 size-4 shrink-0 text-muted-foreground" strokeWidth={1.75} />
             <span className="min-w-0 flex-1">
               <span className="block text-sm font-medium text-foreground">
                 {pending === "forget" ? "Removing…" : "Remove from Workbench"}
               </span>
-              <span className="block text-xs text-muted-foreground">
+              <span className="block break-words text-xs text-muted-foreground">
                 Forgets the project and its screenshots and tags. The folder on disk is left
                 completely alone, and a rescan will find it again.
               </span>
@@ -86,18 +86,18 @@ export function DeleteProjectDialog({ project, open, onOpenChange }: DeleteProje
             type="button"
             disabled={pending !== null}
             onClick={() => act("trash")}
-            className="flex w-full cursor-pointer items-start gap-3 rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-left transition-colors duration-150 ease-out hover:border-destructive/60 disabled:opacity-50"
+            className="flex w-full min-w-0 cursor-pointer items-start gap-3 rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-left transition-colors duration-150 ease-out hover:border-destructive/60 disabled:opacity-50"
           >
             <Trash2Icon className="mt-0.5 size-4 shrink-0 text-destructive" strokeWidth={1.75} />
             <span className="min-w-0 flex-1">
               <span className="block text-sm font-medium text-foreground">
                 {pending === "trash" ? "Moving to Trash…" : "Delete from filesystem"}
               </span>
-              <span className="block text-xs text-muted-foreground">
+              <span className="block break-words text-xs text-muted-foreground">
                 Moves the whole folder to the macOS Trash, so you can still get it back. Also
                 removes it from Workbench.
               </span>
-              <code className="mt-1.5 block truncate rounded bg-secondary px-1.5 py-1 font-mono text-[10px] text-muted-foreground">
+              <code className="mt-1.5 block break-all rounded bg-secondary px-1.5 py-1 font-mono text-[10px] whitespace-normal text-muted-foreground">
                 {project.path}
               </code>
             </span>
