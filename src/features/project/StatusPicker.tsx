@@ -13,9 +13,10 @@ import { useUpdateProject } from "@/hooks/useProjects";
 import { cn } from "@/lib/utils";
 import type { ProjectStatus } from "@/lib/types";
 
-const OPTIONS: { value: ProjectStatus; label: string; dot: string; hint: string }[] = [
+export const STATUS_OPTIONS: { value: ProjectStatus; label: string; dot: string; hint: string }[] = [
   { value: "unknown", label: "Unknown", dot: "bg-muted-foreground/50", hint: "Not classified yet" },
   { value: "runnable", label: "Runnable", dot: "bg-ok", hint: "Has a run command" },
+  { value: "in-progress", label: "In Progress", dot: "bg-brand", hint: "Actively being built" },
   { value: "shipped", label: "Shipped", dot: "bg-ok", hint: "Live somewhere" },
   { value: "broken", label: "Broken", dot: "bg-warn", hint: "Fails to start" },
   { value: "dead", label: "Dead", dot: "bg-destructive", hint: "Abandoned" },
@@ -28,7 +29,7 @@ interface StatusPickerProps {
 
 export function StatusPicker({ projectId, status }: StatusPickerProps) {
   const update = useUpdateProject();
-  const current = OPTIONS.find((option) => option.value === status);
+  const current = STATUS_OPTIONS.find((option) => option.value === status);
 
   function choose(next: ProjectStatus) {
     if (next === status) return;
@@ -36,7 +37,7 @@ export function StatusPicker({ projectId, status }: StatusPickerProps) {
       { id: projectId, patch: { status: next } },
       {
         onSuccess: () =>
-          toast.success(`Marked as ${OPTIONS.find((o) => o.value === next)?.label ?? next}`),
+          toast.success(`Marked as ${STATUS_OPTIONS.find((o) => o.value === next)?.label ?? next}`),
         onError: (error) =>
           toast.error("Could not change status", {
             description: error instanceof Error ? error.message : String(error),
@@ -67,7 +68,7 @@ export function StatusPicker({ projectId, status }: StatusPickerProps) {
           Project status
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        {OPTIONS.map((option) => (
+        {STATUS_OPTIONS.map((option) => (
           <DropdownMenuItem
             key={option.value}
             onSelect={() => choose(option.value)}

@@ -5,6 +5,7 @@ const STATUS_COLOR: Record<ProjectStatus, string> = {
   unknown: "bg-muted-foreground/40",
   runnable: "bg-muted-foreground",
   running: "bg-ok",
+  "in-progress": "bg-brand",
   broken: "bg-destructive",
   dead: "bg-destructive/50",
   shipped: "bg-ok",

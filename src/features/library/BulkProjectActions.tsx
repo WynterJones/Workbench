@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { ListChecksIcon } from "lucide-react";
+import { ArchiveIcon, ArchiveRestoreIcon, ListChecksIcon } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { STATUS_OPTIONS } from "@/features/project/StatusPicker";
 import { useAllProjectTags, useBulkUpdateProjects } from "@/hooks/useProjects";
 import type { Project, ProjectStatus } from "@/lib/types";
 
@@ -24,6 +25,7 @@ export function BulkProjectActions({
   const availableTags = useAllProjectTags();
   const update = useBulkUpdateProjects();
   const allVisibleSelected = selected.length === visibleCount;
+  const allSelectedArchived = selected.length > 0 && selected.every((project) => project.archived);
 
   function showError(error: Error) {
     toast.error("Could not update selected projects", { description: error.message });
@@ -70,8 +72,26 @@ export function BulkProjectActions({
     );
   }
 
+  function applyArchive() {
+    const archived = !allSelectedArchived;
+    const count = selected.filter((project) => project.archived !== archived).length;
+    if (count === 0) return;
+    update.mutate(
+      { projects: selected, archived },
+      {
+        onSuccess: () => {
+          toast.success(
+            `${archived ? "Archived" : "Restored"} ${count} project${count === 1 ? "" : "s"}`,
+          );
+          onClear();
+        },
+        onError: showError,
+      },
+    );
+  }
+
   return (
-    <div className="flex flex-wrap items-center gap-2 rounded-lg border border-border bg-card p-2">
+    <div className="sticky top-0 z-20 flex flex-wrap items-center gap-2 rounded-lg border border-border bg-card p-2 shadow-sm">
       <Button
         type="button"
         size="sm"
@@ -142,11 +162,25 @@ export function BulkProjectActions({
                 <SelectValue placeholder="Set status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="runnable">Runnable</SelectItem>
-                <SelectItem value="shipped">Shipped</SelectItem>
+                {STATUS_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
+
+          <Button
+            type="button"
+            size="sm"
+            variant={allSelectedArchived ? "default" : "destructive"}
+            disabled={selected.length === 0 || update.isPending}
+            onClick={applyArchive}
+          >
+            {allSelectedArchived ? <ArchiveRestoreIcon /> : <ArchiveIcon />}
+            {allSelectedArchived ? "Unarchive" : "Archive"}
+          </Button>
         </>
       )}
     </div>

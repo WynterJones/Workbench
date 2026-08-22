@@ -6,6 +6,7 @@ pub enum ProjectStatus {
     Unknown,
     Runnable,
     Running,
+    InProgress,
     Broken,
     Dead,
     Shipped,
@@ -17,6 +18,7 @@ impl ProjectStatus {
             ProjectStatus::Unknown => "unknown",
             ProjectStatus::Runnable => "runnable",
             ProjectStatus::Running => "running",
+            ProjectStatus::InProgress => "in-progress",
             ProjectStatus::Broken => "broken",
             ProjectStatus::Dead => "dead",
             ProjectStatus::Shipped => "shipped",
@@ -27,6 +29,7 @@ impl ProjectStatus {
         match s {
             "runnable" => ProjectStatus::Runnable,
             "running" => ProjectStatus::Running,
+            "in-progress" => ProjectStatus::InProgress,
             "broken" => ProjectStatus::Broken,
             "dead" => ProjectStatus::Dead,
             "shipped" => ProjectStatus::Shipped,

@@ -11,6 +11,7 @@ const STATUS_META: Record<ProjectStatus, { label: string; dot: string; pulse?: b
   unknown: { label: "Unknown", dot: "bg-muted-foreground/50" },
   runnable: { label: "Runnable", dot: "bg-ok" },
   running: { label: "Running", dot: "bg-ok", pulse: true },
+  "in-progress": { label: "In Progress", dot: "bg-brand" },
   broken: { label: "Broken", dot: "bg-warn" },
   dead: { label: "Dead", dot: "bg-destructive" },
   shipped: { label: "Shipped", dot: "bg-ok" },

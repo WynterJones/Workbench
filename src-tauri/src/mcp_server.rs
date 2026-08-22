@@ -20,7 +20,7 @@ fn tools() -> Value {
                 "properties": {
                     "search": { "type": "string", "description": "Free text matched against name, path, framework and README summary." },
                     "framework": { "type": "string", "description": "Restrict to one framework, e.g. nextjs, vite, chrome-extension, rust." },
-                    "status": { "type": "string", "description": "Restrict to one status: runnable, running, broken, dead, shipped, unknown." },
+                    "status": { "type": "string", "description": "Restrict to one status: runnable, running, in-progress, broken, dead, shipped, unknown." },
                     "limit": { "type": "integer", "description": "Maximum projects to return. Defaults to 40." }
                 }
             }

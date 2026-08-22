@@ -2,6 +2,7 @@ export type ProjectStatus =
   | "unknown"
   | "runnable"
   | "running"
+  | "in-progress"
   | "broken"
   | "dead"
   | "shipped";

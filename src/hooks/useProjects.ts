@@ -14,7 +14,8 @@ const ALL_PROJECTS_QUERY: ProjectQuery = {
 
 type BulkProjectUpdate =
   | { projects: Project[]; tag: string }
-  | { projects: Project[]; status: ProjectStatus };
+  | { projects: Project[]; status: ProjectStatus }
+  | { projects: Project[]; archived: boolean };
 
 export function useProjects(query: ProjectQuery) {
   return useQuery({
@@ -105,6 +106,14 @@ export function useBulkUpdateProjects() {
         );
         return;
       }
+      if ("archived" in update) {
+        await Promise.all(
+          update.projects
+            .filter((project) => project.archived !== update.archived)
+            .map((project) => api.archiveProject(project.id, update.archived)),
+        );
+        return;
+      }
       await Promise.all(
         update.projects
           .filter((project) => project.status !== update.status)
@@ -115,7 +124,7 @@ export function useBulkUpdateProjects() {
       queryClient.invalidateQueries({ queryKey: ["projects"] });
       queryClient.invalidateQueries({ queryKey: ["project"] });
       queryClient.invalidateQueries({ queryKey: ["shelf-count"] });
-      if ("status" in update) queryClient.invalidateQueries({ queryKey: ["libraryStats"] });
+      if (!("tag" in update)) queryClient.invalidateQueries({ queryKey: ["libraryStats"] });
     },
   });
 }

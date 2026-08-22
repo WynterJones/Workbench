@@ -31,6 +31,7 @@ const STATUS_LABELS: Record<ProjectStatus, string> = {
   unknown: "Unknown",
   runnable: "Runnable",
   running: "Running",
+  "in-progress": "In Progress",
   broken: "Broken",
   dead: "Dead",
   shipped: "Shipped",

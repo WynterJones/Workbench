@@ -70,16 +70,14 @@ export function ProjectGrid({
 
   return (
     <div className="space-y-4">
-      {view === "list" && (
-        <BulkProjectActions
-          selecting={selecting}
-          selected={selected}
-          visibleCount={visible.length}
-          onToggleSelecting={toggleSelecting}
-          onSelectVisible={() => setSelectedIds(visible.map((project) => project.id))}
-          onClear={() => setSelectedIds([])}
-        />
-      )}
+      <BulkProjectActions
+        selecting={selecting}
+        selected={selected}
+        visibleCount={visible.length}
+        onToggleSelecting={toggleSelecting}
+        onSelectVisible={() => setSelectedIds(visible.map((project) => project.id))}
+        onClear={() => setSelectedIds([])}
+      />
       <div
         className="grid gap-4"
         style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}
