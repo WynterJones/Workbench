@@ -257,10 +257,14 @@ pub async fn workbench_mcp() -> Result<WorkbenchMcp, String> {
 
 #[tauri::command]
 pub async fn install_workbench_mcp(agent: String) -> Result<(), String> {
+    install_workbench_mcp_for(&agent)
+}
+
+pub fn install_workbench_mcp_for(agent: &str) -> Result<(), String> {
     let binary = workbench_binary()?;
     let home = dirs::home_dir().ok_or("could not resolve home directory")?;
 
-    match agent.as_str() {
+    match agent {
         "claude-code" => install_into_json(home.join(".claude.json"), &binary),
         "codex" => install_into_codex(home.join(".codex/config.toml"), &binary),
         "gemini-cli" => install_into_json(home.join(".gemini/settings.json"), &binary),

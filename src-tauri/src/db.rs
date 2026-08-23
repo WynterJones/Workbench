@@ -695,9 +695,11 @@ fn shelf_clause(shelf: ShelfId) -> &'static str {
             "AND (status = 'shipped' OR EXISTS (SELECT 1 FROM tags t WHERE t.project_id = projects.id AND t.label = 'shipped'))"
         }
         ShelfId::Experiments => {
-            "AND status NOT IN ('shipped', 'dead') \
-             AND NOT EXISTS (SELECT 1 FROM tags t WHERE t.project_id = projects.id AND t.label = 'shipped')"
+            "AND status NOT IN ('shipped', 'dead', 'broken', 'in-progress') \
+             AND NOT EXISTS (SELECT 1 FROM tags t WHERE t.project_id = projects.id AND t.label = 'shipped') \
+             AND NOT EXISTS (SELECT 1 FROM tags t WHERE t.project_id = projects.id AND t.label = 'needs-work')"
         }
+        ShelfId::InProgress => "AND status = 'in-progress'",
         ShelfId::Attention => {
             "AND (status = 'broken' OR EXISTS (SELECT 1 FROM tags t WHERE t.project_id = projects.id AND t.label = 'needs-work'))"
         }
@@ -1002,6 +1004,47 @@ mod tests {
         };
         let all_rows = list_projects(&conn, &query_all).unwrap();
         assert_eq!(all_rows.len(), 4);
+    }
+
+    #[test]
+    fn experiments_shelf_excludes_classified_projects() {
+        let conn = setup();
+
+        let plain = upsert_project(&conn, &sample_input("/code/plain", "Plain")).unwrap();
+        let in_progress =
+            upsert_project(&conn, &sample_input("/code/wip", "Work In Progress")).unwrap();
+        let broken = upsert_project(&conn, &sample_input("/code/broken", "Broken")).unwrap();
+        let needs_work = upsert_project(&conn, &sample_input("/code/tagged", "Tagged")).unwrap();
+
+        for (id, status) in [(in_progress.id, "in-progress"), (broken.id, "broken")] {
+            conn.execute(
+                "UPDATE projects SET status = ?2 WHERE id = ?1",
+                params![id, status],
+            )
+            .unwrap();
+        }
+        set_tags(&conn, needs_work.id, &["needs-work".to_string()]).unwrap();
+
+        let query = |shelf| ProjectQuery {
+            shelf,
+            search: String::new(),
+            frameworks: Vec::new(),
+            tags: Vec::new(),
+            sort: SortMode::Modified,
+        };
+
+        let experiments = list_projects(&conn, &query(ShelfId::Experiments)).unwrap();
+        let experiment_ids: Vec<i64> = experiments.iter().map(|p| p.id).collect();
+        assert_eq!(experiment_ids, vec![plain.id]);
+
+        let wip = list_projects(&conn, &query(ShelfId::InProgress)).unwrap();
+        assert_eq!(wip.len(), 1);
+        assert_eq!(wip[0].id, in_progress.id);
+
+        let attention = list_projects(&conn, &query(ShelfId::Attention)).unwrap();
+        let attention_ids: Vec<i64> = attention.iter().map(|p| p.id).collect();
+        assert!(attention_ids.contains(&broken.id));
+        assert!(attention_ids.contains(&needs_work.id));
     }
 
     #[test]

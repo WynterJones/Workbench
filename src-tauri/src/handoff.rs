@@ -99,11 +99,11 @@ pub fn build_prompt(info: &ProjectRunInfo, reason: Option<BrokenReason>, log_tai
     prompt
 }
 
-fn shell_escape(value: &str) -> String {
+pub fn shell_escape(value: &str) -> String {
     format!("'{}'", value.replace('\'', "'\\''"))
 }
 
-fn cli_for(provider: AiProvider) -> &'static str {
+pub fn cli_for(provider: AiProvider) -> &'static str {
     match provider {
         AiProvider::ClaudeCode => "claude",
         AiProvider::Codex => "codex",

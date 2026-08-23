@@ -55,6 +55,21 @@ fn tools() -> Value {
             }
         },
         {
+            "name": "add_screenshot",
+            "description": "Add a screenshot to a project's Workbench catalog entry and its AI Portfolio. Save the image to disk first, then give this its absolute path and a short label for the area it shows, e.g. 'Dashboard'. Identify the project by id, path or name.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "id": { "type": "integer", "description": "Workbench project id." },
+                    "path": { "type": "string", "description": "Project folder path." },
+                    "name": { "type": "string", "description": "Project name." },
+                    "file": { "type": "string", "description": "Absolute path of the png, jpg, gif, webp or avif image to add." },
+                    "label": { "type": "string", "description": "Short name for what the shot shows, e.g. 'Dashboard'. Reusing a label replaces that shot." }
+                },
+                "required": ["file", "label"]
+            }
+        },
+        {
             "name": "list_portfolios",
             "description": "Every project that has a written AI Portfolio piece, with its title, screenshot count and word count. Start here when building a portfolio site.",
             "inputSchema": { "type": "object", "properties": {} }
@@ -186,6 +201,19 @@ pub fn call_tool(conn: &Connection, name: &str, args: &Value) -> Result<Value, S
                 "images": image_paths(&state),
                 "voice": state.voice,
                 "notes": state.messages,
+            })))
+        }
+        "add_screenshot" => {
+            let project = resolve_project(conn, args, "add_screenshot")?;
+            let file = string_arg(args, "file")
+                .ok_or("add_screenshot needs `file`, the path of an image already saved on disk")?;
+            let label = string_arg(args, "label")
+                .ok_or("add_screenshot needs `label`, a short name for what the shot shows")?;
+            let name = portfolio::import_labelled_image(project.id, file, label)?;
+            Ok(text_result(&json!({
+                "project": project.name,
+                "label": label,
+                "saved": format!("{}/{name}", portfolio::images_dir(project.id).display()),
             })))
         }
         "list_portfolios" => {
@@ -368,7 +396,7 @@ mod tests {
         let conn = db_with_project();
         let response = handle_message(&conn, &request("tools/list", json!({}))).unwrap();
         let tools = response["result"]["tools"].as_array().unwrap();
-        assert_eq!(tools.len(), 5);
+        assert_eq!(tools.len(), 6);
         for tool in tools {
             assert!(tool["name"].is_string());
             assert_eq!(tool["inputSchema"]["type"], "object");

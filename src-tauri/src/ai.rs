@@ -6,7 +6,7 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-fn slugify(name: &str) -> String {
+pub fn slugify(name: &str) -> String {
     let mut slug = String::new();
     let mut last_was_dash = false;
     for ch in name.to_lowercase().chars() {

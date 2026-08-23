@@ -178,33 +178,45 @@ struct CaptureProgress {
     done: bool,
 }
 
+fn capture_shots(id: i64, url: &str) -> Result<(), String> {
+    let chrome = capture::resolve_chrome_binary()
+        .ok_or("Chrome is not installed, so Workbench cannot take screenshots")?;
+    let mut saved = 0;
+    for variant in [&capture::DESKTOP, &capture::MOBILE] {
+        let out_path = capture::shot_path(id, variant.name);
+        if capture::capture_screenshot(&chrome, url, variant, &out_path).is_ok()
+            && !capture::is_blank_png(&out_path).unwrap_or(false)
+        {
+            store::insert_screenshot(id, variant.name, &out_path.to_string_lossy())?;
+            saved += 1;
+        }
+    }
+    if saved == 0 {
+        return Err(format!(
+            "{url} came back blank — try a screenshot tour, which drives the app first"
+        ));
+    }
+    Ok(())
+}
+
 fn capture_one(id: i64, app: &AppHandle) -> Result<(), String> {
     let registry = app.state::<ProcessRegistry>();
     let result = execute_run(id, &registry)?;
-    if result.ok {
-        if let Some(url) = &result.url {
-            if let Some(chrome) = capture::resolve_chrome_binary() {
-                for variant in [&capture::DESKTOP, &capture::MOBILE] {
-                    let out_path = capture::shot_path(id, variant.name);
-                    if capture::capture_screenshot(&chrome, url, variant, &out_path).is_ok() {
-                        let blank = capture::is_blank_png(&out_path).unwrap_or(false);
-                        if !blank {
-                            let _ = store::insert_screenshot(
-                                id,
-                                variant.name,
-                                &out_path.to_string_lossy(),
-                            );
-                        }
-                    }
-                }
-            }
-        }
-    }
+    let outcome = match (&result.url, result.ok) {
+        (Some(url), true) => capture_shots(id, url),
+        _ => Err(format!(
+            "the project did not start ({})",
+            result
+                .reason
+                .map(|reason| reason.as_str())
+                .unwrap_or("no reason given")
+        )),
+    };
     kill_and_remove(&registry, id);
     if result.ok {
         store::update_after_run(id, ProjectStatus::Runnable, None, None, None)?;
     }
-    Ok(())
+    outcome
 }
 
 fn pop_next(queue: &Mutex<VecDeque<i64>>) -> Option<i64> {

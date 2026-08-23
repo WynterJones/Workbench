@@ -8,6 +8,7 @@ const SHELVES: ShelfId[] = [
   "discovered",
   "shipped",
   "experiments",
+  "in-progress",
   "attention",
   "dead",
   "archived",

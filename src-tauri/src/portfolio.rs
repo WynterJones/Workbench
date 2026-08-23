@@ -42,7 +42,7 @@ fn project_dir(id: i64) -> PathBuf {
         .join(id.to_string())
 }
 
-fn images_dir(id: i64) -> PathBuf {
+pub fn images_dir(id: i64) -> PathBuf {
     project_dir(id).join("images")
 }
 
@@ -125,9 +125,8 @@ pub fn portfolio_add_image(id: i64, bytes: Vec<u8>, extension: String) -> Result
     Ok(name)
 }
 
-#[tauri::command]
-pub fn portfolio_add_image_file(id: i64, source_path: String) -> Result<String, String> {
-    let source = Path::new(&source_path);
+fn checked_source(source_path: &str) -> Result<String, String> {
+    let source = Path::new(source_path);
     let ext = extension_of(source)
         .ok_or_else(|| "Only png, jpg, gif, webp and avif images are supported".to_string())?;
     let meta = fs::metadata(source).map_err(|e| e.to_string())?;
@@ -137,10 +136,32 @@ pub fn portfolio_add_image_file(id: i64, source_path: String) -> Result<String, 
     if meta.len() as usize > MAX_IMAGE_BYTES {
         return Err("That image is larger than 25 MB".into());
     }
+    Ok(ext)
+}
+
+fn copy_into_images(id: i64, source_path: &str, name: &str) -> Result<PathBuf, String> {
     let dir = images_dir(id);
     fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+    let target = dir.join(name);
+    fs::copy(source_path, &target).map_err(|e| e.to_string())?;
+    Ok(target)
+}
+
+#[tauri::command]
+pub fn portfolio_add_image_file(id: i64, source_path: String) -> Result<String, String> {
+    let ext = checked_source(&source_path)?;
     let name = unique_name(&ext);
-    fs::copy(source, dir.join(&name)).map_err(|e| e.to_string())?;
+    copy_into_images(id, &source_path, &name)?;
+    Ok(name)
+}
+
+pub fn import_labelled_image(id: i64, source_path: &str, label: &str) -> Result<String, String> {
+    let ext = checked_source(source_path)?;
+    let name = format!("{}.{ext}", crate::ai::slugify(label));
+    let target = copy_into_images(id, source_path, &name)?;
+    if store::get_screenshot_path(id, "desktop").is_none() {
+        let _ = store::insert_screenshot(id, "desktop", &target.to_string_lossy());
+    }
     Ok(name)
 }
 

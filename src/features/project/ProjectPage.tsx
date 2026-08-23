@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProjectMeta } from "@/features/project/ProjectMeta";
 import { ProjectActions } from "@/features/project/ProjectActions";
 import { ScreenshotHero } from "@/features/project/ScreenshotHero";
+import { ScreenshotTour } from "@/features/project/ScreenshotTour";
 import { ProjectTimeline } from "@/features/project/ProjectTimeline";
 import { ShipScoreCard } from "@/features/project/ShipScoreCard";
 import { ReadmePanel } from "@/features/project/ReadmePanel";
@@ -93,6 +94,7 @@ export function ProjectPage() {
 
         <div className="space-y-4">
           <ScreenshotHero project={project} />
+          <ScreenshotTour project={project} />
           <ShipScoreCard projectId={project.id} />
           <div className="rounded-lg border border-border bg-card p-4">
             <p className="mb-3 text-sm font-medium">Timeline</p>

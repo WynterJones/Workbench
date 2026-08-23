@@ -25,6 +25,7 @@ mod shots;
 mod skills;
 mod snippet;
 mod timeline;
+mod tour;
 mod usage;
 
 use std::sync::Mutex;
@@ -131,6 +132,8 @@ pub fn run() {
             portfolio::portfolio_chat,
             portfolio::portfolio_generate,
             handoff::start_run_fix,
+            tour::start_screenshot_tour,
+            tour::poll_screenshot_tour,
             handoff::poll_handoff,
             doctor::system_checks,
             misc::disk_reclaim_scan,
