@@ -4,7 +4,7 @@ import type { ShelfId } from "@/lib/types";
 
 const SHELVES: ShelfId[] = [
   "continue",
-  "gems",
+  "unsorted",
   "discovered",
   "shipped",
   "experiments",

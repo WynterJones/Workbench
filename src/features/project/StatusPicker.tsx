@@ -14,9 +14,10 @@ import { cn } from "@/lib/utils";
 import type { ProjectStatus } from "@/lib/types";
 
 export const STATUS_OPTIONS: { value: ProjectStatus; label: string; dot: string; hint: string }[] = [
-  { value: "unknown", label: "Unknown", dot: "bg-muted-foreground/50", hint: "Not classified yet" },
+  { value: "unknown", label: "Not Sorted", dot: "bg-muted-foreground/50", hint: "Not classified yet" },
   { value: "runnable", label: "Runnable", dot: "bg-ok", hint: "Has a run command" },
   { value: "in-progress", label: "In Progress", dot: "bg-brand", hint: "Actively being built" },
+  { value: "experiment", label: "Experiment", dot: "bg-brand/60", hint: "A trial, not headed anywhere" },
   { value: "shipped", label: "Shipped", dot: "bg-ok", hint: "Live somewhere" },
   { value: "broken", label: "Broken", dot: "bg-warn", hint: "Fails to start" },
   { value: "dead", label: "Dead", dot: "bg-destructive", hint: "Abandoned" },

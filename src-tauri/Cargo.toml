@@ -1,6 +1,6 @@
 [package]
 name = "workbench"
-version = "1.0.7"
+version = "1.0.8"
 description = "Local-first prototype library and launcher"
 authors = ["Wynter Jones"]
 edition = "2021"

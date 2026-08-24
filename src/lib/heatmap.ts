@@ -52,12 +52,20 @@ export function monthLabels(weeks: Week[]): MonthLabel[] {
   return labels;
 }
 
-export function levelFor(count: number, max: number): number {
+export function levelThresholds(days: HeatmapDay[]): [number, number, number] {
+  const counts = days
+    .map((day) => day.count)
+    .filter((count) => count > 0)
+    .sort((a, b) => a - b);
+  if (counts.length === 0) return [1, 1, 1];
+  const at = (q: number) => counts[Math.min(counts.length - 1, Math.floor(counts.length * q))];
+  return [at(0.25), at(0.5), at(0.75)];
+}
+
+export function levelFor(count: number, thresholds: [number, number, number]): number {
   if (count === 0) return 0;
-  if (max <= 1) return 4;
-  const ratio = count / max;
-  if (ratio <= 0.25) return 1;
-  if (ratio <= 0.5) return 2;
-  if (ratio <= 0.75) return 3;
+  if (count <= thresholds[0]) return 1;
+  if (count <= thresholds[1]) return 2;
+  if (count <= thresholds[2]) return 3;
   return 4;
 }

@@ -12,7 +12,7 @@ use tauri::{AppHandle, Emitter};
 
 use crate::db;
 use crate::models::{
-    NewProjectInput, PackageManager, Project, ProjectPatch, ProjectStatus, ScanProgress, ShipScore,
+    NewProjectInput, Project, ProjectPatch, ProjectStatus, ScanProgress, ShipScore,
 };
 use crate::score;
 
@@ -111,18 +111,7 @@ fn scan_one(dir: &Path) -> Option<NewProjectInput> {
         .unwrap_or_else(|| dir.display().to_string());
 
     let deps_installed = meta::deps_installed(dir);
-    let uses_js_pm = matches!(
-        detection.package_manager,
-        PackageManager::Npm | PackageManager::Pnpm | PackageManager::Yarn | PackageManager::Bun
-    );
-
-    let status = if detection.run_cmd.is_none() {
-        ProjectStatus::Unknown
-    } else if uses_js_pm && !deps_installed {
-        ProjectStatus::Unknown
-    } else {
-        ProjectStatus::Runnable
-    };
+    let status = ProjectStatus::Unknown;
 
     Some(NewProjectInput {
         homepage: None,
@@ -309,10 +298,7 @@ fn compute_and_persist_ship_score(conn: &Connection, project: &Project) -> ShipS
         project.screenshot_desktop.is_some() || project.screenshot_mobile.is_some();
 
     let signals = score::ShipSignals {
-        runs: matches!(
-            project.status,
-            ProjectStatus::Runnable | ProjectStatus::Running | ProjectStatus::Shipped
-        ),
+        runs: project.run_cmd.is_some(),
         has_readme: project.readme_summary.is_some(),
         has_ui: score::detect_ui(project.framework, &root_files, has_screenshot),
         has_auth: score::detect_auth(&manifests),

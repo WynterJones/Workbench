@@ -28,10 +28,11 @@ const SORT_LABELS: Record<ProjectQuery["sort"], string> = {
 };
 
 const STATUS_LABELS: Record<ProjectStatus, string> = {
-  unknown: "Unknown",
+  unknown: "Not Sorted",
   runnable: "Runnable",
   running: "Running",
   "in-progress": "In Progress",
+  experiment: "Experiment",
   broken: "Broken",
   dead: "Dead",
   shipped: "Shipped",

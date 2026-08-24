@@ -146,6 +146,9 @@ DELETE FROM projects WHERE path LIKE '%/gems/%' OR path LIKE '%/gems';
     r#"
 DELETE FROM projects WHERE path GLOB '*/.*';
 "#,
+    r#"
+UPDATE projects SET status = 'unknown' WHERE status IN ('runnable', 'running');
+"#,
 ];
 
 pub fn db_path() -> Result<std::path::PathBuf, String> {
@@ -686,19 +689,12 @@ pub fn library_stats(conn: &Connection) -> rusqlite::Result<LibraryStats> {
 fn shelf_clause(shelf: ShelfId) -> &'static str {
     match shelf {
         ShelfId::Continue => "AND last_modified >= datetime('now', '-14 days')",
-        ShelfId::Gems => {
-            "AND last_modified < datetime('now', '-30 days') \
-             AND EXISTS (SELECT 1 FROM screenshots s WHERE s.project_id = projects.id)"
-        }
+        ShelfId::Unsorted => "AND status = 'unknown'",
         ShelfId::Discovered => "AND first_seen >= datetime('now', '-7 days')",
         ShelfId::Shipped => {
             "AND (status = 'shipped' OR EXISTS (SELECT 1 FROM tags t WHERE t.project_id = projects.id AND t.label = 'shipped'))"
         }
-        ShelfId::Experiments => {
-            "AND status NOT IN ('shipped', 'dead', 'broken', 'in-progress') \
-             AND NOT EXISTS (SELECT 1 FROM tags t WHERE t.project_id = projects.id AND t.label = 'shipped') \
-             AND NOT EXISTS (SELECT 1 FROM tags t WHERE t.project_id = projects.id AND t.label = 'needs-work')"
-        }
+        ShelfId::Experiments => "AND status = 'experiment'",
         ShelfId::InProgress => "AND status = 'in-progress'",
         ShelfId::Attention => {
             "AND (status = 'broken' OR EXISTS (SELECT 1 FROM tags t WHERE t.project_id = projects.id AND t.label = 'needs-work'))"
@@ -883,7 +879,8 @@ mod tests {
         )
         .unwrap();
 
-        conn.execute_batch(MIGRATIONS.last().unwrap()).unwrap();
+        let hidden_dirs = MIGRATIONS.iter().find(|m| m.contains("GLOB")).unwrap();
+        conn.execute_batch(hidden_dirs).unwrap();
 
         let name: String = conn
             .query_row("SELECT name FROM projects", [], |row| row.get(0))
@@ -941,11 +938,10 @@ mod tests {
 
         let gem = upsert_project(&conn, &sample_input("/code/gem", "Gem App")).unwrap();
         conn.execute(
-            "UPDATE projects SET last_modified = datetime('now', '-60 days') WHERE id = ?1",
+            "UPDATE projects SET status = 'unknown', last_modified = datetime('now', '-60 days') WHERE id = ?1",
             params![gem.id],
         )
         .unwrap();
-        upsert_screenshot(&conn, gem.id, "desktop", "/shots/gem-desktop.png").unwrap();
 
         let active = upsert_project(&conn, &sample_input("/code/active", "Active App")).unwrap();
 
@@ -972,7 +968,7 @@ mod tests {
         assert_eq!(dead_rows[0].id, dead.id);
 
         let query_gems = ProjectQuery {
-            shelf: ShelfId::Gems,
+            shelf: ShelfId::Unsorted,
             search: String::new(),
             frameworks: vec![],
             tags: vec![],
@@ -1007,16 +1003,23 @@ mod tests {
     }
 
     #[test]
-    fn experiments_shelf_excludes_classified_projects() {
+    fn shelves_split_by_the_status_the_user_picked() {
         let conn = setup();
 
         let plain = upsert_project(&conn, &sample_input("/code/plain", "Plain")).unwrap();
+        let experiment = upsert_project(&conn, &sample_input("/code/lab", "Lab")).unwrap();
         let in_progress =
             upsert_project(&conn, &sample_input("/code/wip", "Work In Progress")).unwrap();
         let broken = upsert_project(&conn, &sample_input("/code/broken", "Broken")).unwrap();
         let needs_work = upsert_project(&conn, &sample_input("/code/tagged", "Tagged")).unwrap();
 
-        for (id, status) in [(in_progress.id, "in-progress"), (broken.id, "broken")] {
+        for (id, status) in [
+            (plain.id, "unknown"),
+            (experiment.id, "experiment"),
+            (in_progress.id, "in-progress"),
+            (broken.id, "broken"),
+            (needs_work.id, "unknown"),
+        ] {
             conn.execute(
                 "UPDATE projects SET status = ?2 WHERE id = ?1",
                 params![id, status],
@@ -1033,9 +1036,18 @@ mod tests {
             sort: SortMode::Modified,
         };
 
+        let unsorted: Vec<i64> = list_projects(&conn, &query(ShelfId::Unsorted))
+            .unwrap()
+            .iter()
+            .map(|p| p.id)
+            .collect();
+        assert!(unsorted.contains(&plain.id));
+        assert!(unsorted.contains(&needs_work.id));
+        assert!(!unsorted.contains(&experiment.id));
+
         let experiments = list_projects(&conn, &query(ShelfId::Experiments)).unwrap();
-        let experiment_ids: Vec<i64> = experiments.iter().map(|p| p.id).collect();
-        assert_eq!(experiment_ids, vec![plain.id]);
+        assert_eq!(experiments.len(), 1);
+        assert_eq!(experiments[0].id, experiment.id);
 
         let wip = list_projects(&conn, &query(ShelfId::InProgress)).unwrap();
         assert_eq!(wip.len(), 1);

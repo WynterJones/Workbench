@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { heatmapWeeks, levelFor, monthLabels } from "@/lib/heatmap";
+import { heatmapWeeks, levelFor, levelThresholds, monthLabels } from "@/lib/heatmap";
 import type { HeatmapDay } from "@/hooks/useHeatmap";
 
 function makeDays(start: string, count: number, commits = 0): HeatmapDay[] {
@@ -47,17 +47,30 @@ describe("monthLabels", () => {
 
 describe("levelFor", () => {
   it("gives zero commits the empty level", () => {
-    expect(levelFor(0, 10)).toBe(0);
+    expect(levelFor(0, [1, 5, 10])).toBe(0);
   });
 
-  it("scales relative to the busiest day", () => {
-    expect(levelFor(1, 20)).toBe(1);
-    expect(levelFor(10, 20)).toBe(2);
-    expect(levelFor(15, 20)).toBe(3);
-    expect(levelFor(20, 20)).toBe(4);
+  it("buckets by threshold", () => {
+    expect(levelFor(1, [1, 5, 10])).toBe(1);
+    expect(levelFor(5, [1, 5, 10])).toBe(2);
+    expect(levelFor(10, [1, 5, 10])).toBe(3);
+    expect(levelFor(11, [1, 5, 10])).toBe(4);
+  });
+});
+
+describe("levelThresholds", () => {
+  const days = (counts: number[]) =>
+    counts.map((count, i) => ({ date: `2024-01-${String(i + 1).padStart(2, "0")}`, count }));
+
+  it("ignores empty days so a busy day does not flatten the rest", () => {
+    const counts = [...Array(99).fill(0), 1, 2, 3, 4, 500];
+    const thresholds = levelThresholds(days(counts));
+    expect(levelFor(1, thresholds)).toBe(1);
+    expect(levelFor(500, thresholds)).toBe(4);
+    expect(new Set([1, 2, 3, 4, 500].map((c) => levelFor(c, thresholds))).size).toBeGreaterThan(2);
   });
 
-  it("treats a single-commit maximum as fully lit", () => {
-    expect(levelFor(1, 1)).toBe(4);
+  it("falls back when nothing was committed", () => {
+    expect(levelThresholds(days([0, 0]))).toEqual([1, 1, 1]);
   });
 });

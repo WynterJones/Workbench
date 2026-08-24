@@ -3,7 +3,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { QueryState } from "@/components/QueryState";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useHeatmap, type HeatmapDay } from "@/hooks/useHeatmap";
-import { heatmapWeeks, monthLabels, levelFor } from "@/lib/heatmap";
+import { heatmapWeeks, monthLabels, levelFor, levelThresholds } from "@/lib/heatmap";
 import { cn } from "@/lib/utils";
 
 const LEVEL_CLASS = [
@@ -29,10 +29,7 @@ export function ContributionHeatmap() {
 
   const weeks = useMemo(() => heatmapWeeks(data?.days ?? []), [data]);
   const months = useMemo(() => monthLabels(weeks), [weeks]);
-  const max = useMemo(
-    () => (data?.days ?? []).reduce((peak, day) => Math.max(peak, day.count), 0),
-    [data],
-  );
+  const thresholds = useMemo(() => levelThresholds(data?.days ?? []), [data]);
 
   return (
     <QueryState
@@ -75,7 +72,7 @@ export function ContributionHeatmap() {
                         <span
                           className={cn(
                             "heatmap-cell aspect-square w-full rounded-[2px]",
-                            LEVEL_CLASS[levelFor(day.count, max)],
+                            LEVEL_CLASS[levelFor(day.count, thresholds)],
                             (weekIndex * 7 + dayIndex) % 29 === 0 && "heatmap-cell-pulse",
                           )}
                           style={{ animationDelay: `-${(weekIndex * 7 + dayIndex) % 64}s` }}

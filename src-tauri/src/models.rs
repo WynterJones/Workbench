@@ -7,6 +7,7 @@ pub enum ProjectStatus {
     Runnable,
     Running,
     InProgress,
+    Experiment,
     Broken,
     Dead,
     Shipped,
@@ -19,6 +20,7 @@ impl ProjectStatus {
             ProjectStatus::Runnable => "runnable",
             ProjectStatus::Running => "running",
             ProjectStatus::InProgress => "in-progress",
+            ProjectStatus::Experiment => "experiment",
             ProjectStatus::Broken => "broken",
             ProjectStatus::Dead => "dead",
             ProjectStatus::Shipped => "shipped",
@@ -30,6 +32,7 @@ impl ProjectStatus {
             "runnable" => ProjectStatus::Runnable,
             "running" => ProjectStatus::Running,
             "in-progress" => ProjectStatus::InProgress,
+            "experiment" => ProjectStatus::Experiment,
             "broken" => ProjectStatus::Broken,
             "dead" => ProjectStatus::Dead,
             "shipped" => ProjectStatus::Shipped,
@@ -368,7 +371,7 @@ pub struct LibraryStats {
 #[serde(rename_all = "lowercase")]
 pub enum ShelfId {
     Continue,
-    Gems,
+    Unsorted,
     Discovered,
     Shipped,
     Experiments,
@@ -383,7 +386,7 @@ impl ShelfId {
     pub fn from_str(s: &str) -> Self {
         match s {
             "continue" => ShelfId::Continue,
-            "gems" => ShelfId::Gems,
+            "unsorted" => ShelfId::Unsorted,
             "discovered" => ShelfId::Discovered,
             "shipped" => ShelfId::Shipped,
             "experiments" => ShelfId::Experiments,

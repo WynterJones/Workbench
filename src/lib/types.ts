@@ -3,6 +3,7 @@ export type ProjectStatus =
   | "runnable"
   | "running"
   | "in-progress"
+  | "experiment"
   | "broken"
   | "dead"
   | "shipped";
@@ -122,7 +123,7 @@ export interface LibraryStats {
 
 export type ShelfId =
   | "continue"
-  | "gems"
+  | "unsorted"
   | "discovered"
   | "shipped"
   | "experiments"
